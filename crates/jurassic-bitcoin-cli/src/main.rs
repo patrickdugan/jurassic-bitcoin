@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use jb_core_exec::{mint_seed_testcase, run_testcase_core};
+use jb_core_exec::{doctor_report, mint_seed_testcase, run_testcase_core};
 use jb_corpus::{load_corpus, write_divergence_event};
 use jb_diff::diff_results;
 use jb_model::TestCase;
@@ -49,6 +49,7 @@ enum Command {
         #[arg(long)]
         out: PathBuf,
     },
+    Doctor,
 }
 
 fn main() -> Result<()> {
@@ -67,6 +68,7 @@ fn main() -> Result<()> {
         } => fuzz(&corpus, iterations, seed, &artifacts),
         Command::Reduce { event, artifacts } => reduce(&event, &artifacts),
         Command::MintSeed { out } => mint_seed(&out),
+        Command::Doctor => doctor(),
     }
 }
 
@@ -146,5 +148,24 @@ fn mint_seed(out_path: &Path) -> Result<()> {
     fs::write(out_path, serde_json::to_vec_pretty(&tc)?)
         .with_context(|| format!("writing {}", out_path.display()))?;
     println!("minted seed -> {}", out_path.display());
+    Ok(())
+}
+
+fn doctor() -> Result<()> {
+    let report = doctor_report()?;
+    println!("doctor: ok");
+    println!("rpc_url={}", report.rpc_url);
+    println!("chain={}", report.chain);
+    println!("wallet={} ready={}", report.wallet_name, report.wallet_ready);
+    println!("state_path={}", report.state_path.display());
+    println!(
+        "funding_outpoint={}",
+        report
+            .funding_outpoint
+            .as_deref()
+            .unwrap_or("<missing in state file>")
+    );
+    println!("funding_outpoint_exists={}", report.funding_outpoint_exists);
+    println!("suggested_start_command={}", report.suggested_start_command);
     Ok(())
 }

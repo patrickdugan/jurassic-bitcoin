@@ -1,5 +1,5 @@
 param(
-    [string]$DataDir = "D:\jurassic-bitcoin-blocks",
+    [string]$DataDir = "D:\bitcoin-regtest",
     [int]$PruneMiB = 550,
     [int]$RpcPort = 18443,
     [switch]$Daemon
@@ -19,11 +19,13 @@ New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 $args = @(
     "-regtest",
     "-server",
-    "-txindex=1",
+    "-txindex=0",
     "-fallbackfee=0.0002",
     "-prune=$PruneMiB",
     "-datadir=$DataDir",
-    "-rpcport=$RpcPort"
+    "-rpcport=$RpcPort",
+    "-rpcbind=127.0.0.1",
+    "-rpcallowip=127.0.0.1"
 )
 
 if ($Daemon) {

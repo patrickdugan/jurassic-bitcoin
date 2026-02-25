@@ -10,6 +10,18 @@ use std::path::{Path, PathBuf};
 
 const HARNESS_WALLET: &str = "jb_harness";
 
+#[derive(Debug, Clone)]
+pub struct DoctorReport {
+    pub rpc_url: String,
+    pub chain: String,
+    pub wallet_name: String,
+    pub wallet_ready: bool,
+    pub state_path: PathBuf,
+    pub funding_outpoint: Option<String>,
+    pub funding_outpoint_exists: bool,
+    pub suggested_start_command: String,
+}
+
 pub fn run_testcase_core(tc: &TestCase) -> ExecResult {
     let rpc = match RpcClient::from_env() {
         Ok(rpc) => rpc,
@@ -24,6 +36,67 @@ pub fn run_testcase_core(tc: &TestCase) -> ExecResult {
     } else {
         parse_only_result(tc)
     }
+}
+
+pub fn doctor_report() -> Result<DoctorReport> {
+    let rpc_url = env::var("BITCOIND_RPC_URL")
+        .context("missing BITCOIND_RPC_URL (example: http://127.0.0.1:18443)")?;
+    let _rpc_user = env::var("BITCOIND_RPC_USER")
+        .context("missing BITCOIND_RPC_USER (set in your shell)")?;
+    let _rpc_pass = env::var("BITCOIND_RPC_PASS")
+        .context("missing BITCOIND_RPC_PASS (set in your shell)")?;
+
+    let rpc = RpcClient::from_env()?;
+    let info = rpc
+        .call("getblockchaininfo", json!([]))
+        .map_err(|e| anyhow!("bitcoind not running or auth failed: {e:#}"))?;
+    let chain = info["chain"]
+        .as_str()
+        .ok_or_else(|| anyhow!("rpc response missing chain"))?
+        .to_string();
+    if chain != "regtest" {
+        return Err(anyhow!("wrong chain: expected regtest, got {chain}"));
+    }
+
+    ensure_wallet_loaded(&rpc)
+        .map_err(|e| anyhow!("wallet {HARNESS_WALLET} unavailable and could not be created: {e:#}"))?;
+
+    let state_path = resolve_state_path();
+    let state = load_state(&state_path).ok();
+    let funding_outpoint = state
+        .as_ref()
+        .and_then(|s| s.funding.as_ref())
+        .map(|f| format!("{}:{}", f.txid, f.vout));
+
+    let funding_outpoint_exists = if let Some(s) = &state {
+        if let Some(f) = &s.funding {
+            let txout = rpc
+                .call("gettxout", json!([f.txid, f.vout, true]))
+                .unwrap_or(Value::Null);
+            !txout.is_null()
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
+    let datadir = env::var("JB_BITCOIND_DATADIR").unwrap_or_else(|_| "D:\\bitcoin-regtest".to_string());
+    let conf = format!("{datadir}\\bitcoin.conf");
+    let suggested_start_command = format!(
+        "bitcoind -datadir=\"{datadir}\" -conf=\"{conf}\" -regtest -server -prune=550 -txindex=0 -fallbackfee=0.0002 -rpcbind=127.0.0.1 -rpcallowip=127.0.0.1"
+    );
+
+    Ok(DoctorReport {
+        rpc_url,
+        chain,
+        wallet_name: HARNESS_WALLET.to_string(),
+        wallet_ready: true,
+        state_path,
+        funding_outpoint,
+        funding_outpoint_exists,
+        suggested_start_command,
+    })
 }
 
 pub fn mint_seed_testcase(out_id: impl Into<String>) -> Result<TestCase> {
@@ -231,22 +304,7 @@ fn ensure_harness_state(rpc: &RpcClient) -> Result<HarnessState> {
         return Err(anyhow!("bitcoind chain is {chain}, expected regtest"));
     }
 
-    let wallets = rpc.call("listwallets", json!([]))?;
-    let loaded = wallets
-        .as_array()
-        .map(|arr| arr.iter().any(|w| w.as_str() == Some(HARNESS_WALLET)))
-        .unwrap_or(false);
-    if !loaded {
-        match rpc.call("loadwallet", json!([HARNESS_WALLET])) {
-            Ok(_) => {}
-            Err(_) => {
-                rpc.call(
-                    "createwallet",
-                    json!([HARNESS_WALLET, false, false, "", false, false, true]),
-                )?;
-            }
-        }
-    }
+    ensure_wallet_loaded(rpc)?;
 
     let wallet = rpc.for_wallet(HARNESS_WALLET);
     let state_path = resolve_state_path();
@@ -337,6 +395,27 @@ fn ensure_harness_state(rpc: &RpcClient) -> Result<HarnessState> {
         sink_addr,
         funding,
     })
+}
+
+fn ensure_wallet_loaded(rpc: &RpcClient) -> Result<()> {
+    let wallets = rpc.call("listwallets", json!([]))?;
+    let loaded = wallets
+        .as_array()
+        .map(|arr| arr.iter().any(|w| w.as_str() == Some(HARNESS_WALLET)))
+        .unwrap_or(false);
+    if loaded {
+        return Ok(());
+    }
+    match rpc.call("loadwallet", json!([HARNESS_WALLET])) {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            rpc.call(
+                "createwallet",
+                json!([HARNESS_WALLET, false, false, "", false, false, true]),
+            )?;
+            Ok(())
+        }
+    }
 }
 
 #[derive(Clone)]

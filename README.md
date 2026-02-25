@@ -84,8 +84,14 @@ Bundled local binary (downloaded): `tools/bitcoin-core-30.2/bitcoin-30.2/bin/bit
 Pruned runner (datadir on `D:`):
 
 ```powershell
-.\scripts\run-bitcoind-pruned.ps1 -DataDir "D:\jurassic-bitcoin-blocks" -PruneMiB 550
+.\scripts\run-bitcoind-pruned.ps1 -DataDir "D:\bitcoin-regtest" -PruneMiB 550
 ```
+
+Config template:
+
+- `configs/bitcoin.regtest.pruned.conf`
+- copy to `D:\bitcoin-regtest\bitcoin.conf`
+- detailed guide: `docs/bitcoind-windows-regtest.md`
 
 Core template mode supports:
 
@@ -138,11 +144,15 @@ State path resolution:
 
 ## Regtest Seed Workflow
 
-1. Run `bitcoind -regtest -server -txindex=1 -fallbackfee=0.0002`.
-2. Set `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, `BITCOIND_RPC_PASS`.
-3. Mint a seed:
+1. Prepare `D:\bitcoin-regtest\bitcoin.conf` from `configs/bitcoin.regtest.pruned.conf`.
+2. Start bitcoind in pruned regtest mode:
+   `.\scripts\run-bitcoind-pruned.ps1 -DataDir "D:\bitcoin-regtest" -PruneMiB 550`
+3. Set `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, `BITCOIND_RPC_PASS`.
+4. Run doctor:
+   `cargo run -p jurassic-bitcoin-cli -- doctor`
+5. Mint a seed:
    `cargo run -p jurassic-bitcoin-cli -- mint-seed --out corpus/seed-p2wpkh.json`
-4. Fuzz that corpus:
+6. Fuzz that corpus:
    `cargo run -p jurassic-bitcoin-cli -- fuzz --corpus corpus --iterations 1000 --seed 7`
 
 Divergence artifacts include:
