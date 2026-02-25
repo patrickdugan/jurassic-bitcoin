@@ -8,7 +8,7 @@ use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
 use jb_rust_shadow::run_testcase_rust;
 use rand::{rngs::StdRng, SeedableRng};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -63,6 +63,12 @@ enum Command {
         #[arg(long, default_value = "corpus")]
         corpus: PathBuf,
     },
+    Summarize {
+        #[arg(long)]
+        dir: PathBuf,
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -89,6 +95,7 @@ fn main() -> Result<()> {
             force,
             corpus,
         } => demo_run(&out_dir, iterations, seed, force, &corpus),
+        Command::Summarize { dir, json } => summarize(&dir, json),
     }
 }
 
@@ -204,6 +211,28 @@ struct DemoSummary {
     seed_path: String,
     best_event_path: Option<String>,
     reduced_testcase_path: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct ReasonCount {
+    reason: String,
+    count: usize,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct SummaryOutput {
+    total_events: usize,
+    scanned_files: usize,
+    parsed_events: usize,
+    malformed_files: usize,
+    counts_by_normalized_class: BTreeMap<String, usize>,
+    counts_by_core_reason: BTreeMap<String, usize>,
+    top_core_reasons: Vec<ReasonCount>,
+    counts_by_rust_reason: BTreeMap<String, usize>,
+    mutation_histogram: BTreeMap<String, usize>,
+    unique_core_reason_count: usize,
+    unique_mutation_count: usize,
+    interestingness_score: usize,
 }
 
 fn demo_run(out_dir: &Path, iterations: usize, seed: u64, force: bool, _corpus: &Path) -> Result<()> {
@@ -341,10 +370,160 @@ fn prepare_out_dir(out_dir: &Path, force: bool) -> Result<()> {
     Ok(())
 }
 
+fn summarize(dir: &Path, write_json: bool) -> Result<()> {
+    let summary = summarize_dir_offline(dir)?;
+    print_summary_table(dir, &summary);
+    if write_json {
+        let out = dir.join("summary.json");
+        fs::write(&out, serde_json::to_vec_pretty(&summary)?)
+            .with_context(|| format!("writing {}", out.display()))?;
+        println!("summary_json={}", out.display());
+    }
+    Ok(())
+}
+
+fn summarize_dir_offline(dir: &Path) -> Result<SummaryOutput> {
+    let events_root = dir.join("events");
+    let mut counts_by_normalized_class: BTreeMap<String, usize> = BTreeMap::new();
+    let mut counts_by_core_reason: BTreeMap<String, usize> = BTreeMap::new();
+    let mut counts_by_rust_reason: BTreeMap<String, usize> = BTreeMap::new();
+    let mut mutation_histogram: BTreeMap<String, usize> = BTreeMap::new();
+    let mut unique_core_reasons: BTreeSet<String> = BTreeSet::new();
+    let mut unique_mutations: BTreeSet<String> = BTreeSet::new();
+
+    let mut parsed_events = 0usize;
+    let mut malformed_files = 0usize;
+
+    let mut files = Vec::new();
+    collect_json_files(&events_root, &mut files)?;
+    files.sort();
+    let scanned_files = files.len();
+
+    for path in files {
+        let bytes = match fs::read(&path) {
+            Ok(v) => v,
+            Err(_) => {
+                malformed_files += 1;
+                continue;
+            }
+        };
+        let event: DivergenceEvent = match serde_json::from_slice(&bytes) {
+            Ok(v) => v,
+            Err(_) => {
+                malformed_files += 1;
+                continue;
+            }
+        };
+        parsed_events += 1;
+        *counts_by_normalized_class
+            .entry(event.normalized_class.clone())
+            .or_insert(0) += 1;
+
+        let core_reason = event
+            .core_reason
+            .unwrap_or_else(|| "<none>".to_string());
+        *counts_by_core_reason.entry(core_reason.clone()).or_insert(0) += 1;
+        if core_reason != "<none>" {
+            unique_core_reasons.insert(core_reason);
+        }
+
+        let rust_reason = event
+            .rust_reason
+            .unwrap_or_else(|| "<none>".to_string());
+        *counts_by_rust_reason.entry(rust_reason).or_insert(0) += 1;
+
+        for m in event.mutations_applied {
+            *mutation_histogram.entry(m.clone()).or_insert(0) += 1;
+            unique_mutations.insert(m);
+        }
+    }
+
+    let non_unclassified = counts_by_normalized_class
+        .iter()
+        .filter(|(k, _)| k.as_str() != "UNCLASSIFIED")
+        .map(|(_, v)| *v)
+        .sum::<usize>();
+    let interestingness_score =
+        non_unclassified + unique_core_reasons.len() + unique_mutations.len();
+
+    let mut top_core_reasons: Vec<ReasonCount> = counts_by_core_reason
+        .iter()
+        .map(|(reason, count)| ReasonCount {
+            reason: reason.clone(),
+            count: *count,
+        })
+        .collect();
+    top_core_reasons.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.reason.cmp(&b.reason)));
+    top_core_reasons.truncate(10);
+
+    Ok(SummaryOutput {
+        total_events: parsed_events,
+        scanned_files,
+        parsed_events,
+        malformed_files,
+        counts_by_normalized_class,
+        counts_by_core_reason,
+        top_core_reasons,
+        counts_by_rust_reason,
+        mutation_histogram,
+        unique_core_reason_count: unique_core_reasons.len(),
+        unique_mutation_count: unique_mutations.len(),
+        interestingness_score,
+    })
+}
+
+fn collect_json_files(root: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+    if !root.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(root).with_context(|| format!("reading {}", root.display()))? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_json_files(&path, out)?;
+        } else if path.extension().and_then(|s| s.to_str()) == Some("json") {
+            out.push(path);
+        }
+    }
+    Ok(())
+}
+
+fn print_summary_table(dir: &Path, s: &SummaryOutput) {
+    println!("Summary: {}", dir.display());
+    println!("total_events={}", s.total_events);
+    println!(
+        "files_scanned={} parsed={} malformed={}",
+        s.scanned_files, s.parsed_events, s.malformed_files
+    );
+    println!("interestingness_score={}", s.interestingness_score);
+
+    println!("\nBy Class");
+    for (k, v) in &s.counts_by_normalized_class {
+        println!("{:20} {}", k, v);
+    }
+
+    println!("\nTop Core Reasons");
+    for rc in &s.top_core_reasons {
+        println!("{:5} {}", rc.count, rc.reason);
+    }
+
+    println!("\nRust Reasons");
+    for (k, v) in &s.counts_by_rust_reason {
+        println!("{:5} {}", v, k);
+    }
+
+    println!("\nMutations");
+    for (k, v) in &s.mutation_histogram {
+        println!("{:5} {}", v, k);
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{prepare_out_dir, Cli, Command};
+    use super::{prepare_out_dir, summarize_dir_offline, Cli, Command};
     use clap::Parser;
+    use jb_model::{DivergenceEvent, ExecResult};
+    use std::path::PathBuf;
 
     #[test]
     fn parses_demo_run_flags() {
@@ -392,5 +571,73 @@ mod tests {
         let count = std::fs::read_dir(&temp).expect("read").count();
         assert_eq!(count, 0);
         let _ = std::fs::remove_dir_all(&temp);
+    }
+
+    #[test]
+    fn summarize_aggregates_fixture() {
+        let root = std::env::temp_dir().join(format!("jb-summarize-{}", std::process::id()));
+        let events_dir = root.join("events").join("2026-02-25");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&events_dir).expect("create events");
+
+        let base_event = |id: &str, class: &str, core_reason: Option<&str>, rust_reason: Option<&str>, muts: Vec<&str>| {
+            DivergenceEvent {
+                testcase_id: id.to_string(),
+                core: ExecResult::err(core_reason.unwrap_or("")),
+                rust: ExecResult::err(rust_reason.unwrap_or("")),
+                core_allowed: false,
+                rust_ok: false,
+                core_reason: core_reason.map(|s| s.to_string()),
+                rust_reason: rust_reason.map(|s| s.to_string()),
+                normalized_class: class.to_string(),
+                mutations_applied: muts.into_iter().map(|s| s.to_string()).collect(),
+                diff_summary: "d".to_string(),
+                timestamp: chrono::Utc::now(),
+                artifacts: vec![PathBuf::from("x")],
+            }
+        };
+
+        let e1 = base_event(
+            "a",
+            "PREVOUT_MISSING",
+            Some("wrong prevout (not harness funding outpoint)"),
+            Some("wrong prevout (not harness funding outpoint)"),
+            vec!["mutate_sequence", "mutate_locktime"],
+        );
+        let e2 = base_event(
+            "b",
+            "UNCLASSIFIED",
+            Some("txn-mempool-conflict"),
+            Some("unsupported: script not implemented"),
+            vec!["mutate_sequence"],
+        );
+        std::fs::write(
+            events_dir.join("a-event.json"),
+            serde_json::to_vec_pretty(&e1).expect("serialize e1"),
+        )
+        .expect("write e1");
+        std::fs::write(
+            events_dir.join("b-event.json"),
+            serde_json::to_vec_pretty(&e2).expect("serialize e2"),
+        )
+        .expect("write e2");
+        std::fs::write(events_dir.join("bad-event.json"), b"{not-json").expect("write bad");
+
+        let s = summarize_dir_offline(&root).expect("summarize");
+        assert_eq!(s.total_events, 2);
+        assert_eq!(s.malformed_files, 1);
+        assert_eq!(
+            *s.counts_by_normalized_class
+                .get("PREVOUT_MISSING")
+                .unwrap_or(&0),
+            1
+        );
+        assert_eq!(
+            *s.mutation_histogram.get("mutate_sequence").unwrap_or(&0),
+            2
+        );
+        assert!(s.interestingness_score >= 3);
+
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

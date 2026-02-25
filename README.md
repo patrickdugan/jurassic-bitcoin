@@ -174,6 +174,16 @@ cargo run -p jurassic-bitcoin-cli -- demo-run --out-dir artifacts/demo --iterati
 
 Use `--force` to overwrite a non-empty output directory.
 
+## Analyze Results
+
+Summarize an existing demo bundle without re-running fuzzing:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/demo --json
+```
+
+This prints class/reason/mutation aggregates and writes `artifacts/demo/summary.json`.
+
 Divergence artifacts include:
 
 - normalized class labels (`PARSE_FAIL`, `PREVOUT_MISSING`, `SCRIPT_FAIL`, `POLICY_FAIL`, `SIG_FAIL`, `UNCLASSIFIED`)
