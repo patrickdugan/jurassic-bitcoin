@@ -1,0 +1,16 @@
+{
+  "id": "rpc-template-p2wpkh",
+  "description": "Core template path for harness-owned UTXO spend in regtest.",
+  "network": "regtest",
+  "utxo_set": [],
+  "tx_hex": "00",
+  "flags": [],
+  "core_template": {
+    "kind": "spend_harness_utxo",
+    "spend_type": "p2wpkh",
+    "feerate_sats_vb": 2
+  },
+  "metadata": {
+    "mode": "rpc-template"
+  }
+}

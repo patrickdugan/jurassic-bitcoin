@@ -1,0 +1,11 @@
+[package]
+name = "jb-ingest"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+hex.workspace = true
+jb-model = { path = "../jb-model" }

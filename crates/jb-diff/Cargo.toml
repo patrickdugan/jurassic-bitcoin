@@ -1,0 +1,10 @@
+[package]
+name = "jb-diff"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+chrono.workspace = true
+jb-model = { path = "../jb-model" }

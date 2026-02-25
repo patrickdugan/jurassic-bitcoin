@@ -1,0 +1,24 @@
+{
+  "id": "agree-basic",
+  "description": "Toy baseline case where both executors accept.",
+  "network": "regtest",
+  "utxo_set": [
+    {
+      "outpoint": {
+        "txid": "0000000000000000000000000000000000000000000000000000000000000001",
+        "vout": 0
+      },
+      "amount_sats": 5000000000,
+      "script_pubkey_hex": "51",
+      "height": 101,
+      "coinbase": false
+    }
+  ],
+  "tx_hex": "01000000",
+  "flags": [
+    "MANDATORY_SCRIPT_VERIFY_FLAGS"
+  ],
+  "metadata": {
+    "seed": "toy"
+  }
+}

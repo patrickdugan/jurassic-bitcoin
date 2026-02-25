@@ -1,0 +1,12 @@
+[package]
+name = "jb-reducer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+jb-core-exec = { path = "../jb-core-exec" }
+jb-diff = { path = "../jb-diff" }
+jb-model = { path = "../jb-model" }
+jb-rust-shadow = { path = "../jb-rust-shadow" }

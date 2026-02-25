@@ -1,0 +1,24 @@
+{
+  "id": "hello-divergence",
+  "description": "Intentional mismatch to validate artifact plumbing.",
+  "network": "regtest",
+  "utxo_set": [
+    {
+      "outpoint": {
+        "txid": "0000000000000000000000000000000000000000000000000000000000000002",
+        "vout": 1
+      },
+      "amount_sats": 10000,
+      "script_pubkey_hex": "51",
+      "height": 102,
+      "coinbase": false
+    }
+  ],
+  "tx_hex": "02000000",
+  "flags": [
+    "RUST_SHADOW_FAIL"
+  ],
+  "metadata": {
+    "purpose": "smoke-test"
+  }
+}
