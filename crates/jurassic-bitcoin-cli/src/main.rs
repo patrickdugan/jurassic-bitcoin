@@ -1,13 +1,14 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
 use jb_core_exec::{doctor_report, mint_seed_testcase, run_testcase_core};
 use jb_corpus::{load_corpus, write_divergence_event};
 use jb_diff::diff_results;
-use jb_model::TestCase;
+use jb_model::{DivergenceEvent, TestCase};
 use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
 use jb_rust_shadow::run_testcase_rust;
 use rand::{rngs::StdRng, SeedableRng};
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -50,6 +51,18 @@ enum Command {
         out: PathBuf,
     },
     Doctor,
+    DemoRun {
+        #[arg(long, default_value = "artifacts/demo")]
+        out_dir: PathBuf,
+        #[arg(long, default_value_t = 200)]
+        iterations: usize,
+        #[arg(long, default_value_t = 7)]
+        seed: u64,
+        #[arg(long, default_value_t = false)]
+        force: bool,
+        #[arg(long, default_value = "corpus")]
+        corpus: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -69,6 +82,13 @@ fn main() -> Result<()> {
         Command::Reduce { event, artifacts } => reduce(&event, &artifacts),
         Command::MintSeed { out } => mint_seed(&out),
         Command::Doctor => doctor(),
+        Command::DemoRun {
+            out_dir,
+            iterations,
+            seed,
+            force,
+            corpus,
+        } => demo_run(&out_dir, iterations, seed, force, &corpus),
     }
 }
 
@@ -168,4 +188,209 @@ fn doctor() -> Result<()> {
     println!("funding_outpoint_exists={}", report.funding_outpoint_exists);
     println!("suggested_start_command={}", report.suggested_start_command);
     Ok(())
+}
+
+#[derive(serde::Serialize)]
+struct ReplaySummary {
+    checked: usize,
+    divergences: usize,
+}
+
+#[derive(serde::Serialize)]
+struct DemoSummary {
+    total_iterations: usize,
+    divergences_found: usize,
+    counts_by_normalized_class: BTreeMap<String, usize>,
+    seed_path: String,
+    best_event_path: Option<String>,
+    reduced_testcase_path: Option<String>,
+}
+
+fn demo_run(out_dir: &Path, iterations: usize, seed: u64, force: bool, _corpus: &Path) -> Result<()> {
+    let report = doctor_report().map_err(|e| {
+        anyhow!(
+            "doctor failed: {e:#}\nRun this first:\n  cargo run -p jurassic-bitcoin-cli -- doctor"
+        )
+    })?;
+    println!("doctor: ok chain={} rpc_url={}", report.chain, report.rpc_url);
+
+    prepare_out_dir(out_dir, force)?;
+    let events_dir = out_dir.join("events");
+    let reduced_dir = out_dir.join("reduced");
+    fs::create_dir_all(&events_dir).with_context(|| format!("creating {}", events_dir.display()))?;
+    fs::create_dir_all(&reduced_dir).with_context(|| format!("creating {}", reduced_dir.display()))?;
+
+    let seed_path = out_dir.join("seed-p2wpkh.json");
+    let seed_case = mint_seed_testcase("seed-p2wpkh".to_string())?;
+    fs::write(&seed_path, serde_json::to_vec_pretty(&seed_case)?)
+        .with_context(|| format!("writing {}", seed_path.display()))?;
+
+    let mut checked = 0usize;
+    let mut replay_divergences = 0usize;
+    let mut all_events: Vec<(DivergenceEvent, TestCase, PathBuf)> = Vec::new();
+
+    checked += 1;
+    let core = run_testcase_core(&seed_case);
+    let rust = run_testcase_rust(&seed_case);
+    if let Some(event) = diff_results(&seed_case, &core, &rust) {
+        replay_divergences += 1;
+        let path = write_divergence_event(&events_dir, &event, &seed_case)?;
+        all_events.push((event, seed_case.clone(), path));
+    }
+
+    let replay_summary = ReplaySummary {
+        checked,
+        divergences: replay_divergences,
+    };
+    let replay_summary_path = out_dir.join("replay-summary.json");
+    fs::write(
+        &replay_summary_path,
+        serde_json::to_vec_pretty(&replay_summary)?,
+    )
+    .with_context(|| format!("writing {}", replay_summary_path.display()))?;
+
+    let mut rng = StdRng::seed_from_u64(seed);
+    let mut class_counts: BTreeMap<String, usize> = BTreeMap::new();
+    for _ in 0..iterations {
+        let mut_result = mutate_testcase_with_trace(&seed_case, &mut rng);
+        let mutated = mut_result.testcase;
+        let core = run_testcase_core(&mutated);
+        let rust = run_testcase_rust(&mutated);
+        if let Some(mut event) = diff_results(&mutated, &core, &rust) {
+            event.mutations_applied = mut_result.mutations_applied;
+            *class_counts.entry(event.normalized_class.clone()).or_insert(0) += 1;
+            let path = write_divergence_event(&events_dir, &event, &mutated)?;
+            all_events.push((event, mutated, path));
+        }
+    }
+
+    let best_idx = all_events
+        .iter()
+        .position(|(e, _, _)| e.normalized_class != "UNCLASSIFIED")
+        .or_else(|| all_events.first().map(|_| 0usize));
+
+    let mut reduced_path: Option<PathBuf> = None;
+    let mut best_event_path: Option<PathBuf> = None;
+    if let Some(idx) = best_idx {
+        let (event, case, event_path) = &all_events[idx];
+        best_event_path = Some(event_path.clone());
+        let reduced = reduce_divergence(case);
+        let out = reduced_dir.join(format!("{}.json", reduced.id));
+        fs::write(&out, serde_json::to_vec_pretty(&reduced)?)
+            .with_context(|| format!("writing {}", out.display()))?;
+        reduced_path = Some(out);
+        println!(
+            "best divergence: {} class={}",
+            event.testcase_id, event.normalized_class
+        );
+    }
+
+    let summary = DemoSummary {
+        total_iterations: iterations,
+        divergences_found: all_events.len(),
+        counts_by_normalized_class: class_counts.clone(),
+        seed_path: seed_path.display().to_string(),
+        best_event_path: best_event_path.as_ref().map(|p| p.display().to_string()),
+        reduced_testcase_path: reduced_path.as_ref().map(|p| p.display().to_string()),
+    };
+    let summary_path = out_dir.join("demo-summary.json");
+    fs::write(&summary_path, serde_json::to_vec_pretty(&summary)?)
+        .with_context(|| format!("writing {}", summary_path.display()))?;
+
+    println!("demo summary:");
+    println!("iterations={}", iterations);
+    println!("divergences_found={}", all_events.len());
+    println!("counts_by_normalized_class={:?}", class_counts);
+    println!("seed={}", seed_path.display());
+    println!(
+        "best_event={}",
+        best_event_path
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "<none>".to_string())
+    );
+    println!(
+        "reduced={}",
+        reduced_path
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "<none>".to_string())
+    );
+    println!("bundle={}", out_dir.display());
+    Ok(())
+}
+
+fn prepare_out_dir(out_dir: &Path, force: bool) -> Result<()> {
+    if out_dir.exists() {
+        let has_entries = fs::read_dir(out_dir)
+            .with_context(|| format!("reading {}", out_dir.display()))?
+            .next()
+            .is_some();
+        if has_entries && !force {
+            return Err(anyhow!(
+                "out-dir {} is not empty; use --force to overwrite",
+                out_dir.display()
+            ));
+        }
+        if force {
+            fs::remove_dir_all(out_dir)
+                .with_context(|| format!("removing {}", out_dir.display()))?;
+        }
+    }
+    fs::create_dir_all(out_dir).with_context(|| format!("creating {}", out_dir.display()))?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{prepare_out_dir, Cli, Command};
+    use clap::Parser;
+
+    #[test]
+    fn parses_demo_run_flags() {
+        let cli = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "demo-run",
+            "--out-dir",
+            "artifacts/demo-x",
+            "--iterations",
+            "42",
+            "--seed",
+            "9",
+            "--force",
+            "--corpus",
+            "corpus",
+        ])
+        .expect("parse");
+        match cli.cmd {
+            Command::DemoRun {
+                iterations,
+                seed,
+                force,
+                ..
+            } => {
+                assert_eq!(iterations, 42);
+                assert_eq!(seed, 9);
+                assert!(force);
+            }
+            _ => panic!("expected demo-run"),
+        }
+    }
+
+    #[test]
+    fn out_dir_overwrite_behavior() {
+        let temp = std::env::temp_dir().join(format!("jb-demo-outdir-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&temp);
+        std::fs::create_dir_all(&temp).expect("create");
+        std::fs::write(temp.join("marker.txt"), b"x").expect("write marker");
+
+        let err = prepare_out_dir(&temp, false).expect_err("should fail without force");
+        let msg = format!("{err:#}");
+        assert!(msg.contains("not empty"));
+
+        prepare_out_dir(&temp, true).expect("force cleanup");
+        let count = std::fs::read_dir(&temp).expect("read").count();
+        assert_eq!(count, 0);
+        let _ = std::fs::remove_dir_all(&temp);
+    }
 }

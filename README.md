@@ -155,6 +155,25 @@ State path resolution:
 6. Fuzz that corpus:
    `cargo run -p jurassic-bitcoin-cli -- fuzz --corpus corpus --iterations 1000 --seed 7`
 
+## Demo Run
+
+One-command orchestrator for demos and grant walkthroughs:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- demo-run --out-dir artifacts/demo --iterations 200 --seed 7
+```
+
+`demo-run` performs:
+
+1. `doctor` preflight (RPC env, chain, wallet, state/funding visibility)
+2. seed minting to `artifacts/demo/seed-p2wpkh.json`
+3. replay on that seed with `replay-summary.json`
+4. fuzz loop with divergence events under `artifacts/demo/events/YYYY-MM-DD/`
+5. reducer on the best divergence candidate
+6. final summary in `artifacts/demo/demo-summary.json`
+
+Use `--force` to overwrite a non-empty output directory.
+
 Divergence artifacts include:
 
 - normalized class labels (`PARSE_FAIL`, `PREVOUT_MISSING`, `SCRIPT_FAIL`, `POLICY_FAIL`, `SIG_FAIL`, `UNCLASSIFIED`)
