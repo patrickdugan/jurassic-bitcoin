@@ -192,6 +192,20 @@ cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/demo --json
 
 This prints class/reason/mutation aggregates and writes `artifacts/demo/summary.json`.
 
+## Era Replay (2009-2013 POC)
+
+Run a height-context replay across coarse epoch bands and auto-summarize each epoch bundle:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --start-height 90000 --end-height 260000 --limit 100 --out-dir artifacts/era --force
+```
+
+This command:
+
+- assigns `context.height` per epoch sample
+- derives coarse flags from `jb-consensus-profile`
+- writes per-epoch events + `replay-summary.json` + `summary.json`
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

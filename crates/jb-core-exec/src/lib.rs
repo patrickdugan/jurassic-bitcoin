@@ -111,6 +111,7 @@ pub fn mint_seed_testcase(out_id: impl Into<String>) -> Result<TestCase> {
         utxo_set: Vec::new(),
         tx_hex: signed_hex,
         flags: Vec::new(),
+        context: None,
         core_template: Some(CoreTemplate {
             kind: "testmempoolaccept_tx_hex".to_string(),
             spend_type: "p2wpkh".to_string(),
@@ -680,6 +681,7 @@ mod tests {
             utxo_set: Vec::new(),
             tx_hex: "00".to_string(),
             flags: Vec::new(),
+            context: None,
             core_template: Some(CoreTemplate {
                 kind: "spend_harness_utxo".to_string(),
                 spend_type: "p2wpkh".to_string(),

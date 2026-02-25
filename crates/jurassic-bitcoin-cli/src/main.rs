@@ -1,9 +1,10 @@
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
+use jb_consensus_profile::{epochs_for_range, flags_for_height};
 use jb_core_exec::{doctor_report, mint_seed_testcase, run_testcase_core};
 use jb_corpus::{load_corpus, write_divergence_event};
 use jb_diff::diff_results;
-use jb_model::{DivergenceEvent, TestCase};
+use jb_model::{DivergenceEvent, TestCase, ValidationContext};
 use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
 use jb_rust_shadow::run_testcase_rust;
@@ -69,6 +70,20 @@ enum Command {
         #[arg(long, default_value_t = false)]
         json: bool,
     },
+    ReplayEra {
+        #[arg(long)]
+        start_height: u32,
+        #[arg(long)]
+        end_height: u32,
+        #[arg(long, default_value_t = 150)]
+        limit: usize,
+        #[arg(long, default_value = "artifacts/era")]
+        out_dir: PathBuf,
+        #[arg(long, default_value = "corpus")]
+        corpus: PathBuf,
+        #[arg(long, default_value_t = false)]
+        force: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -96,6 +111,14 @@ fn main() -> Result<()> {
             corpus,
         } => demo_run(&out_dir, iterations, seed, force, &corpus),
         Command::Summarize { dir, json } => summarize(&dir, json),
+        Command::ReplayEra {
+            start_height,
+            end_height,
+            limit,
+            out_dir,
+            corpus,
+            force,
+        } => replay_era(start_height, end_height, limit, &out_dir, &corpus, force),
     }
 }
 
@@ -367,6 +390,77 @@ fn prepare_out_dir(out_dir: &Path, force: bool) -> Result<()> {
         }
     }
     fs::create_dir_all(out_dir).with_context(|| format!("creating {}", out_dir.display()))?;
+    Ok(())
+}
+
+fn replay_era(
+    start_height: u32,
+    end_height: u32,
+    limit: usize,
+    out_dir: &Path,
+    corpus_dir: &Path,
+    force: bool,
+) -> Result<()> {
+    if start_height > end_height {
+        return Err(anyhow!("start-height must be <= end-height"));
+    }
+    prepare_out_dir(out_dir, force)?;
+    let corpus = load_corpus(corpus_dir)?;
+    if corpus.is_empty() {
+        return Err(anyhow!("corpus is empty: {}", corpus_dir.display()));
+    }
+
+    let epochs = epochs_for_range(start_height, end_height);
+    for epoch in epochs {
+        let epoch_dir = out_dir.join(format!("{}-h{}", epoch.label, epoch.sample_height));
+        fs::create_dir_all(&epoch_dir).with_context(|| format!("creating {}", epoch_dir.display()))?;
+        let events_dir = epoch_dir.join("events");
+        fs::create_dir_all(&events_dir).with_context(|| format!("creating {}", events_dir.display()))?;
+
+        let mut checked = 0usize;
+        let mut divergences = 0usize;
+        let epoch_flags = flags_for_height(epoch.sample_height);
+
+        for tc in corpus.iter().take(limit) {
+            checked += 1;
+            let mut adjusted = tc.clone();
+            adjusted.context = Some(ValidationContext {
+                height: epoch.sample_height,
+                median_time_past: None,
+            });
+            adjusted.flags = epoch_flags.clone();
+            adjusted.id = format!("{}-h{}", adjusted.id, epoch.sample_height);
+
+            let core = run_testcase_core(&adjusted);
+            let rust = run_testcase_rust(&adjusted);
+            if let Some(event) = diff_results(&adjusted, &core, &rust) {
+                divergences += 1;
+                let _ = write_divergence_event(&events_dir, &event, &adjusted)?;
+            }
+        }
+
+        let replay_summary = ReplaySummary { checked, divergences };
+        let replay_summary_path = epoch_dir.join("replay-summary.json");
+        fs::write(
+            &replay_summary_path,
+            serde_json::to_vec_pretty(&replay_summary)?,
+        )
+        .with_context(|| format!("writing {}", replay_summary_path.display()))?;
+
+        let summary = summarize_dir_offline(&epoch_dir)?;
+        let summary_path = epoch_dir.join("summary.json");
+        fs::write(&summary_path, serde_json::to_vec_pretty(&summary)?)
+            .with_context(|| format!("writing {}", summary_path.display()))?;
+
+        println!(
+            "epoch={} height={} checked={} divergences={} summary={}",
+            epoch.label,
+            epoch.sample_height,
+            checked,
+            divergences,
+            summary_path.display()
+        );
+    }
     Ok(())
 }
 

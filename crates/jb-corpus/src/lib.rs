@@ -67,6 +67,7 @@ mod tests {
             }],
             tx_hex: "00".to_string(),
             flags: vec!["MANDATORY_SCRIPT_VERIFY_FLAGS".to_string()],
+            context: None,
             core_template: None,
             metadata: BTreeMap::new(),
         }

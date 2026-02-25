@@ -12,9 +12,18 @@ pub struct TestCase {
     pub tx_hex: String,
     pub flags: Vec<String>,
     #[serde(default)]
+    pub context: Option<ValidationContext>,
+    #[serde(default)]
     pub core_template: Option<CoreTemplate>,
     #[serde(default)]
     pub metadata: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ValidationContext {
+    pub height: u32,
+    #[serde(default)]
+    pub median_time_past: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

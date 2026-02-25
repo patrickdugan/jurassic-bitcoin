@@ -10,6 +10,7 @@ anyhow.workspace = true
 chrono.workspace = true
 clap.workspace = true
 jb-core-exec = { path = "../jb-core-exec" }
+jb-consensus-profile = { path = "../jb-consensus-profile" }
 jb-corpus = { path = "../jb-corpus" }
 jb-diff = { path = "../jb-diff" }
 jb-model = { path = "../jb-model" }
