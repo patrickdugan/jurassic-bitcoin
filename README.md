@@ -184,6 +184,14 @@ cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/demo --json
 
 This prints class/reason/mutation aggregates and writes `artifacts/demo/summary.json`.
 
+## Grant Package
+
+Grant-ready materials are in `docs/grants/`:
+
+- `docs/grants/one_pager.md`
+- `docs/grants/email_pitch.md`
+- `docs/grants/demo_script.md`
+
 Divergence artifacts include:
 
 - normalized class labels (`PARSE_FAIL`, `PREVOUT_MISSING`, `SCRIPT_FAIL`, `POLICY_FAIL`, `SIG_FAIL`, `UNCLASSIFIED`)
