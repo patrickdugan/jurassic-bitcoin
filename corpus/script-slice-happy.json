@@ -1,0 +1,15 @@
+{
+  "id": "script-slice-happy",
+  "description": "Structural happy-path for rust_shadow opcode slice with checksighook=true.",
+  "network": "regtest",
+  "utxo_set": [],
+  "tx_hex": "0100000000010111111111111111111111111111111111111111111111111111111111111111110000000000ffffffff01102700000000000016001400000000000000000000000000000000000000000201012102000000000000000000000000000000000000000000000000000000000000000000000000",
+  "flags": [],
+  "core_template": {
+    "kind": "testmempoolaccept_tx_hex",
+    "spend_type": "p2wpkh"
+  },
+  "metadata": {
+    "checksighook": "true"
+  }
+}

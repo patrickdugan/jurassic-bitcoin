@@ -38,7 +38,7 @@ fn classify(core: &ExecResult, rust: &ExecResult) -> String {
         "PARSE_FAIL".to_string()
     } else if both.contains("wrong prevout") {
         "PREVOUT_MISSING".to_string()
-    } else if both.contains("script") {
+    } else if both.contains("script") || both.contains("checksighook") {
         "SCRIPT_FAIL".to_string()
     } else if both.contains("reject") || both.contains("policy") {
         "POLICY_FAIL".to_string()

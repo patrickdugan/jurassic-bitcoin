@@ -124,10 +124,18 @@ Core template mode supports:
 Rust shadow status for `testmempoolaccept_tx_hex`:
 
 - parses tx encoding and input outpoints
+- enforces harness funding outpoint context
+- executes a basic script opcode slice for P2WPKH-style scriptCode:
+  - pushes (`0x01..0x4b`, `PUSHDATA1/2/4`, `OP_0`, `OP_1..OP_16`)
+  - `OP_DUP`, `OP_HASH160`, `OP_EQUALVERIFY`
+  - `OP_CHECKSIG` via deterministic hook (`metadata.checksighook=true|false`)
 - returns matching gate errors:
   - `invalid tx encoding`
-  - `wrong prevout (not harness funding outpoint)` when `JB_FUNDING_OUTPOINT` is set
-- otherwise returns `unsupported: script not implemented` (script semantics TBD)
+  - `wrong prevout (not harness funding outpoint)`
+- narrow scope limits:
+  - one input only
+  - witness form ending with `[sig, pubkey]` only
+  - no signature hashing/crypto verification yet
 
 Determinism hardening in `jb-core-exec`:
 
