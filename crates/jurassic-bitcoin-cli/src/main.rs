@@ -4,7 +4,7 @@ use jb_core_exec::{mint_seed_testcase, run_testcase_core};
 use jb_corpus::{load_corpus, write_divergence_event};
 use jb_diff::diff_results;
 use jb_model::TestCase;
-use jb_mutator::mutate_testcase;
+use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
 use jb_rust_shadow::run_testcase_rust;
 use rand::{rngs::StdRng, SeedableRng};
@@ -97,10 +97,12 @@ fn fuzz(corpus_dir: &Path, iterations: usize, seed: u64, artifacts: &Path) -> Re
     let mut divergences = 0usize;
     for _ in 0..iterations {
         let idx = rand::Rng::gen_range(&mut rng, 0..corpus.len());
-        let mutated = mutate_testcase(&corpus[idx], &mut rng);
+        let mut_result = mutate_testcase_with_trace(&corpus[idx], &mut rng);
+        let mutated = mut_result.testcase;
         let core = run_testcase_core(&mutated);
         let rust = run_testcase_rust(&mutated);
-        if let Some(event) = diff_results(&mutated, &core, &rust) {
+        if let Some(mut event) = diff_results(&mutated, &core, &rust) {
+            event.mutations_applied = mut_result.mutations_applied;
             divergences += 1;
             let _ = write_divergence_event(artifacts, &event, &mutated)?;
         }

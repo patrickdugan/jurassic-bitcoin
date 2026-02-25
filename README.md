@@ -107,6 +107,14 @@ Core template mode supports:
 - tx inputs must include the harness funding outpoint
 - otherwise result is deterministic error (`invalid tx encoding` or `wrong prevout (not harness funding outpoint)`)
 
+Rust shadow status for `testmempoolaccept_tx_hex`:
+
+- parses tx encoding and input outpoints
+- returns matching gate errors:
+  - `invalid tx encoding`
+  - `wrong prevout (not harness funding outpoint)` when `JB_FUNDING_OUTPOINT` is set
+- otherwise returns `unsupported: script not implemented` (script semantics TBD)
+
 Determinism hardening in `jb-core-exec`:
 
 - fixed wallet: `jb_harness`
@@ -128,6 +136,11 @@ State path resolution:
    `cargo run -p jurassic-bitcoin-cli -- mint-seed --out corpus/seed-p2wpkh.json`
 4. Fuzz that corpus:
    `cargo run -p jurassic-bitcoin-cli -- fuzz --corpus corpus --iterations 1000 --seed 7`
+
+Divergence artifacts include:
+
+- normalized class labels (`PARSE_FAIL`, `PREVOUT_MISSING`, `SCRIPT_FAIL`, `POLICY_FAIL`, `SIG_FAIL`, `UNCLASSIFIED`)
+- mutation trace list (`mutations_applied`) for fuzzed cases
 
 ## Windows Disk Hygiene
 

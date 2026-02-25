@@ -53,6 +53,13 @@ pub struct DivergenceEvent {
     pub testcase_id: String,
     pub core: ExecResult,
     pub rust: ExecResult,
+    pub core_allowed: bool,
+    pub rust_ok: bool,
+    pub core_reason: Option<String>,
+    pub rust_reason: Option<String>,
+    pub normalized_class: String,
+    #[serde(default)]
+    pub mutations_applied: Vec<String>,
     pub diff_summary: String,
     pub timestamp: DateTime<Utc>,
     pub artifacts: Vec<PathBuf>,
