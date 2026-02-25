@@ -1,2 +1,5 @@
 /target
 /artifacts
+/tools/downloads
+/tools/bitcoin-core-30.2
+/.tmp_bitcoincore_*.html

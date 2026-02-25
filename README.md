@@ -79,6 +79,14 @@ Run Core for template mode:
 bitcoind -regtest -server -txindex=1 -fallbackfee=0.0002
 ```
 
+Bundled local binary (downloaded): `tools/bitcoin-core-30.2/bitcoin-30.2/bin/bitcoind.exe`
+
+Pruned runner (datadir on `D:`):
+
+```powershell
+.\scripts\run-bitcoind-pruned.ps1 -DataDir "D:\jurassic-bitcoin-blocks" -PruneMiB 550
+```
+
 Core template mode supports:
 
 ```json
