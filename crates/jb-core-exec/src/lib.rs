@@ -149,6 +149,7 @@ fn parse_only_result(tc: &TestCase) -> ExecResult {
 fn run_template_case(rpc: &RpcClient, template: &CoreTemplate) -> Result<ExecResult> {
     match template.kind.as_str() {
         "spend_harness_utxo" => run_spend_harness_template(rpc, template),
+        "decode_tx_hex" => run_decode_tx_hex_template(rpc, template),
         "testmempoolaccept_tx_hex" => Ok(ExecResult::err(
             "internal error: testmempoolaccept_tx_hex requires testcase context",
         )),
@@ -166,7 +167,38 @@ fn run_template_case_with_testcase(
 ) -> Result<ExecResult> {
     match template.kind.as_str() {
         "testmempoolaccept_tx_hex" => run_testmempoolaccept_tx_hex_template(rpc, template, tc),
+        "decode_tx_hex" => run_decode_tx_hex_template_with_testcase(rpc, template, tc),
         _ => run_template_case(rpc, template),
+    }
+}
+
+fn run_decode_tx_hex_template_with_testcase(
+    rpc: &RpcClient,
+    template: &CoreTemplate,
+    tc: &TestCase,
+) -> Result<ExecResult> {
+    run_decode_tx_hex(rpc, tc.tx_hex.as_str(), template)
+}
+
+fn run_decode_tx_hex_template(_rpc: &RpcClient, _template: &CoreTemplate) -> Result<ExecResult> {
+    Ok(ExecResult::err(
+        "internal error: decode_tx_hex requires testcase context",
+    ))
+}
+
+fn run_decode_tx_hex(rpc: &RpcClient, tx_hex: &str, template: &CoreTemplate) -> Result<ExecResult> {
+    match rpc.call("decoderawtransaction", json!([tx_hex])) {
+        Ok(decoded) => {
+            let mut r = ExecResult::ok();
+            r.details.insert("mode".to_string(), "rpc-template".to_string());
+            r.details.insert("kind".to_string(), "decode_tx_hex".to_string());
+            r.details.insert("spend_type".to_string(), template.spend_type.clone());
+            if let Some(txid) = decoded["txid"].as_str() {
+                r.details.insert("decoded_txid".to_string(), txid.to_string());
+            }
+            Ok(r)
+        }
+        Err(_) => Ok(ExecResult::err("invalid tx encoding")),
     }
 }
 

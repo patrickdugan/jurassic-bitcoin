@@ -10,9 +10,20 @@ pub fn run_testcase_rust(tc: &TestCase) -> ExecResult {
         .as_ref()
         .map(|t| t.kind == "testmempoolaccept_tx_hex" && t.spend_type == "p2wpkh")
         .unwrap_or(false);
+    let is_decode_template = tc
+        .core_template
+        .as_ref()
+        .map(|t| t.kind == "decode_tx_hex")
+        .unwrap_or(false);
 
     if is_txhex_template {
         return run_txhex_p2wpkh_slice(tc);
+    }
+    if is_decode_template {
+        return match parse_transaction(&tc.tx_hex) {
+            Ok(_) => ExecResult::ok(),
+            Err(_) => ExecResult::err("invalid tx encoding"),
+        };
     }
 
     if tc.tx_hex.len() % 2 != 0 {

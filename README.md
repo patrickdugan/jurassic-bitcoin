@@ -206,6 +206,18 @@ This command:
 - derives coarse flags from `jb-consensus-profile`
 - writes per-epoch events + `replay-summary.json` + `summary.json`
 
+Historical extract (offline corpus generation from local Core RPC):
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- extract-era --start-height 0 --end-height 281472 --limit-per-height 10 --out-corpus corpus/era-mainnet --force
+```
+
+Then replay:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --start-height 0 --end-height 281472 --limit 100 --out-dir artifacts/era-mainnet-run --corpus corpus/era-mainnet --force
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

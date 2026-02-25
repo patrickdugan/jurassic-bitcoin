@@ -524,6 +524,7 @@ name = "jurassic-bitcoin-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "chrono",
  "clap",
  "jb-consensus-profile",
@@ -537,6 +538,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "ureq",
 ]
 
 [[package]]

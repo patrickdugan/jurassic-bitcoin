@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use clap::{Parser, Subcommand};
 use jb_consensus_profile::{epochs_for_range, flags_for_height};
 use jb_core_exec::{doctor_report, mint_seed_testcase, run_testcase_core};
@@ -9,6 +10,8 @@ use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
 use jb_rust_shadow::run_testcase_rust;
 use rand::{rngs::StdRng, SeedableRng};
+use serde::Deserialize;
+use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -84,6 +87,18 @@ enum Command {
         #[arg(long, default_value_t = false)]
         force: bool,
     },
+    ExtractEra {
+        #[arg(long)]
+        start_height: u32,
+        #[arg(long)]
+        end_height: u32,
+        #[arg(long, default_value_t = 10)]
+        limit_per_height: usize,
+        #[arg(long, default_value = "corpus/era-mainnet")]
+        out_corpus: PathBuf,
+        #[arg(long, default_value_t = false)]
+        force: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -119,6 +134,13 @@ fn main() -> Result<()> {
             corpus,
             force,
         } => replay_era(start_height, end_height, limit, &out_dir, &corpus, force),
+        Command::ExtractEra {
+            start_height,
+            end_height,
+            limit_per_height,
+            out_corpus,
+            force,
+        } => extract_era(start_height, end_height, limit_per_height, &out_corpus, force),
     }
 }
 
@@ -462,6 +484,123 @@ fn replay_era(
         );
     }
     Ok(())
+}
+
+fn extract_era(
+    start_height: u32,
+    end_height: u32,
+    limit_per_height: usize,
+    out_corpus: &Path,
+    force: bool,
+) -> Result<()> {
+    if start_height > end_height {
+        return Err(anyhow!("start-height must be <= end-height"));
+    }
+    prepare_out_dir(out_corpus, force)?;
+    let rpc = SimpleRpc::from_env()?;
+
+    let mut written = 0usize;
+    for height in start_height..=end_height {
+        let block_hash = match rpc.call("getblockhash", json!([height])) {
+            Ok(v) => match v.as_str() {
+                Some(s) => s.to_string(),
+                None => continue,
+            },
+            Err(_) => continue,
+        };
+        let block = match rpc.call("getblock", json!([block_hash, 2])) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        let txs = block["tx"].as_array().cloned().unwrap_or_default();
+        for (idx, tx) in txs.into_iter().take(limit_per_height).enumerate() {
+            let tx_hex = match tx["hex"].as_str() {
+                Some(s) => s.to_string(),
+                None => continue,
+            };
+            let txid = tx["txid"].as_str().unwrap_or("unknown").to_string();
+            let id = format!("mainnet-h{}-tx{:04}", height, idx);
+            let mut metadata = BTreeMap::new();
+            metadata.insert("source".to_string(), "mainnet-block".to_string());
+            metadata.insert("block_hash".to_string(), block_hash.clone());
+            metadata.insert("txid".to_string(), txid);
+            let tc = TestCase {
+                id: id.clone(),
+                description: format!("Extracted mainnet tx at height {}", height),
+                network: "mainnet".to_string(),
+                utxo_set: Vec::new(),
+                tx_hex,
+                flags: Vec::new(),
+                context: Some(ValidationContext {
+                    height,
+                    median_time_past: None,
+                }),
+                core_template: Some(jb_model::CoreTemplate {
+                    kind: "decode_tx_hex".to_string(),
+                    spend_type: "rawtx".to_string(),
+                    feerate_sats_vb: None,
+                }),
+                metadata,
+            };
+            let path = out_corpus.join(format!("{id}.json"));
+            fs::write(&path, serde_json::to_vec_pretty(&tc)?)
+                .with_context(|| format!("writing {}", path.display()))?;
+            written += 1;
+        }
+    }
+    println!("extracted_testcases={} out={}", written, out_corpus.display());
+    Ok(())
+}
+
+#[derive(Clone)]
+struct SimpleRpc {
+    url: String,
+    user: String,
+    pass: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct SimpleRpcResponse {
+    result: Option<Value>,
+    error: Option<SimpleRpcErr>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SimpleRpcErr {
+    code: i64,
+    message: String,
+}
+
+impl SimpleRpc {
+    fn from_env() -> Result<Self> {
+        Ok(Self {
+            url: std::env::var("BITCOIND_RPC_URL")
+                .context("missing BITCOIND_RPC_URL (example: http://127.0.0.1:8332)")?,
+            user: std::env::var("BITCOIND_RPC_USER").context("missing BITCOIND_RPC_USER")?,
+            pass: std::env::var("BITCOIND_RPC_PASS").context("missing BITCOIND_RPC_PASS")?,
+        })
+    }
+
+    fn call(&self, method: &str, params: Value) -> Result<Value> {
+        let req = json!({
+            "jsonrpc":"1.0",
+            "id":"jb",
+            "method": method,
+            "params": params
+        });
+        let auth = format!("Basic {}", STANDARD.encode(format!("{}:{}", self.user, self.pass)));
+        let resp: SimpleRpcResponse = ureq::post(&self.url)
+            .set("content-type", "text/plain")
+            .set("authorization", &auth)
+            .send_json(req)
+            .with_context(|| format!("rpc call failed: {method}"))?
+            .into_json()
+            .with_context(|| format!("rpc decode failed: {method}"))?;
+        if let Some(err) = resp.error {
+            return Err(anyhow!("rpc {method} error {}: {}", err.code, err.message));
+        }
+        resp.result.ok_or_else(|| anyhow!("rpc {method} returned null result"))
+    }
 }
 
 fn summarize(dir: &Path, write_json: bool) -> Result<()> {
