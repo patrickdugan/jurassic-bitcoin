@@ -36,6 +36,7 @@ Bitcoin Core is canonical. This project does not attempt to replace or fork cons
 - `crates/jb-corpus`: corpus/artifact IO
 - `crates/jb-mutator`: testcase mutation
 - `crates/jb-reducer`: divergence minimization
+- `crates/jb-fixtures`: curated fixture manifest/blob loader
 - `crates/jurassic-bitcoin-cli`: `replay`, `fuzz`, `reduce`, and `mint-seed` commands
 
 ## Run (MVP)
@@ -192,31 +193,49 @@ cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/demo --json
 
 This prints class/reason/mutation aggregates and writes `artifacts/demo/summary.json`.
 
-## Era Replay (2009-2013 POC)
-
-Run a height-context replay across coarse epoch bands and auto-summarize each epoch bundle:
+Generate a static "Quirk Museum" dashboard:
 
 ```powershell
-cargo run -p jurassic-bitcoin-cli -- replay-era --start-height 90000 --end-height 260000 --limit 100 --out-dir artifacts/era --force
+cargo run -p jurassic-bitcoin-cli -- museum --in artifacts/era-2009-2013 --out artifacts/museum
+```
+
+Heuristic label suggestions (rule-based, review before applying):
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- suggest-labels --in artifacts/era-2009-2013 --out artifacts/museum/suggestions.json
+```
+
+Apply one curated label:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- apply-label --specimen <specimen_id> --label STACK_UNDERFLOW_STRUCTURAL --labels artifacts/museum/labels.json
+```
+
+See `docs/museum.md` for details.
+
+## Era Replay (2009-2013 POC)
+
+Run a curated boundary replay from fixture manifest and auto-summarize each era bundle:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/era_2009_2013_poc.json --out-dir artifacts/era-2009-2013 --limit-per-epoch 200 --force
 ```
 
 This command:
 
-- assigns `context.height` per epoch sample
-- derives coarse flags from `jb-consensus-profile`
-- writes per-epoch events + `replay-summary.json` + `summary.json`
+- materializes fixture txs from `fixtures/blobs/*.json` (offline mode)
+- sets `context.height` plus epoch flags from `jb-consensus-profile`
+- runs `testmempoolaccept_tx_hex` template per fixture
+- writes per-era `events/`, `replay-summary.json`, and `summary.json`
 
-Historical extract (offline corpus generation from local Core RPC):
-
-```powershell
-cargo run -p jurassic-bitcoin-cli -- extract-era --start-height 0 --end-height 281472 --limit-per-height 10 --out-corpus corpus/era-mainnet --force
-```
-
-Then replay:
+Optional RPC-assisted fixture fetch for txid-based manifests:
 
 ```powershell
-cargo run -p jurassic-bitcoin-cli -- replay-era --start-height 0 --end-height 281472 --limit 100 --out-dir artifacts/era-mainnet-run --corpus corpus/era-mainnet --force
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/era_2009_2013_poc.json --out-dir artifacts/era-2009-2013 --limit-per-epoch 200 --rpc-fetch --force
 ```
+
+Fetched tx hex is cached under `JB_FIXTURE_CACHE` (or default `fixtures/cache`, gitignored).
+Detailed notes: `docs/era-2009-2013.md`.
 
 ## Grant Package
 

@@ -3,3 +3,7 @@
 /tools/downloads
 /tools/bitcoin-core-30.2
 /.tmp_bitcoincore_*.html
+/fixtures/cache
+/tools/quirk-museum-vite/node_modules
+/tools/quirk-museum-vite/dist
+/tools/quirk-museum-vite/public/data.json

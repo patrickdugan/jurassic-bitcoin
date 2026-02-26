@@ -9,6 +9,7 @@ members = [
   "crates/jb-mutator",
   "crates/jb-reducer",
   "crates/jurassic-bitcoin-cli", "crates/jb-consensus-profile",
+  "crates/jb-fixtures",
 ]
 resolver = "2"
 

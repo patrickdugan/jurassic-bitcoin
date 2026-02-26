@@ -10,10 +10,12 @@ anyhow.workspace = true
 base64 = "0.22"
 chrono.workspace = true
 clap.workspace = true
+hex.workspace = true
 jb-core-exec = { path = "../jb-core-exec" }
 jb-consensus-profile = { path = "../jb-consensus-profile" }
 jb-corpus = { path = "../jb-corpus" }
 jb-diff = { path = "../jb-diff" }
+jb-fixtures = { path = "../jb-fixtures" }
 jb-model = { path = "../jb-model" }
 jb-mutator = { path = "../jb-mutator" }
 jb-reducer = { path = "../jb-reducer" }
@@ -21,4 +23,5 @@ jb-rust-shadow = { path = "../jb-rust-shadow" }
 rand.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2 = "0.10"
 ureq = { version = "2", default-features = true, features = ["json"] }

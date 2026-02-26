@@ -1,17 +1,21 @@
-use anyhow::{anyhow, Context, Result};
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use anyhow::{Context, Result, anyhow};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use clap::{Parser, Subcommand};
-use jb_consensus_profile::{epochs_for_range, flags_for_height};
+use jb_consensus_profile::{
+    ContextView as ProfileContextView, epoch_for_height, flags_for_context,
+};
 use jb_core_exec::{doctor_report, mint_seed_testcase, run_testcase_core};
 use jb_corpus::{load_corpus, write_divergence_event};
 use jb_diff::diff_results;
-use jb_model::{DivergenceEvent, TestCase, ValidationContext};
+use jb_fixtures::{FixtureOptions, default_cache_dir, load_manifest, materialize_fixtures};
+use jb_model::{CoreTemplate, DivergenceEvent, TestCase, ValidationContext};
 use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
 use jb_rust_shadow::run_testcase_rust;
-use rand::{rngs::StdRng, SeedableRng};
-use serde::Deserialize;
-use serde_json::{json, Value};
+use rand::{SeedableRng, rngs::StdRng};
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -73,17 +77,35 @@ enum Command {
         #[arg(long, default_value_t = false)]
         json: bool,
     },
+    Museum {
+        #[arg(long)]
+        r#in: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+    },
+    SuggestLabels {
+        #[arg(long)]
+        r#in: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+    },
+    ApplyLabel {
+        #[arg(long)]
+        specimen: String,
+        #[arg(long)]
+        label: String,
+        #[arg(long)]
+        labels: PathBuf,
+    },
     ReplayEra {
-        #[arg(long)]
-        start_height: u32,
-        #[arg(long)]
-        end_height: u32,
-        #[arg(long, default_value_t = 150)]
-        limit: usize,
-        #[arg(long, default_value = "artifacts/era")]
+        #[arg(long, default_value = "fixtures/manifests/era_2009_2013_poc.json")]
+        manifest: PathBuf,
+        #[arg(long, default_value = "artifacts/era-2009-2013")]
         out_dir: PathBuf,
-        #[arg(long, default_value = "corpus")]
-        corpus: PathBuf,
+        #[arg(long, default_value_t = 200)]
+        limit_per_epoch: usize,
+        #[arg(long, default_value_t = false)]
+        rpc_fetch: bool,
         #[arg(long, default_value_t = false)]
         force: bool,
     },
@@ -126,21 +148,33 @@ fn main() -> Result<()> {
             corpus,
         } => demo_run(&out_dir, iterations, seed, force, &corpus),
         Command::Summarize { dir, json } => summarize(&dir, json),
+        Command::Museum { r#in, out } => museum(&r#in, &out),
+        Command::SuggestLabels { r#in, out } => suggest_labels(&r#in, &out),
+        Command::ApplyLabel {
+            specimen,
+            label,
+            labels,
+        } => apply_label(&specimen, &label, &labels),
         Command::ReplayEra {
-            start_height,
-            end_height,
-            limit,
+            manifest,
             out_dir,
-            corpus,
+            limit_per_epoch,
+            rpc_fetch,
             force,
-        } => replay_era(start_height, end_height, limit, &out_dir, &corpus, force),
+        } => replay_era(&manifest, &out_dir, limit_per_epoch, rpc_fetch, force),
         Command::ExtractEra {
             start_height,
             end_height,
             limit_per_height,
             out_corpus,
             force,
-        } => extract_era(start_height, end_height, limit_per_height, &out_corpus, force),
+        } => extract_era(
+            start_height,
+            end_height,
+            limit_per_height,
+            &out_corpus,
+            force,
+        ),
     }
 }
 
@@ -194,8 +228,8 @@ fn reduce(event_path: &Path, artifacts: &Path) -> Result<()> {
         .parent()
         .with_context(|| format!("missing parent dir for {}", event_path.display()))?;
     let case_path = day_dir.join(format!("{}-testcase.json", event.testcase_id));
-    let case_bytes =
-        fs::read(&case_path).with_context(|| format!("reading testcase {}", case_path.display()))?;
+    let case_bytes = fs::read(&case_path)
+        .with_context(|| format!("reading testcase {}", case_path.display()))?;
     let case: TestCase = serde_json::from_slice(&case_bytes).context("parsing testcase json")?;
     let reduced = reduce_divergence(&case);
     let out = artifacts.join("reduced");
@@ -228,7 +262,10 @@ fn doctor() -> Result<()> {
     println!("doctor: ok");
     println!("rpc_url={}", report.rpc_url);
     println!("chain={}", report.chain);
-    println!("wallet={} ready={}", report.wallet_name, report.wallet_ready);
+    println!(
+        "wallet={} ready={}",
+        report.wallet_name, report.wallet_ready
+    );
     println!("state_path={}", report.state_path.display());
     println!(
         "funding_outpoint={}",
@@ -280,19 +317,30 @@ struct SummaryOutput {
     interestingness_score: usize,
 }
 
-fn demo_run(out_dir: &Path, iterations: usize, seed: u64, force: bool, _corpus: &Path) -> Result<()> {
+fn demo_run(
+    out_dir: &Path,
+    iterations: usize,
+    seed: u64,
+    force: bool,
+    _corpus: &Path,
+) -> Result<()> {
     let report = doctor_report().map_err(|e| {
         anyhow!(
             "doctor failed: {e:#}\nRun this first:\n  cargo run -p jurassic-bitcoin-cli -- doctor"
         )
     })?;
-    println!("doctor: ok chain={} rpc_url={}", report.chain, report.rpc_url);
+    println!(
+        "doctor: ok chain={} rpc_url={}",
+        report.chain, report.rpc_url
+    );
 
     prepare_out_dir(out_dir, force)?;
     let events_dir = out_dir.join("events");
     let reduced_dir = out_dir.join("reduced");
-    fs::create_dir_all(&events_dir).with_context(|| format!("creating {}", events_dir.display()))?;
-    fs::create_dir_all(&reduced_dir).with_context(|| format!("creating {}", reduced_dir.display()))?;
+    fs::create_dir_all(&events_dir)
+        .with_context(|| format!("creating {}", events_dir.display()))?;
+    fs::create_dir_all(&reduced_dir)
+        .with_context(|| format!("creating {}", reduced_dir.display()))?;
 
     let seed_path = out_dir.join("seed-p2wpkh.json");
     let seed_case = mint_seed_testcase("seed-p2wpkh".to_string())?;
@@ -332,7 +380,9 @@ fn demo_run(out_dir: &Path, iterations: usize, seed: u64, force: bool, _corpus: 
         let rust = run_testcase_rust(&mutated);
         if let Some(mut event) = diff_results(&mutated, &core, &rust) {
             event.mutations_applied = mut_result.mutations_applied;
-            *class_counts.entry(event.normalized_class.clone()).or_insert(0) += 1;
+            *class_counts
+                .entry(event.normalized_class.clone())
+                .or_insert(0) += 1;
             let path = write_divergence_event(&events_dir, &event, &mutated)?;
             all_events.push((event, mutated, path));
         }
@@ -416,52 +466,94 @@ fn prepare_out_dir(out_dir: &Path, force: bool) -> Result<()> {
 }
 
 fn replay_era(
-    start_height: u32,
-    end_height: u32,
-    limit: usize,
+    manifest_path: &Path,
     out_dir: &Path,
-    corpus_dir: &Path,
+    limit_per_epoch: usize,
+    rpc_fetch: bool,
     force: bool,
 ) -> Result<()> {
-    if start_height > end_height {
-        return Err(anyhow!("start-height must be <= end-height"));
-    }
     prepare_out_dir(out_dir, force)?;
-    let corpus = load_corpus(corpus_dir)?;
-    if corpus.is_empty() {
-        return Err(anyhow!("corpus is empty: {}", corpus_dir.display()));
+    let manifest = load_manifest(manifest_path)?;
+    let fixtures = materialize_fixtures(
+        manifest_path,
+        &manifest,
+        &FixtureOptions {
+            rpc_fetch,
+            cache_dir: default_cache_dir(),
+            limit_per_epoch,
+        },
+    )?;
+
+    let mut fixtures_by_window: BTreeMap<String, Vec<jb_fixtures::MaterializedFixture>> =
+        BTreeMap::new();
+    for fixture in fixtures {
+        fixtures_by_window
+            .entry(fixture.window.clone())
+            .or_default()
+            .push(fixture);
     }
 
-    let epochs = epochs_for_range(start_height, end_height);
-    for epoch in epochs {
-        let epoch_dir = out_dir.join(format!("{}-h{}", epoch.label, epoch.sample_height));
-        fs::create_dir_all(&epoch_dir).with_context(|| format!("creating {}", epoch_dir.display()))?;
+    for (window, cases) in fixtures_by_window {
+        let epoch_dir = out_dir.join(&window);
+        fs::create_dir_all(&epoch_dir)
+            .with_context(|| format!("creating {}", epoch_dir.display()))?;
         let events_dir = epoch_dir.join("events");
-        fs::create_dir_all(&events_dir).with_context(|| format!("creating {}", events_dir.display()))?;
+        fs::create_dir_all(&events_dir)
+            .with_context(|| format!("creating {}", events_dir.display()))?;
 
         let mut checked = 0usize;
         let mut divergences = 0usize;
-        let epoch_flags = flags_for_height(epoch.sample_height);
-
-        for tc in corpus.iter().take(limit) {
+        for case in cases {
             checked += 1;
-            let mut adjusted = tc.clone();
-            adjusted.context = Some(ValidationContext {
-                height: epoch.sample_height,
+            let inferred_epoch = epoch_for_height(case.height).label().to_string();
+            let epoch_label = case.epoch.clone().unwrap_or(inferred_epoch);
+            let context = ValidationContext {
+                height: case.height,
                 median_time_past: None,
+                block_time: None,
+                epoch: Some(epoch_label.clone()),
+            };
+            let profile_flags = flags_for_context(&ProfileContextView {
+                height: case.height,
+                median_time_past: context.median_time_past,
+                block_time: context.block_time,
+                epoch: context.epoch.clone(),
             });
-            adjusted.flags = epoch_flags.clone();
-            adjusted.id = format!("{}-h{}", adjusted.id, epoch.sample_height);
 
-            let core = run_testcase_core(&adjusted);
-            let rust = run_testcase_rust(&adjusted);
-            if let Some(event) = diff_results(&adjusted, &core, &rust) {
+            let mut metadata = case.metadata.clone();
+            metadata.insert("fixture_window".to_string(), case.window.clone());
+            metadata.insert("manifest_name".to_string(), manifest.name.clone());
+            metadata.insert("consensus_epoch".to_string(), epoch_label);
+            metadata.insert("consensus_flags".to_string(), profile_flags.join(","));
+
+            let testcase = TestCase {
+                id: format!("{}-h{}", case.id, case.height),
+                description: case.description,
+                network: "mainnet".to_string(),
+                utxo_set: Vec::new(),
+                tx_hex: case.tx_hex,
+                flags: profile_flags,
+                context: Some(context),
+                core_template: Some(CoreTemplate {
+                    kind: "testmempoolaccept_tx_hex".to_string(),
+                    spend_type: case.spend_type,
+                    feerate_sats_vb: None,
+                }),
+                metadata,
+            };
+
+            let core = run_testcase_core(&testcase);
+            let rust = run_testcase_rust(&testcase);
+            if let Some(event) = diff_results(&testcase, &core, &rust) {
                 divergences += 1;
-                let _ = write_divergence_event(&events_dir, &event, &adjusted)?;
+                let _ = write_divergence_event(&events_dir, &event, &testcase)?;
             }
         }
 
-        let replay_summary = ReplaySummary { checked, divergences };
+        let replay_summary = ReplaySummary {
+            checked,
+            divergences,
+        };
         let replay_summary_path = epoch_dir.join("replay-summary.json");
         fs::write(
             &replay_summary_path,
@@ -475,9 +567,8 @@ fn replay_era(
             .with_context(|| format!("writing {}", summary_path.display()))?;
 
         println!(
-            "epoch={} height={} checked={} divergences={} summary={}",
-            epoch.label,
-            epoch.sample_height,
+            "epoch={} checked={} divergences={} summary={}",
+            window,
             checked,
             divergences,
             summary_path.display()
@@ -534,6 +625,8 @@ fn extract_era(
                 context: Some(ValidationContext {
                     height,
                     median_time_past: None,
+                    block_time: None,
+                    epoch: None,
                 }),
                 core_template: Some(jb_model::CoreTemplate {
                     kind: "decode_tx_hex".to_string(),
@@ -548,7 +641,11 @@ fn extract_era(
             written += 1;
         }
     }
-    println!("extracted_testcases={} out={}", written, out_corpus.display());
+    println!(
+        "extracted_testcases={} out={}",
+        written,
+        out_corpus.display()
+    );
     Ok(())
 }
 
@@ -588,7 +685,10 @@ impl SimpleRpc {
             "method": method,
             "params": params
         });
-        let auth = format!("Basic {}", STANDARD.encode(format!("{}:{}", self.user, self.pass)));
+        let auth = format!(
+            "Basic {}",
+            STANDARD.encode(format!("{}:{}", self.user, self.pass))
+        );
         let resp: SimpleRpcResponse = ureq::post(&self.url)
             .set("content-type", "text/plain")
             .set("authorization", &auth)
@@ -599,7 +699,8 @@ impl SimpleRpc {
         if let Some(err) = resp.error {
             return Err(anyhow!("rpc {method} error {}: {}", err.code, err.message));
         }
-        resp.result.ok_or_else(|| anyhow!("rpc {method} returned null result"))
+        resp.result
+            .ok_or_else(|| anyhow!("rpc {method} returned null result"))
     }
 }
 
@@ -652,17 +753,15 @@ fn summarize_dir_offline(dir: &Path) -> Result<SummaryOutput> {
             .entry(event.normalized_class.clone())
             .or_insert(0) += 1;
 
-        let core_reason = event
-            .core_reason
-            .unwrap_or_else(|| "<none>".to_string());
-        *counts_by_core_reason.entry(core_reason.clone()).or_insert(0) += 1;
+        let core_reason = event.core_reason.unwrap_or_else(|| "<none>".to_string());
+        *counts_by_core_reason
+            .entry(core_reason.clone())
+            .or_insert(0) += 1;
         if core_reason != "<none>" {
             unique_core_reasons.insert(core_reason);
         }
 
-        let rust_reason = event
-            .rust_reason
-            .unwrap_or_else(|| "<none>".to_string());
+        let rust_reason = event.rust_reason.unwrap_or_else(|| "<none>".to_string());
         *counts_by_rust_reason.entry(rust_reason).or_insert(0) += 1;
 
         for m in event.mutations_applied {
@@ -714,7 +813,13 @@ fn collect_json_files(root: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
         let path = entry.path();
         if path.is_dir() {
             collect_json_files(&path, out)?;
-        } else if path.extension().and_then(|s| s.to_str()) == Some("json") {
+        } else if path.extension().and_then(|s| s.to_str()) == Some("json")
+            && path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .map(|n| n.ends_with("-event.json"))
+                .unwrap_or(false)
+        {
             out.push(path);
         }
     }
@@ -751,11 +856,520 @@ fn print_summary_table(dir: &Path, s: &SummaryOutput) {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct MuseumEpochSummary {
+    epoch: String,
+    total_events: usize,
+    counts_by_normalized_class: BTreeMap<String, usize>,
+    top_core_reasons: Vec<ReasonCount>,
+    top_rust_reasons: Vec<ReasonCount>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct MuseumSpecimen {
+    specimen_id: String,
+    testcase_id: String,
+    epoch: String,
+    normalized_class: String,
+    core_reason: Option<String>,
+    rust_reason: Option<String>,
+    script_trace: Option<String>,
+    mutations_applied: Vec<String>,
+    label: Option<String>,
+    event_path: String,
+    reduced_testcase_path: Option<String>,
+    testcase_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct MuseumData {
+    epochs: Vec<MuseumEpochSummary>,
+    specimens: Vec<MuseumSpecimen>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct LabelSuggestion {
+    specimen_id: String,
+    suggested_label: String,
+    confidence: String,
+    rationale: String,
+}
+
+fn museum(in_dir: &Path, out_dir: &Path) -> Result<()> {
+    fs::create_dir_all(out_dir).with_context(|| format!("creating {}", out_dir.display()))?;
+    let labels_path = out_dir.join("labels.json");
+    let labels = load_labels_map(&labels_path)?;
+    let dataset = build_museum_data(in_dir, &labels)?;
+
+    let data_path = out_dir.join("data.json");
+    fs::write(&data_path, serde_json::to_vec_pretty(&dataset)?)
+        .with_context(|| format!("writing {}", data_path.display()))?;
+    let html_path = out_dir.join("index.html");
+    fs::write(&html_path, museum_html_template())
+        .with_context(|| format!("writing {}", html_path.display()))?;
+    println!("museum_data={}", data_path.display());
+    println!("museum_index={}", html_path.display());
+    Ok(())
+}
+
+fn suggest_labels(in_dir: &Path, out_path: &Path) -> Result<()> {
+    let dataset = build_museum_data(in_dir, &BTreeMap::new())?;
+    let mut suggestions = Vec::new();
+    for specimen in dataset.specimens {
+        if let Some(suggestion) = suggest_label_for_specimen(&specimen) {
+            suggestions.push(suggestion);
+        }
+    }
+    fs::write(out_path, serde_json::to_vec_pretty(&suggestions)?)
+        .with_context(|| format!("writing {}", out_path.display()))?;
+    println!("suggestions={}", out_path.display());
+    println!("count={}", suggestions.len());
+    Ok(())
+}
+
+fn apply_label(specimen: &str, label: &str, labels_path: &Path) -> Result<()> {
+    let mut labels = load_labels_map(labels_path)?;
+    labels.insert(specimen.to_string(), label.to_string());
+    if let Some(parent) = labels_path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(labels_path, serde_json::to_vec_pretty(&labels)?)
+        .with_context(|| format!("writing {}", labels_path.display()))?;
+    println!("label_applied specimen={} label={}", specimen, label);
+    println!("labels_file={}", labels_path.display());
+    Ok(())
+}
+
+fn load_labels_map(path: &Path) -> Result<BTreeMap<String, String>> {
+    if !path.exists() {
+        return Ok(BTreeMap::new());
+    }
+    let bytes = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
+    let parsed: Value =
+        serde_json::from_slice(&bytes).with_context(|| format!("parsing {}", path.display()))?;
+    let mut out = BTreeMap::new();
+    if let Some(obj) = parsed.as_object() {
+        for (k, v) in obj {
+            if let Some(label) = v.as_str() {
+                out.insert(k.clone(), label.to_string());
+            }
+        }
+    }
+    Ok(out)
+}
+
+fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result<MuseumData> {
+    let mut event_files = Vec::new();
+    collect_event_json_files_anywhere(in_dir, &mut event_files)?;
+    event_files.sort();
+
+    let reduced_map = index_reduced_testcases(in_dir)?;
+    let mut epoch_class_counts: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+    let mut epoch_core_reason_counts: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+    let mut epoch_rust_reason_counts: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+
+    let mut specimens = Vec::new();
+    for event_path in &event_files {
+        let bytes = match fs::read(event_path) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        let event: DivergenceEvent = match serde_json::from_slice(&bytes) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+
+        let testcase_path = event_path
+            .parent()
+            .map(|p| p.join(format!("{}-testcase.json", event.testcase_id)));
+        let testcase_value = testcase_path
+            .as_ref()
+            .and_then(|p| fs::read(p).ok())
+            .and_then(|b| serde_json::from_slice::<Value>(&b).ok());
+
+        let reduced_path = reduced_map.get(&event.testcase_id).cloned();
+        let canonical_source = if let Some(path) = &reduced_path {
+            fs::read(path)
+                .ok()
+                .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
+                .or_else(|| testcase_value.clone())
+                .unwrap_or_else(|| serde_json::to_value(&event).unwrap_or(Value::Null))
+        } else if let Some(v) = testcase_value.clone() {
+            v
+        } else {
+            serde_json::to_value(&event).unwrap_or(Value::Null)
+        };
+        let specimen_id = specimen_id_for_value(&canonical_source)?;
+
+        let epoch = find_epoch_from_event_path(event_path).unwrap_or_else(|| "unknown".to_string());
+        *epoch_class_counts
+            .entry(epoch.clone())
+            .or_default()
+            .entry(event.normalized_class.clone())
+            .or_insert(0) += 1;
+        *epoch_core_reason_counts
+            .entry(epoch.clone())
+            .or_default()
+            .entry(
+                event
+                    .core_reason
+                    .clone()
+                    .unwrap_or_else(|| "<none>".to_string()),
+            )
+            .or_insert(0) += 1;
+        *epoch_rust_reason_counts
+            .entry(epoch.clone())
+            .or_default()
+            .entry(
+                event
+                    .rust_reason
+                    .clone()
+                    .unwrap_or_else(|| "<none>".to_string()),
+            )
+            .or_insert(0) += 1;
+
+        let script_trace = event.rust.details.get("script_trace").cloned();
+        specimens.push(MuseumSpecimen {
+            specimen_id: specimen_id.clone(),
+            testcase_id: event.testcase_id.clone(),
+            epoch,
+            normalized_class: event.normalized_class.clone(),
+            core_reason: event.core_reason.clone(),
+            rust_reason: event.rust_reason.clone(),
+            script_trace,
+            mutations_applied: event.mutations_applied.clone(),
+            label: labels.get(&specimen_id).cloned(),
+            event_path: event_path.display().to_string(),
+            reduced_testcase_path: reduced_path.map(|p| p.display().to_string()),
+            testcase_path: testcase_path.map(|p| p.display().to_string()),
+        });
+    }
+    specimens.sort_by(|a, b| a.specimen_id.cmp(&b.specimen_id));
+
+    let mut epochs = Vec::new();
+    for (epoch, counts_by_normalized_class) in epoch_class_counts {
+        let total_events = counts_by_normalized_class.values().sum::<usize>();
+        let top_core_reasons = top_reasons(
+            epoch_core_reason_counts
+                .get(&epoch)
+                .cloned()
+                .unwrap_or_default(),
+            5,
+        );
+        let top_rust_reasons = top_reasons(
+            epoch_rust_reason_counts
+                .get(&epoch)
+                .cloned()
+                .unwrap_or_default(),
+            5,
+        );
+        epochs.push(MuseumEpochSummary {
+            epoch,
+            total_events,
+            counts_by_normalized_class,
+            top_core_reasons,
+            top_rust_reasons,
+        });
+    }
+    epochs.sort_by(|a, b| a.epoch.cmp(&b.epoch));
+
+    Ok(MuseumData { epochs, specimens })
+}
+
+fn top_reasons(counts: BTreeMap<String, usize>, max: usize) -> Vec<ReasonCount> {
+    let mut out: Vec<ReasonCount> = counts
+        .into_iter()
+        .map(|(reason, count)| ReasonCount { reason, count })
+        .collect();
+    out.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.reason.cmp(&b.reason)));
+    out.truncate(max);
+    out
+}
+
+fn collect_event_json_files_anywhere(root: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+    if !root.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(root).with_context(|| format!("reading {}", root.display()))? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_event_json_files_anywhere(&path, out)?;
+            continue;
+        }
+        let is_event_json = path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .map(|name| name.ends_with("-event.json"))
+            .unwrap_or(false);
+        if is_event_json {
+            out.push(path);
+        }
+    }
+    Ok(())
+}
+
+fn index_reduced_testcases(root: &Path) -> Result<BTreeMap<String, PathBuf>> {
+    let mut files = Vec::new();
+    collect_json_files_loose(root, &mut files)?;
+    let mut out = BTreeMap::new();
+    for path in files {
+        let maybe_name = path.file_name().and_then(|s| s.to_str());
+        if let Some(name) = maybe_name {
+            if let Some(id) = name.strip_suffix("-reduced.json") {
+                out.insert(id.to_string(), path);
+            }
+        }
+    }
+    Ok(out)
+}
+
+fn collect_json_files_loose(root: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+    if !root.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(root).with_context(|| format!("reading {}", root.display()))? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_json_files_loose(&path, out)?;
+        } else if path.extension().and_then(|s| s.to_str()) == Some("json") {
+            out.push(path);
+        }
+    }
+    Ok(())
+}
+
+fn find_epoch_from_event_path(path: &Path) -> Option<String> {
+    let mut cur = path.parent();
+    while let Some(p) = cur {
+        if p.file_name().and_then(|s| s.to_str()) == Some("events") {
+            return p
+                .parent()
+                .and_then(|x| x.file_name())
+                .and_then(|s| s.to_str())
+                .map(ToOwned::to_owned);
+        }
+        cur = p.parent();
+    }
+    None
+}
+
+fn specimen_id_for_value(value: &Value) -> Result<String> {
+    let canonical = canonical_json_string(value)?;
+    let mut hasher = Sha256::new();
+    hasher.update(canonical.as_bytes());
+    let digest = hasher.finalize();
+    Ok(hex::encode(digest))
+}
+
+fn canonical_json_string(value: &Value) -> Result<String> {
+    fn canonicalize(v: &Value) -> Value {
+        match v {
+            Value::Object(map) => {
+                let mut ordered = serde_json::Map::new();
+                let mut keys: Vec<&String> = map.keys().collect();
+                keys.sort();
+                for k in keys {
+                    if let Some(child) = map.get(k) {
+                        ordered.insert(k.clone(), canonicalize(child));
+                    }
+                }
+                Value::Object(ordered)
+            }
+            Value::Array(arr) => Value::Array(arr.iter().map(canonicalize).collect()),
+            _ => v.clone(),
+        }
+    }
+    let canonical = canonicalize(value);
+    serde_json::to_string(&canonical).context("serialize canonical json")
+}
+
+fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggestion> {
+    let reason_joined = format!(
+        "{} {} {}",
+        specimen.core_reason.as_deref().unwrap_or(""),
+        specimen.rust_reason.as_deref().unwrap_or(""),
+        specimen.script_trace.as_deref().unwrap_or("")
+    )
+    .to_ascii_lowercase();
+    let muts = specimen
+        .mutations_applied
+        .iter()
+        .map(|m| m.to_ascii_lowercase())
+        .collect::<Vec<_>>();
+
+    let choose = |label: &str, confidence: &str, rationale: &str| LabelSuggestion {
+        specimen_id: specimen.specimen_id.clone(),
+        suggested_label: label.to_string(),
+        confidence: confidence.to_string(),
+        rationale: rationale.to_string(),
+    };
+
+    if reason_joined.contains("checksighook") {
+        return Some(choose(
+            "CHECKSIGHOOK_FORCED_FAIL",
+            "high",
+            "reason/trace contains checksighook marker",
+        ));
+    }
+    if reason_joined.contains("pushdata")
+        && (reason_joined.contains("length") || reason_joined.contains("overrun"))
+    {
+        return Some(choose(
+            "PUSHDATA_LEN_OVERRUN",
+            "high",
+            "pushdata plus length/overrun signal in reason/trace",
+        ));
+    }
+    if specimen.normalized_class == "SCRIPT_FAIL" && reason_joined.contains("stack") {
+        return Some(choose(
+            "STACK_UNDERFLOW_STRUCTURAL",
+            "high",
+            "script fail with stack-related reason",
+        ));
+    }
+    if muts
+        .iter()
+        .any(|m| m.contains("sequence") || m.contains("locktime"))
+    {
+        return Some(choose(
+            "FUZZ_SEQUENCE_MUTATION",
+            "medium",
+            "mutation trace contains sequence/locktime mutation",
+        ));
+    }
+    if reason_joined.contains("standard")
+        || reason_joined.contains("minimal")
+        || reason_joined.contains("cleanstack")
+        || reason_joined.contains("policy")
+    {
+        return Some(choose(
+            "POLICY_MINIMALDATA_ONLY",
+            "low",
+            "reason appears policy/standardness-oriented",
+        ));
+    }
+    None
+}
+
+fn museum_html_template() -> &'static str {
+    r#"<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quirk Museum</title>
+  <style>
+    :root { --bg:#f5f1e8; --ink:#1c1a17; --accent:#aa3d2f; --muted:#6b6257; --card:#fffaf2; }
+    body { margin:0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+    .wrap { display:grid; grid-template-columns: 280px 1fr; min-height:100vh; }
+    .sidebar { padding:20px; border-right:1px solid #d8cfbf; background:linear-gradient(180deg,#f9f5ed,#efe8da); }
+    .main { padding:20px; }
+    h1 { margin:0 0 12px 0; font-size:24px; }
+    .muted { color:var(--muted); }
+    .card { background:var(--card); border:1px solid #dfd4c2; border-radius:10px; padding:12px; margin:12px 0; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { border-bottom:1px solid #e3d7c6; text-align:left; padding:8px 6px; vertical-align:top; }
+    th { background:#f2e9db; position:sticky; top:0; }
+    input, select { width:100%; padding:8px; margin:6px 0; border:1px solid #cdbfa9; border-radius:6px; background:white; }
+    a { color:var(--accent); text-decoration:none; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #d8c9b3; background:#fff; font-size:12px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="sidebar">
+    <h1>Quirk Museum</h1>
+    <div class="muted">Specimen browser</div>
+    <div class="card">
+      <label>Epoch</label><select id="fEpoch"><option value="">All</option></select>
+      <label>Class</label><select id="fClass"><option value="">All</option></select>
+      <label>Reason contains</label><input id="fReason" />
+      <label>Mutation contains</label><input id="fMutation" />
+    </div>
+    <div id="epochSummary"></div>
+  </aside>
+  <main class="main">
+    <div class="card"><span id="counts" class="pill"></span></div>
+    <table>
+      <thead><tr><th>Specimen</th><th>Epoch</th><th>Class</th><th>Label</th><th>Core</th><th>Rust</th><th>Trace</th><th>Mutations</th><th>Links</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </main>
+</div>
+<script>
+const state = { data:null, filtered:[] };
+const el = (id) => document.getElementById(id);
+fetch('data.json').then(r => r.json()).then(data => { state.data = data; init(); apply(); });
+function init(){
+  const epochs = [...new Set(state.data.specimens.map(s => s.epoch))].sort();
+  const classes = [...new Set(state.data.specimens.map(s => s.normalized_class))].sort();
+  for (const e of epochs){ const o=document.createElement('option'); o.value=e; o.textContent=e; el('fEpoch').appendChild(o); }
+  for (const c of classes){ const o=document.createElement('option'); o.value=c; o.textContent=c; el('fClass').appendChild(o); }
+  ['fEpoch','fClass','fReason','fMutation'].forEach(id => el(id).addEventListener('input', apply));
+  renderEpochSummary();
+}
+function apply(){
+  const fEpoch = el('fEpoch').value;
+  const fClass = el('fClass').value;
+  const fReason = el('fReason').value.toLowerCase();
+  const fMutation = el('fMutation').value.toLowerCase();
+  state.filtered = state.data.specimens.filter(s => {
+    if (fEpoch && s.epoch !== fEpoch) return false;
+    if (fClass && s.normalized_class !== fClass) return false;
+    const reasonBlob = `${s.core_reason||''} ${s.rust_reason||''}`.toLowerCase();
+    if (fReason && !reasonBlob.includes(fReason)) return false;
+    const muts = (s.mutations_applied||[]).join(' ').toLowerCase();
+    if (fMutation && !muts.includes(fMutation)) return false;
+    return true;
+  });
+  renderRows();
+  el('counts').textContent = `${state.filtered.length} specimens`;
+}
+function renderRows(){
+  const tbody = el('rows');
+  tbody.innerHTML = '';
+  for (const s of state.filtered){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${s.specimen_id.slice(0,16)}</code><br/><span class="muted">${s.testcase_id}</span></td>
+      <td>${s.epoch}</td>
+      <td>${s.normalized_class}</td>
+      <td>${s.label||''}</td>
+      <td>${s.core_reason||''}</td>
+      <td>${s.rust_reason||''}</td>
+      <td>${s.script_trace||''}</td>
+      <td>${(s.mutations_applied||[]).join(', ')}</td>
+      <td>
+        <a href="${s.event_path}" target="_blank">event</a>
+        ${s.reduced_testcase_path ? ` | <a href="${s.reduced_testcase_path}" target="_blank">reduced</a>` : ''}
+        ${s.testcase_path ? ` | <a href="${s.testcase_path}" target="_blank">testcase</a>` : ''}
+      </td>`;
+    tbody.appendChild(tr);
+  }
+}
+function renderEpochSummary(){
+  const host = el('epochSummary');
+  host.innerHTML = '';
+  for (const e of state.data.epochs){
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `<strong>${e.epoch}</strong><div class="muted">${e.total_events} events</div>`;
+    host.appendChild(div);
+  }
+}
+</script>
+</body>
+</html>"#
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{prepare_out_dir, summarize_dir_offline, Cli, Command};
+    use super::{Cli, Command, prepare_out_dir, specimen_id_for_value, summarize_dir_offline};
     use clap::Parser;
     use jb_model::{DivergenceEvent, ExecResult};
+    use serde_json::json;
     use std::path::PathBuf;
 
     #[test]
@@ -790,6 +1404,93 @@ mod tests {
     }
 
     #[test]
+    fn parses_replay_era_manifest_flags() {
+        let cli = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "replay-era",
+            "--manifest",
+            "fixtures/manifests/era_2009_2013_poc.json",
+            "--out-dir",
+            "artifacts/era-2009-2013",
+            "--limit-per-epoch",
+            "123",
+            "--rpc-fetch",
+            "--force",
+        ])
+        .expect("parse");
+
+        match cli.cmd {
+            Command::ReplayEra {
+                manifest,
+                out_dir,
+                limit_per_epoch,
+                rpc_fetch,
+                force,
+            } => {
+                assert!(manifest.ends_with("era_2009_2013_poc.json"));
+                assert!(out_dir.ends_with("era-2009-2013"));
+                assert_eq!(limit_per_epoch, 123);
+                assert!(rpc_fetch);
+                assert!(force);
+            }
+            _ => panic!("expected replay-era"),
+        }
+    }
+
+    #[test]
+    fn parses_museum_and_label_commands() {
+        let museum = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "museum",
+            "--in",
+            "artifacts/era-2009-2013",
+            "--out",
+            "artifacts/museum",
+        ])
+        .expect("parse museum");
+        match museum.cmd {
+            Command::Museum { r#in, out } => {
+                assert!(r#in.ends_with("era-2009-2013"));
+                assert!(out.ends_with("museum"));
+            }
+            _ => panic!("expected museum"),
+        }
+
+        let apply = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "apply-label",
+            "--specimen",
+            "abc",
+            "--label",
+            "STACK_UNDERFLOW_STRUCTURAL",
+            "--labels",
+            "museum/labels.json",
+        ])
+        .expect("parse apply-label");
+        match apply.cmd {
+            Command::ApplyLabel {
+                specimen,
+                label,
+                labels,
+            } => {
+                assert_eq!(specimen, "abc");
+                assert_eq!(label, "STACK_UNDERFLOW_STRUCTURAL");
+                assert!(labels.ends_with("labels.json"));
+            }
+            _ => panic!("expected apply-label"),
+        }
+    }
+
+    #[test]
+    fn specimen_id_is_stable_for_key_order() {
+        let a = json!({"b":2,"a":1});
+        let b = json!({"a":1,"b":2});
+        let ida = specimen_id_for_value(&a).expect("id a");
+        let idb = specimen_id_for_value(&b).expect("id b");
+        assert_eq!(ida, idb);
+    }
+
+    #[test]
     fn out_dir_overwrite_behavior() {
         let temp = std::env::temp_dir().join(format!("jb-demo-outdir-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&temp);
@@ -813,7 +1514,11 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&events_dir).expect("create events");
 
-        let base_event = |id: &str, class: &str, core_reason: Option<&str>, rust_reason: Option<&str>, muts: Vec<&str>| {
+        let base_event = |id: &str,
+                          class: &str,
+                          core_reason: Option<&str>,
+                          rust_reason: Option<&str>,
+                          muts: Vec<&str>| {
             DivergenceEvent {
                 testcase_id: id.to_string(),
                 core: ExecResult::err(core_reason.unwrap_or("")),

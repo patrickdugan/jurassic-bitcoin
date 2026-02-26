@@ -24,6 +24,10 @@ pub struct ValidationContext {
     pub height: u32,
     #[serde(default)]
     pub median_time_past: Option<u64>,
+    #[serde(default)]
+    pub block_time: Option<u64>,
+    #[serde(default)]
+    pub epoch: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

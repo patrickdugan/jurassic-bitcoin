@@ -463,6 +463,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "jb-fixtures"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64",
+ "serde",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "jb-ingest"
 version = "0.1.0"
 dependencies = [
@@ -527,10 +538,12 @@ dependencies = [
  "base64",
  "chrono",
  "clap",
+ "hex",
  "jb-consensus-profile",
  "jb-core-exec",
  "jb-corpus",
  "jb-diff",
+ "jb-fixtures",
  "jb-model",
  "jb-mutator",
  "jb-reducer",
@@ -538,6 +551,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "sha2",
  "ureq",
 ]
 

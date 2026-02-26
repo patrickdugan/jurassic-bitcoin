@@ -1,0 +1,94 @@
+{
+  "name": "era_2009_2013_poc",
+  "windows": [
+    {
+      "name": "pre-bip16-h173804",
+      "start_height": 173802,
+      "end_height": 173804,
+      "representative_heights": [173804],
+      "epoch": "pre-bip16"
+    },
+    {
+      "name": "post-bip16-pre-bip34-h173805",
+      "start_height": 173805,
+      "end_height": 173808,
+      "representative_heights": [173805, 173806],
+      "epoch": "post-bip16-pre-bip34"
+    },
+    {
+      "name": "post-bip34-h227931",
+      "start_height": 227930,
+      "end_height": 227933,
+      "representative_heights": [227930, 227931, 227932],
+      "epoch": "post-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "legacy-no-witness",
+      "description": "Legacy tx blob forces shadow-side witness-stack failure for script classification",
+      "window": "pre-bip16-h173804",
+      "tx_hex_blob": "../blobs/legacy-no-witness.json",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "quirk_target": "legacy-vs-witness-slice",
+        "checksighook": "true"
+      }
+    },
+    {
+      "id": "segwit-checksig-false",
+      "description": "Segwit-shaped tx with checksighook=false triggers controlled OP_CHECKSIG failure",
+      "window": "pre-bip16-h173804",
+      "tx_hex_blob": "../blobs/segwit-checksig-hook.json",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "quirk_target": "checksig-hook",
+        "checksighook": "false"
+      }
+    },
+    {
+      "id": "legacy-no-witness",
+      "description": "Legacy tx blob forces shadow-side witness-stack failure for script classification",
+      "window": "post-bip16-pre-bip34-h173805",
+      "tx_hex_blob": "../blobs/legacy-no-witness.json",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "quirk_target": "legacy-vs-witness-slice",
+        "checksighook": "true"
+      }
+    },
+    {
+      "id": "segwit-checksig-false",
+      "description": "Segwit-shaped tx with checksighook=false triggers controlled OP_CHECKSIG failure",
+      "window": "post-bip16-pre-bip34-h173805",
+      "tx_hex_blob": "../blobs/segwit-checksig-hook.json",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "quirk_target": "checksig-hook",
+        "checksighook": "false"
+      }
+    },
+    {
+      "id": "legacy-no-witness",
+      "description": "Legacy tx blob forces shadow-side witness-stack failure for script classification",
+      "window": "post-bip34-h227931",
+      "tx_hex_blob": "../blobs/legacy-no-witness.json",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "quirk_target": "legacy-vs-witness-slice",
+        "checksighook": "true"
+      }
+    },
+    {
+      "id": "segwit-checksig-false",
+      "description": "Segwit-shaped tx with checksighook=false triggers controlled OP_CHECKSIG failure",
+      "window": "post-bip34-h227931",
+      "tx_hex_blob": "../blobs/segwit-checksig-hook.json",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "quirk_target": "checksig-hook",
+        "checksighook": "false"
+      }
+    }
+  ]
+}
