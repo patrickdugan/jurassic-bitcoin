@@ -2,6 +2,13 @@
 
 This app visualizes `artifacts/museum/data.json` as an interactive timeline and quirk bubble field.
 
+## Status
+
+- Optional local UI for richer exploration.
+- Canonical museum output remains the CLI-generated static bundle:
+  - `cargo run -p jurassic-bitcoin-cli -- museum --in <artifacts> --out <museum-dir>`
+  - outputs `<museum-dir>/data.json` and `<museum-dir>/index.html`
+
 ## Setup
 
 ```powershell
