@@ -7,7 +7,10 @@ use jb_consensus_profile::{
 use jb_core_exec::{doctor_report, mint_seed_testcase, run_testcase_core};
 use jb_corpus::{load_corpus, write_divergence_event};
 use jb_diff::diff_results;
-use jb_fixtures::{FixtureOptions, default_cache_dir, load_manifest, materialize_fixtures};
+use jb_fixtures::{
+    FetchReport, FixtureOptions, default_cache_dir, fetch_txid_fixtures, load_manifest,
+    materialize_fixtures,
+};
 use jb_model::{CoreTemplate, DivergenceEvent, TestCase, ValidationContext};
 use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
@@ -76,6 +79,16 @@ enum Command {
         dir: PathBuf,
         #[arg(long, default_value_t = false)]
         json: bool,
+        #[arg(long, default_value_t = false)]
+        compare: bool,
+    },
+    FetchFixtures {
+        #[arg(long, default_value = "fixtures/manifests/era_2009_2013_poc.json")]
+        manifest: PathBuf,
+        #[arg(long, default_value = "fixtures/cache/index.json")]
+        out_index: PathBuf,
+        #[arg(long, default_value_t = false)]
+        strict: bool,
     },
     Museum {
         #[arg(long)]
@@ -147,7 +160,12 @@ fn main() -> Result<()> {
             force,
             corpus,
         } => demo_run(&out_dir, iterations, seed, force, &corpus),
-        Command::Summarize { dir, json } => summarize(&dir, json),
+        Command::Summarize { dir, json, compare } => summarize(&dir, json, compare),
+        Command::FetchFixtures {
+            manifest,
+            out_index,
+            strict,
+        } => fetch_fixtures(&manifest, &out_index, strict),
         Command::Museum { r#in, out } => museum(&r#in, &out),
         Command::SuggestLabels { r#in, out } => suggest_labels(&r#in, &out),
         Command::ApplyLabel {
@@ -577,6 +595,38 @@ fn replay_era(
     Ok(())
 }
 
+fn fetch_fixtures(manifest_path: &Path, out_index: &Path, strict: bool) -> Result<()> {
+    let manifest = load_manifest(manifest_path)?;
+    let cache_dir = default_cache_dir();
+    let report = fetch_txid_fixtures(&manifest, &cache_dir)?;
+
+    if let Some(parent) = out_index.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(out_index, serde_json::to_vec_pretty(&report)?)
+        .with_context(|| format!("writing {}", out_index.display()))?;
+
+    print_fetch_report(&report, out_index);
+    if strict && report.failed > 0 {
+        return Err(anyhow!(
+            "strict mode: {} txid fetches failed (see {})",
+            report.failed,
+            out_index.display()
+        ));
+    }
+    Ok(())
+}
+
+fn print_fetch_report(report: &FetchReport, out_index: &Path) {
+    println!("fetch_manifest={}", report.manifest_name);
+    println!("cache_dir={}", report.cache_dir);
+    println!(
+        "txids_total={} fetched={} cached={} failed={}",
+        report.total_txids, report.fetched, report.cached, report.failed
+    );
+    println!("fetch_index={}", out_index.display());
+}
+
 fn extract_era(
     start_height: u32,
     end_height: u32,
@@ -704,7 +754,19 @@ impl SimpleRpc {
     }
 }
 
-fn summarize(dir: &Path, write_json: bool) -> Result<()> {
+fn summarize(dir: &Path, write_json: bool, compare: bool) -> Result<()> {
+    if compare {
+        let out = summarize_compare_offline(dir)?;
+        print_compare_table(dir, &out);
+        if write_json {
+            let path = dir.join("compare.json");
+            fs::write(&path, serde_json::to_vec_pretty(&out)?)
+                .with_context(|| format!("writing {}", path.display()))?;
+            println!("compare_json={}", path.display());
+        }
+        return Ok(());
+    }
+
     let summary = summarize_dir_offline(dir)?;
     print_summary_table(dir, &summary);
     if write_json {
@@ -853,6 +915,236 @@ fn print_summary_table(dir: &Path, s: &SummaryOutput) {
     println!("\nMutations");
     for (k, v) in &s.mutation_histogram {
         println!("{:5} {}", v, k);
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct EpochCompareRow {
+    epoch: String,
+    counts_by_normalized_class: BTreeMap<String, usize>,
+    top_core_reasons: Vec<ReasonCount>,
+    top_mutations: Vec<ReasonCount>,
+    reasons_only_in_epoch: Vec<String>,
+    mutations_only_in_epoch: Vec<String>,
+    unique_specimen_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct CompareOutput {
+    epochs: Vec<EpochCompareRow>,
+    class_table: BTreeMap<String, BTreeMap<String, usize>>,
+}
+
+fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
+    let epoch_dirs = collect_epoch_dirs(root)?;
+    if epoch_dirs.is_empty() {
+        return Err(anyhow!(
+            "no epoch dirs with summary.json found under {}",
+            root.display()
+        ));
+    }
+
+    let mut class_table: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+    let mut reason_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut mutation_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut specimen_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut rows = Vec::new();
+
+    for (epoch, epoch_dir) in &epoch_dirs {
+        let summary_path = epoch_dir.join("summary.json");
+        let summary_bytes = fs::read(&summary_path)
+            .with_context(|| format!("reading {}", summary_path.display()))?;
+        let summary: SummaryOutput = serde_json::from_slice(&summary_bytes)
+            .with_context(|| format!("parsing {}", summary_path.display()))?;
+
+        for (class, count) in &summary.counts_by_normalized_class {
+            class_table
+                .entry(class.clone())
+                .or_default()
+                .insert(epoch.clone(), *count);
+        }
+
+        let events_dir = epoch_dir.join("events");
+        let mut files = Vec::new();
+        collect_json_files(&events_dir, &mut files)?;
+        files.sort();
+
+        let mut reasons = BTreeSet::new();
+        let mut mutations = BTreeSet::new();
+        let mut specimen_ids = BTreeSet::new();
+        for event_path in files {
+            let bytes = match fs::read(&event_path) {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+            let event: DivergenceEvent = match serde_json::from_slice(&bytes) {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+            if let Some(reason) = event.core_reason.clone().filter(|r| r != "<none>") {
+                reasons.insert(reason);
+            }
+            for m in &event.mutations_applied {
+                mutations.insert(m.clone());
+            }
+            let testcase_path = event_path
+                .parent()
+                .map(|p| p.join(format!("{}-testcase.json", event.testcase_id)));
+            let specimen_source = testcase_path
+                .as_ref()
+                .and_then(|p| fs::read(p).ok())
+                .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
+                .unwrap_or_else(|| serde_json::to_value(&event).unwrap_or(Value::Null));
+            if let Ok(id) = specimen_id_for_value(&specimen_source) {
+                specimen_ids.insert(id);
+            }
+        }
+        reason_sets.insert(epoch.clone(), reasons);
+        mutation_sets.insert(epoch.clone(), mutations);
+        specimen_sets.insert(epoch.clone(), specimen_ids);
+
+        let top_mutations = top_reasons(summary.mutation_histogram, 5);
+        rows.push(EpochCompareRow {
+            epoch: epoch.clone(),
+            counts_by_normalized_class: summary.counts_by_normalized_class,
+            top_core_reasons: top_reasons(summary.counts_by_core_reason, 5),
+            top_mutations,
+            reasons_only_in_epoch: Vec::new(),
+            mutations_only_in_epoch: Vec::new(),
+            unique_specimen_count: 0,
+        });
+    }
+
+    for row in &mut rows {
+        let own_reasons = reason_sets.get(&row.epoch).cloned().unwrap_or_default();
+        let mut other_reasons = BTreeSet::new();
+        for (epoch, set) in &reason_sets {
+            if *epoch != row.epoch {
+                other_reasons.extend(set.iter().cloned());
+            }
+        }
+        let own_mutations = mutation_sets.get(&row.epoch).cloned().unwrap_or_default();
+        let mut other_mutations = BTreeSet::new();
+        for (epoch, set) in &mutation_sets {
+            if *epoch != row.epoch {
+                other_mutations.extend(set.iter().cloned());
+            }
+        }
+        let unique_specimens = specimen_sets
+            .get(&row.epoch)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|id| {
+                !specimen_sets
+                    .iter()
+                    .filter(|(epoch, _)| **epoch != row.epoch)
+                    .any(|(_, set)| set.contains(id))
+            })
+            .collect::<Vec<_>>();
+
+        row.reasons_only_in_epoch = own_reasons
+            .difference(&other_reasons)
+            .cloned()
+            .collect::<Vec<_>>();
+        row.reasons_only_in_epoch.sort();
+        row.mutations_only_in_epoch = own_mutations
+            .difference(&other_mutations)
+            .cloned()
+            .collect::<Vec<_>>();
+        row.mutations_only_in_epoch.sort();
+        row.unique_specimen_count = unique_specimens.len();
+    }
+
+    rows.sort_by(|a, b| a.epoch.cmp(&b.epoch));
+
+    Ok(CompareOutput {
+        epochs: rows,
+        class_table,
+    })
+}
+
+fn collect_epoch_dirs(root: &Path) -> Result<Vec<(String, PathBuf)>> {
+    let mut out = Vec::new();
+    if !root.exists() {
+        return Ok(out);
+    }
+    for entry in fs::read_dir(root).with_context(|| format!("reading {}", root.display()))? {
+        let entry = entry?;
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let summary_path = path.join("summary.json");
+        if summary_path.exists() {
+            let name = path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown")
+                .to_string();
+            out.push((name, path));
+        }
+    }
+    out.sort_by(|a, b| a.0.cmp(&b.0));
+    Ok(out)
+}
+
+fn print_compare_table(root: &Path, c: &CompareOutput) {
+    println!("Compare Summary: {}", root.display());
+    let epochs = c.epochs.iter().map(|e| e.epoch.clone()).collect::<Vec<_>>();
+    println!("epochs={}", epochs.join(", "));
+
+    println!("\nClass Counts");
+    print!("{:24}", "normalized_class");
+    for e in &epochs {
+        print!(" {:>12}", e);
+    }
+    println!();
+    for (class, by_epoch) in &c.class_table {
+        print!("{:24}", class);
+        for e in &epochs {
+            let n = by_epoch.get(e).copied().unwrap_or(0);
+            print!(" {:>12}", n);
+        }
+        println!();
+    }
+
+    println!("\nTop Core Reasons Per Epoch");
+    for row in &c.epochs {
+        println!("[{}]", row.epoch);
+        for r in &row.top_core_reasons {
+            println!("  {:5} {}", r.count, r.reason);
+        }
+    }
+
+    println!("\nTop Mutations Per Epoch");
+    for row in &c.epochs {
+        println!("[{}]", row.epoch);
+        for r in &row.top_mutations {
+            println!("  {:5} {}", r.count, r.reason);
+        }
+    }
+
+    println!("\nSet Differences");
+    for row in &c.epochs {
+        println!("[{}]", row.epoch);
+        println!(
+            "  reasons_only_in_epoch={}",
+            if row.reasons_only_in_epoch.is_empty() {
+                "<none>".to_string()
+            } else {
+                row.reasons_only_in_epoch.join(", ")
+            }
+        );
+        println!(
+            "  mutations_only_in_epoch={}",
+            if row.mutations_only_in_epoch.is_empty() {
+                "<none>".to_string()
+            } else {
+                row.mutations_only_in_epoch.join(", ")
+            }
+        );
+        println!("  unique_specimen_count={}", row.unique_specimen_count);
     }
 }
 
@@ -1366,10 +1658,14 @@ function renderEpochSummary(){
 
 #[cfg(test)]
 mod tests {
-    use super::{Cli, Command, prepare_out_dir, specimen_id_for_value, summarize_dir_offline};
+    use super::{
+        Cli, Command, prepare_out_dir, specimen_id_for_value, summarize_compare_offline,
+        summarize_dir_offline,
+    };
     use clap::Parser;
     use jb_model::{DivergenceEvent, ExecResult};
     use serde_json::json;
+    use std::collections::BTreeMap;
     use std::path::PathBuf;
 
     #[test]
@@ -1434,6 +1730,49 @@ mod tests {
                 assert!(force);
             }
             _ => panic!("expected replay-era"),
+        }
+    }
+
+    #[test]
+    fn parses_fetch_and_summarize_compare_flags() {
+        let fetch = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "fetch-fixtures",
+            "--manifest",
+            "fixtures/manifests/era_2009_2013_poc.json",
+            "--out-index",
+            "fixtures/cache/index.json",
+            "--strict",
+        ])
+        .expect("parse fetch-fixtures");
+        match fetch.cmd {
+            Command::FetchFixtures {
+                manifest,
+                out_index,
+                strict,
+            } => {
+                assert!(manifest.ends_with("era_2009_2013_poc.json"));
+                assert!(out_index.ends_with("index.json"));
+                assert!(strict);
+            }
+            _ => panic!("expected fetch-fixtures"),
+        }
+
+        let summarize = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "summarize",
+            "--dir",
+            "artifacts/era-2009-2013",
+            "--compare",
+            "--json",
+        ])
+        .expect("parse summarize compare");
+        match summarize.cmd {
+            Command::Summarize { compare, json, .. } => {
+                assert!(compare);
+                assert!(json);
+            }
+            _ => panic!("expected summarize"),
         }
     }
 
@@ -1575,6 +1914,110 @@ mod tests {
             2
         );
         assert!(s.interestingness_score >= 3);
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn summarize_compare_with_epoch_dirs() {
+        let root = std::env::temp_dir().join(format!("jb-compare-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let e1 = root.join("epoch-a");
+        let e2 = root.join("epoch-b");
+        std::fs::create_dir_all(e1.join("events")).expect("epoch a");
+        std::fs::create_dir_all(e2.join("events")).expect("epoch b");
+
+        let event = |id: &str, class: &str, reason: &str, muts: Vec<&str>| DivergenceEvent {
+            testcase_id: id.to_string(),
+            core: ExecResult::err(reason),
+            rust: ExecResult::err("r"),
+            core_allowed: false,
+            rust_ok: false,
+            core_reason: Some(reason.to_string()),
+            rust_reason: Some("r".to_string()),
+            normalized_class: class.to_string(),
+            mutations_applied: muts.into_iter().map(|m| m.to_string()).collect(),
+            diff_summary: "d".to_string(),
+            timestamp: chrono::Utc::now(),
+            artifacts: vec![],
+        };
+
+        let s1 = super::SummaryOutput {
+            total_events: 1,
+            scanned_files: 1,
+            parsed_events: 1,
+            malformed_files: 0,
+            counts_by_normalized_class: BTreeMap::from([(String::from("SCRIPT_FAIL"), 1usize)]),
+            counts_by_core_reason: BTreeMap::from([(String::from("reason-a"), 1usize)]),
+            top_core_reasons: vec![super::ReasonCount {
+                reason: "reason-a".to_string(),
+                count: 1,
+            }],
+            counts_by_rust_reason: BTreeMap::new(),
+            mutation_histogram: BTreeMap::from([(String::from("mut-a"), 1usize)]),
+            unique_core_reason_count: 1,
+            unique_mutation_count: 1,
+            interestingness_score: 1,
+        };
+        let s2 = super::SummaryOutput {
+            total_events: 1,
+            scanned_files: 1,
+            parsed_events: 1,
+            malformed_files: 0,
+            counts_by_normalized_class: BTreeMap::from([(String::from("PARSE_FAIL"), 1usize)]),
+            counts_by_core_reason: BTreeMap::from([(String::from("reason-b"), 1usize)]),
+            top_core_reasons: vec![super::ReasonCount {
+                reason: "reason-b".to_string(),
+                count: 1,
+            }],
+            counts_by_rust_reason: BTreeMap::new(),
+            mutation_histogram: BTreeMap::from([(String::from("mut-b"), 1usize)]),
+            unique_core_reason_count: 1,
+            unique_mutation_count: 1,
+            interestingness_score: 1,
+        };
+
+        std::fs::write(
+            e1.join("summary.json"),
+            serde_json::to_vec_pretty(&s1).expect("serialize s1"),
+        )
+        .expect("write s1");
+        std::fs::write(
+            e2.join("summary.json"),
+            serde_json::to_vec_pretty(&s2).expect("serialize s2"),
+        )
+        .expect("write s2");
+
+        let ev1 = event("a", "SCRIPT_FAIL", "reason-a", vec!["mut-a"]);
+        let ev2 = event("b", "PARSE_FAIL", "reason-b", vec!["mut-b"]);
+        std::fs::write(
+            e1.join("events").join("a-event.json"),
+            serde_json::to_vec_pretty(&ev1).expect("serialize e1"),
+        )
+        .expect("write e1");
+        std::fs::write(
+            e1.join("events").join("a-testcase.json"),
+            serde_json::to_vec_pretty(&json!({"id":"a"})).expect("serialize tc1"),
+        )
+        .expect("write tc1");
+        std::fs::write(
+            e2.join("events").join("b-event.json"),
+            serde_json::to_vec_pretty(&ev2).expect("serialize e2"),
+        )
+        .expect("write e2");
+        std::fs::write(
+            e2.join("events").join("b-testcase.json"),
+            serde_json::to_vec_pretty(&json!({"id":"b"})).expect("serialize tc2"),
+        )
+        .expect("write tc2");
+
+        let cmp = summarize_compare_offline(&root).expect("compare");
+        assert_eq!(cmp.epochs.len(), 2);
+        assert!(
+            cmp.epochs.iter().any(|e| e.epoch == "epoch-a"
+                && e.reasons_only_in_epoch.contains(&"reason-a".to_string()))
+        );
+        assert!(cmp.class_table.contains_key("SCRIPT_FAIL"));
 
         let _ = std::fs::remove_dir_all(&root);
     }

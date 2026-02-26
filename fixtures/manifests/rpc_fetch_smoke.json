@@ -1,0 +1,58 @@
+{
+  "name": "era_2009_2013_rpc_smoke",
+  "windows": [
+    {
+      "name": "pre-bip16-smoke",
+      "start_height": 173804,
+      "end_height": 173804,
+      "representative_heights": [173804],
+      "epoch": "pre-bip16"
+    },
+    {
+      "name": "post-bip16-smoke",
+      "start_height": 173805,
+      "end_height": 173805,
+      "representative_heights": [173805],
+      "epoch": "post-bip16-pre-bip34"
+    },
+    {
+      "name": "post-bip34-smoke",
+      "start_height": 227931,
+      "end_height": 227931,
+      "representative_heights": [227931],
+      "epoch": "post-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "rpc-smoke-genesis",
+      "description": "Demo-only txid for rpc fetch smoke flow",
+      "window": "pre-bip16-smoke",
+      "txid": "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "demo": "true"
+      }
+    },
+    {
+      "id": "rpc-smoke-block1",
+      "description": "Demo-only txid for rpc fetch smoke flow",
+      "window": "post-bip16-smoke",
+      "txid": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "demo": "true"
+      }
+    },
+    {
+      "id": "rpc-smoke-early-spend",
+      "description": "Demo-only txid for rpc fetch smoke flow",
+      "window": "post-bip34-smoke",
+      "txid": "fff2525b8931402dd09222c50775608f75787bd2b87e56995a7bdd30b1f8f5f1",
+      "spend_type": "p2wpkh",
+      "metadata": {
+        "demo": "true"
+      }
+    }
+  ]
+}

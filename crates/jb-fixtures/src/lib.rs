@@ -59,6 +59,27 @@ pub struct FixtureOptions {
     pub limit_per_epoch: usize,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FetchItemReport {
+    pub txid: String,
+    pub status: String,
+    #[serde(default)]
+    pub cache_path: Option<String>,
+    #[serde(default)]
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FetchReport {
+    pub manifest_name: String,
+    pub cache_dir: String,
+    pub total_txids: usize,
+    pub fetched: usize,
+    pub cached: usize,
+    pub failed: usize,
+    pub items: Vec<FetchItemReport>,
+}
+
 impl Default for FixtureOptions {
     fn default() -> Self {
         Self {
@@ -165,6 +186,82 @@ pub fn materialize_fixtures(
     Ok(out)
 }
 
+pub fn fetch_txid_fixtures(manifest: &FixtureManifest, cache_dir: &Path) -> Result<FetchReport> {
+    fs::create_dir_all(cache_dir).with_context(|| format!("creating {}", cache_dir.display()))?;
+    let mut txids = manifest
+        .fixtures
+        .iter()
+        .filter_map(|f| f.txid.clone())
+        .collect::<Vec<_>>();
+    txids.sort();
+    txids.dedup();
+
+    if txids.is_empty() {
+        return Ok(FetchReport {
+            manifest_name: manifest.name.clone(),
+            cache_dir: cache_dir.display().to_string(),
+            total_txids: 0,
+            fetched: 0,
+            cached: 0,
+            failed: 0,
+            items: Vec::new(),
+        });
+    }
+
+    let rpc = SimpleRpc::from_env()?;
+
+    let mut items = Vec::new();
+    let mut fetched = 0usize;
+    let mut cached = 0usize;
+    let mut failed = 0usize;
+
+    for txid in txids {
+        let cache_path = cache_file_path(cache_dir, &txid);
+        if read_cached_tx_hex(cache_dir, &txid)?.is_some() {
+            cached += 1;
+            items.push(FetchItemReport {
+                txid,
+                status: "cached".to_string(),
+                cache_path: Some(cache_path.display().to_string()),
+                error: None,
+            });
+            continue;
+        }
+
+        match fetch_tx_hex_by_txid(&rpc, &txid) {
+            Ok(tx_hex) => {
+                write_cached_tx_hex(cache_dir, &txid, &tx_hex)?;
+                fetched += 1;
+                items.push(FetchItemReport {
+                    txid,
+                    status: "fetched".to_string(),
+                    cache_path: Some(cache_path.display().to_string()),
+                    error: None,
+                });
+            }
+            Err(e) => {
+                failed += 1;
+                items.push(FetchItemReport {
+                    txid,
+                    status: "failed".to_string(),
+                    cache_path: None,
+                    error: Some(format!("{e:#}")),
+                });
+            }
+        }
+    }
+
+    Ok(FetchReport {
+        manifest_name: manifest.name.clone(),
+        cache_dir: cache_dir.display().to_string(),
+        total_txids: items.len(),
+        fetched,
+        cached,
+        failed,
+        items,
+    })
+}
+
 fn resolve_tx_hex(
     fixture: &ManifestFixture,
     manifest_dir: &Path,
@@ -223,7 +320,7 @@ struct CacheFile {
 }
 
 fn read_cached_tx_hex(cache_dir: &Path, txid: &str) -> Result<Option<String>> {
-    let path = cache_dir.join(format!("{}.json", txid));
+    let path = cache_file_path(cache_dir, txid);
     if !path.exists() {
         return Ok(None);
     }
@@ -235,7 +332,7 @@ fn read_cached_tx_hex(cache_dir: &Path, txid: &str) -> Result<Option<String>> {
 
 fn write_cached_tx_hex(cache_dir: &Path, txid: &str, tx_hex: &str) -> Result<()> {
     fs::create_dir_all(cache_dir).with_context(|| format!("creating {}", cache_dir.display()))?;
-    let path = cache_dir.join(format!("{}.json", txid));
+    let path = cache_file_path(cache_dir, txid);
     let payload = CacheFile {
         txid: txid.to_string(),
         tx_hex: tx_hex.to_string(),
@@ -243,6 +340,10 @@ fn write_cached_tx_hex(cache_dir: &Path, txid: &str, tx_hex: &str) -> Result<()>
     fs::write(&path, serde_json::to_vec_pretty(&payload)?)
         .with_context(|| format!("writing {}", path.display()))?;
     Ok(())
+}
+
+fn cache_file_path(cache_dir: &Path, txid: &str) -> PathBuf {
+    cache_dir.join(format!("{}.json", txid))
 }
 
 fn fetch_tx_hex_by_txid(rpc: &SimpleRpc, txid: &str) -> Result<String> {

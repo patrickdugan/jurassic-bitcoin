@@ -193,6 +193,14 @@ cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/demo --json
 
 This prints class/reason/mutation aggregates and writes `artifacts/demo/summary.json`.
 
+Cross-epoch stratigraphy compare:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/era-2009-2013 --compare --json
+```
+
+This writes `artifacts/era-2009-2013/compare.json`.
+
 Generate a static "Quirk Museum" dashboard:
 
 ```powershell
@@ -232,6 +240,18 @@ Optional RPC-assisted fixture fetch for txid-based manifests:
 
 ```powershell
 cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/era_2009_2013_poc.json --out-dir artifacts/era-2009-2013 --limit-per-epoch 200 --rpc-fetch --force
+```
+
+Standalone fixture materialization (no replay):
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- fetch-fixtures --manifest fixtures/manifests/era_2009_2013_poc.json --out-index fixtures/cache/index.json
+```
+
+RPC smoke check (demo txids):
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- fetch-fixtures --manifest fixtures/manifests/rpc_fetch_smoke.json --out-index fixtures/cache/rpc-smoke-index.json --strict
 ```
 
 Fetched tx hex is cached under `JB_FIXTURE_CACHE` (or default `fixtures/cache`, gitignored).
