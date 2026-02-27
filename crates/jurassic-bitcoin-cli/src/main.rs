@@ -134,6 +134,10 @@ enum Command {
         #[arg(long, default_value_t = false)]
         force: bool,
     },
+    MintP2shSeam {
+        #[arg(long, default_value = "fixtures/blobs/p2sh-core-seam.json")]
+        out: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -193,6 +197,7 @@ fn main() -> Result<()> {
             &out_corpus,
             force,
         ),
+        Command::MintP2shSeam { out } => mint_p2sh_seam(&out),
     }
 }
 
@@ -272,6 +277,155 @@ fn mint_seed(out_path: &Path) -> Result<()> {
     fs::write(out_path, serde_json::to_vec_pretty(&tc)?)
         .with_context(|| format!("writing {}", out_path.display()))?;
     println!("minted seed -> {}", out_path.display());
+    Ok(())
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct SeamAccept {
+    allowed: bool,
+    reject_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct P2shSeamFixture {
+    name: String,
+    network: String,
+    redeem_script_hex: String,
+    context_heights: Vec<u32>,
+    funding_outpoint: String,
+    missing_redeem_tx_hex: String,
+    with_redeem_tx_hex: String,
+    missing_redeem_core: SeamAccept,
+    with_redeem_core: SeamAccept,
+}
+
+fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
+    let report = doctor_report().map_err(|e| {
+        anyhow!(
+            "doctor failed: {e:#}\nSet BITCOIND_RPC_URL/USER/PASS and start regtest bitcoind first."
+        )
+    })?;
+    if report.chain != "regtest" {
+        return Err(anyhow!(
+            "mint-p2sh-seam requires regtest, got {}",
+            report.chain
+        ));
+    }
+
+    let _ = mint_seed_testcase("p2sh-seam-bootstrap".to_string())?;
+    let rpc = SimpleRpc::from_env()?;
+    ensure_wallet_loaded_simple(&rpc, "jb_harness")?;
+    let wallet = rpc.for_wallet("jb_harness");
+
+    let redeem_script_hex = "69".to_string(); // OP_VERIFY
+    let decoded = rpc.call("decodescript", json!([redeem_script_hex]))?;
+    let p2sh_addr = decoded["p2sh"]
+        .as_str()
+        .ok_or_else(|| anyhow!("decodescript missing p2sh address"))?
+        .to_string();
+
+    let funding_txid = wallet.call("sendtoaddress", json!([p2sh_addr, 1.0]))?;
+    let funding_txid = funding_txid
+        .as_str()
+        .ok_or_else(|| anyhow!("sendtoaddress missing txid"))?
+        .to_string();
+
+    let mining_addr = wallet.call("getnewaddress", json!(["jb_seam_mining", "bech32"]))?;
+    let mining_addr = mining_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing mining addr"))?
+        .to_string();
+    wallet.call("generatetoaddress", json!([1, mining_addr]))?;
+
+    let tx = wallet.call("gettransaction", json!([funding_txid, true, true]))?;
+    let funding_hex = tx["hex"]
+        .as_str()
+        .ok_or_else(|| anyhow!("gettransaction missing hex"))?
+        .to_string();
+    let decoded_funding = rpc.call("decoderawtransaction", json!([funding_hex]))?;
+    let vouts = decoded_funding["vout"]
+        .as_array()
+        .ok_or_else(|| anyhow!("decoderawtransaction missing vout"))?;
+    let mut funding_vout = None::<u32>;
+    let mut funding_sats = None::<u64>;
+    for v in vouts {
+        let addrs = v["scriptPubKey"]["address"]
+            .as_str()
+            .map(|s| vec![s.to_string()])
+            .or_else(|| {
+                v["scriptPubKey"]["addresses"].as_array().map(|arr| {
+                    arr.iter()
+                        .filter_map(|x| x.as_str().map(ToOwned::to_owned))
+                        .collect()
+                })
+            })
+            .unwrap_or_default();
+        if addrs.iter().any(|a| a == &p2sh_addr) {
+            funding_vout = v["n"].as_u64().map(|n| n as u32);
+            funding_sats = v["value"]
+                .as_f64()
+                .map(|btc| (btc * 100_000_000.0).round() as u64);
+            break;
+        }
+    }
+    let funding_vout =
+        funding_vout.ok_or_else(|| anyhow!("could not locate p2sh funding output"))?;
+    let funding_sats = funding_sats.ok_or_else(|| anyhow!("missing funding output value"))?;
+    if funding_sats <= 1_000 {
+        return Err(anyhow!("funding output too small"));
+    }
+
+    let sink_addr = wallet.call("getnewaddress", json!(["jb_seam_sink", "bech32"]))?;
+    let sink_addr = sink_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing sink addr"))?
+        .to_string();
+    let sink_info = wallet.call("getaddressinfo", json!([sink_addr]))?;
+    let sink_spk = sink_info["scriptPubKey"]
+        .as_str()
+        .ok_or_else(|| anyhow!("getaddressinfo missing scriptPubKey"))?;
+    let sink_spk = hex::decode(sink_spk).context("decode sink scriptPubKey hex")?;
+
+    let spend_sats = funding_sats - 1_000;
+    let missing_redeem_sig = vec![0x01, 0x01];
+    let with_redeem_sig = vec![0x01, 0x01, 0x01, 0x69];
+
+    let missing_redeem_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &missing_redeem_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+    let with_redeem_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &with_redeem_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+
+    let missing_redeem_core = testmempoolaccept_once(&rpc, &missing_redeem_tx_hex)?;
+    let with_redeem_core = testmempoolaccept_once(&rpc, &with_redeem_tx_hex)?;
+
+    let fixture = P2shSeamFixture {
+        name: "p2sh_core_seam".to_string(),
+        network: "regtest".to_string(),
+        redeem_script_hex: "69".to_string(),
+        context_heights: vec![173_804, 173_805],
+        funding_outpoint: format!("{}:{}", funding_txid, funding_vout),
+        missing_redeem_tx_hex,
+        with_redeem_tx_hex,
+        missing_redeem_core,
+        with_redeem_core,
+    };
+
+    if let Some(parent) = out_path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(out_path, serde_json::to_vec_pretty(&fixture)?)
+        .with_context(|| format!("writing {}", out_path.display()))?;
+    println!("minted p2sh seam fixture -> {}", out_path.display());
     Ok(())
 }
 
@@ -752,6 +906,95 @@ impl SimpleRpc {
         resp.result
             .ok_or_else(|| anyhow!("rpc {method} returned null result"))
     }
+
+    fn for_wallet(&self, wallet: &str) -> Self {
+        Self {
+            url: format!("{}/wallet/{}", self.url.trim_end_matches('/'), wallet),
+            user: self.user.clone(),
+            pass: self.pass.clone(),
+        }
+    }
+}
+
+fn ensure_wallet_loaded_simple(rpc: &SimpleRpc, wallet: &str) -> Result<()> {
+    let wallets = rpc.call("listwallets", json!([]))?;
+    let loaded = wallets
+        .as_array()
+        .map(|arr| arr.iter().any(|w| w.as_str() == Some(wallet)))
+        .unwrap_or(false);
+    if loaded {
+        return Ok(());
+    }
+    match rpc.call("loadwallet", json!([wallet])) {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            rpc.call(
+                "createwallet",
+                json!([wallet, false, false, "", false, false, true]),
+            )?;
+            Ok(())
+        }
+    }
+}
+
+fn build_legacy_tx(
+    prev_txid_hex: &str,
+    prev_vout: u32,
+    script_sig: &[u8],
+    output_sats: u64,
+    output_spk: &[u8],
+) -> Result<String> {
+    let mut out = Vec::new();
+    out.extend_from_slice(&1u32.to_le_bytes()); // version
+    out.extend_from_slice(&encode_varint(1)); // vin
+
+    let mut txid = hex::decode(prev_txid_hex).context("decode prev txid")?;
+    if txid.len() != 32 {
+        return Err(anyhow!("prev txid must be 32 bytes"));
+    }
+    txid.reverse();
+    out.extend_from_slice(&txid);
+    out.extend_from_slice(&prev_vout.to_le_bytes());
+    out.extend_from_slice(&encode_varint(script_sig.len() as u64));
+    out.extend_from_slice(script_sig);
+    out.extend_from_slice(&0xffff_ffffu32.to_le_bytes()); // sequence
+
+    out.extend_from_slice(&encode_varint(1)); // vout
+    out.extend_from_slice(&output_sats.to_le_bytes());
+    out.extend_from_slice(&encode_varint(output_spk.len() as u64));
+    out.extend_from_slice(output_spk);
+    out.extend_from_slice(&0u32.to_le_bytes()); // locktime
+    Ok(hex::encode(out))
+}
+
+fn encode_varint(n: u64) -> Vec<u8> {
+    if n <= 0xfc {
+        vec![n as u8]
+    } else if n <= 0xffff {
+        let mut out = vec![0xfd];
+        out.extend_from_slice(&(n as u16).to_le_bytes());
+        out
+    } else if n <= 0xffff_ffff {
+        let mut out = vec![0xfe];
+        out.extend_from_slice(&(n as u32).to_le_bytes());
+        out
+    } else {
+        let mut out = vec![0xff];
+        out.extend_from_slice(&n.to_le_bytes());
+        out
+    }
+}
+
+fn testmempoolaccept_once(rpc: &SimpleRpc, tx_hex: &str) -> Result<SeamAccept> {
+    let accept = rpc.call("testmempoolaccept", json!([[tx_hex]]))?;
+    let first = accept
+        .as_array()
+        .and_then(|arr| arr.first())
+        .ok_or_else(|| anyhow!("testmempoolaccept missing result"))?;
+    Ok(SeamAccept {
+        allowed: first["allowed"].as_bool().unwrap_or(false),
+        reject_reason: first["reject-reason"].as_str().map(ToOwned::to_owned),
+    })
 }
 
 fn summarize(dir: &Path, write_json: bool, compare: bool) -> Result<()> {
@@ -1817,6 +2060,20 @@ mod tests {
                 assert!(labels.ends_with("labels.json"));
             }
             _ => panic!("expected apply-label"),
+        }
+
+        let mint = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "mint-p2sh-seam",
+            "--out",
+            "fixtures/blobs/p2sh-core-seam.json",
+        ])
+        .expect("parse mint-p2sh-seam");
+        match mint.cmd {
+            Command::MintP2shSeam { out } => {
+                assert!(out.ends_with("p2sh-core-seam.json"));
+            }
+            _ => panic!("expected mint-p2sh-seam"),
         }
     }
 

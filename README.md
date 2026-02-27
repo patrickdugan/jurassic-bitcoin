@@ -257,6 +257,15 @@ cargo run -p jurassic-bitcoin-cli -- fetch-fixtures --manifest fixtures/manifest
 Fetched tx hex is cached under `JB_FIXTURE_CACHE` (or default `fixtures/cache`, gitignored).
 Detailed notes: `docs/era-2009-2013.md`.
 
+Regtest Core seam fixture minting:
+
+```powershell
+$env:BITCOIND_RPC_URL  = "http://127.0.0.1:18443"
+$env:BITCOIND_RPC_USER = "user"
+$env:BITCOIND_RPC_PASS = "pass"
+cargo run -p jurassic-bitcoin-cli -- mint-p2sh-seam --out fixtures/blobs/p2sh-core-seam.json
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:
