@@ -1,0 +1,55 @@
+{
+  "name": "p2sh_bip16_boundary_poc",
+  "windows": [
+    {
+      "name": "p2sh-pre-bip16-h173804",
+      "start_height": 173804,
+      "end_height": 173804,
+      "representative_heights": [173804],
+      "epoch": "pre-bip16"
+    },
+    {
+      "name": "p2sh-post-bip16-h173805",
+      "start_height": 173805,
+      "end_height": 173805,
+      "representative_heights": [173805],
+      "epoch": "post-bip16-pre-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "p2sh_prebip16_missing_redeem",
+      "description": "Pre-BIP16 non-push scriptsig still accepted by this shadow slice",
+      "window": "p2sh-pre-bip16-h173804",
+      "tx_hex_blob": "../blobs/p2sh-missing-redeem.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "bip16-boundary",
+        "script_pubkey_hex": "a914b472a266d0bd89c13706a4132ccfb16f7c3b9fcb87"
+      }
+    },
+    {
+      "id": "p2sh_postbip16_missing_redeem",
+      "description": "Post-BIP16 requires redeemScript push in scriptSig",
+      "window": "p2sh-post-bip16-h173805",
+      "tx_hex_blob": "../blobs/p2sh-missing-redeem.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "bip16-boundary",
+        "script_pubkey_hex": "a914b472a266d0bd89c13706a4132ccfb16f7c3b9fcb87"
+      }
+    },
+    {
+      "id": "p2sh_postbip16_happy",
+      "description": "Post-BIP16 happy path with redeemScript OP_CHECKSIG and checksighook=true",
+      "window": "p2sh-post-bip16-h173805",
+      "tx_hex_blob": "../blobs/p2sh-postbip16-happy.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "bip16-boundary",
+        "checksighook": "true",
+        "script_pubkey_hex": "a91417be79cf51aa88feebb0a25e9d6a153ead585e5987"
+      }
+    }
+  ]
+}

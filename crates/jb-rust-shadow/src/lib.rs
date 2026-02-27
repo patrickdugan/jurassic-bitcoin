@@ -1,23 +1,25 @@
-use jb_model::TestCase;
 use jb_model::ExecResult;
+use jb_model::TestCase;
 use ripemd::Ripemd160;
 use sha2::{Digest, Sha256};
 use std::env;
 
+const BIP16_ENFORCEMENT_HEIGHT: u32 = 173_805;
+
 pub fn run_testcase_rust(tc: &TestCase) -> ExecResult {
-    let is_txhex_template = tc
-        .core_template
-        .as_ref()
-        .map(|t| t.kind == "testmempoolaccept_tx_hex" && t.spend_type == "p2wpkh")
+    let template = tc.core_template.as_ref();
+    let is_txhex_template = template
+        .map(|t| t.kind == "testmempoolaccept_tx_hex")
         .unwrap_or(false);
-    let is_decode_template = tc
-        .core_template
-        .as_ref()
-        .map(|t| t.kind == "decode_tx_hex")
-        .unwrap_or(false);
+    let is_decode_template = template.map(|t| t.kind == "decode_tx_hex").unwrap_or(false);
 
     if is_txhex_template {
-        return run_txhex_p2wpkh_slice(tc);
+        let spend_type = template.map(|t| t.spend_type.as_str()).unwrap_or("");
+        return match spend_type {
+            "p2wpkh" => run_txhex_p2wpkh_slice(tc),
+            "p2sh" => run_txhex_p2sh_slice(tc),
+            other => ExecResult::err(format!("unsupported spend_type in rust_shadow: {other}")),
+        };
     }
     if is_decode_template {
         return match parse_transaction(&tc.tx_hex) {
@@ -31,10 +33,172 @@ pub fn run_testcase_rust(tc: &TestCase) -> ExecResult {
     }
 
     let mut result = ExecResult::ok();
+    result.details.insert(
+        "validation".to_string(),
+        "minimal-script-placeholder".to_string(),
+    );
     result
-        .details
-        .insert("validation".to_string(), "minimal-script-placeholder".to_string());
-    result
+}
+
+fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
+    let tx = match parse_transaction(&tc.tx_hex) {
+        Ok(v) => v,
+        Err(_) => return ExecResult::err("invalid tx encoding"),
+    };
+    if tx.inputs.len() != 1 {
+        return ExecResult::err("unsupported: exactly one input required");
+    }
+
+    let input = &tx.inputs[0];
+    let script_pubkey = match resolve_script_pubkey(tc, &tx) {
+        Some(v) => v,
+        None => return ExecResult::err("missing script_pubkey for p2sh evaluation"),
+    };
+
+    let mut trace = Vec::new();
+    let checksig_true = tc
+        .metadata
+        .get("checksighook")
+        .map(|v| v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    let p2sh_detected = is_p2sh_scriptpubkey(&script_pubkey);
+    let bip16_enforced = tc
+        .context
+        .as_ref()
+        .map(|c| c.height >= BIP16_ENFORCEMENT_HEIGHT)
+        .unwrap_or(false);
+
+    let mut stack = Vec::new();
+    if let Err(e) = execute_script(
+        &input.script_sig,
+        &mut stack,
+        checksig_true,
+        ScriptPhase::ScriptSig,
+        &mut trace,
+    ) {
+        return script_error_result(
+            &e,
+            ScriptPhase::ScriptSig,
+            &trace,
+            p2sh_detected,
+            bip16_enforced,
+        );
+    }
+
+    let scriptsig_stack = stack.clone();
+
+    if let Err(e) = execute_script(
+        &script_pubkey,
+        &mut stack,
+        checksig_true,
+        ScriptPhase::ScriptPubKey,
+        &mut trace,
+    ) {
+        return script_error_result(
+            &e,
+            ScriptPhase::ScriptPubKey,
+            &trace,
+            p2sh_detected,
+            bip16_enforced,
+        );
+    }
+    if !stack_is_truthy(stack.last()) {
+        return reason_result(
+            "script failed: false top stack",
+            ScriptPhase::ScriptPubKey,
+            &trace,
+            p2sh_detected,
+            bip16_enforced,
+            false,
+        );
+    }
+
+    if p2sh_detected && bip16_enforced {
+        let pushes = match decode_push_only_script(&input.script_sig) {
+            Ok(p) if !p.is_empty() => p,
+            _ => {
+                return reason_result(
+                    "p2sh missing redeemscript",
+                    ScriptPhase::RedeemScript,
+                    &trace,
+                    p2sh_detected,
+                    bip16_enforced,
+                    false,
+                );
+            }
+        };
+
+        let redeem_script = match pushes.last() {
+            Some(v) => v.clone(),
+            None => {
+                return reason_result(
+                    "p2sh missing redeemscript",
+                    ScriptPhase::RedeemScript,
+                    &trace,
+                    p2sh_detected,
+                    bip16_enforced,
+                    false,
+                );
+            }
+        };
+
+        let mut redeem_stack = scriptsig_stack;
+        if redeem_stack.pop().is_none() {
+            return reason_result(
+                "p2sh missing redeemscript",
+                ScriptPhase::RedeemScript,
+                &trace,
+                p2sh_detected,
+                bip16_enforced,
+                false,
+            );
+        }
+
+        if let Err(e) = execute_script(
+            &redeem_script,
+            &mut redeem_stack,
+            checksig_true,
+            ScriptPhase::RedeemScript,
+            &mut trace,
+        ) {
+            return script_error_result(
+                &e,
+                ScriptPhase::RedeemScript,
+                &trace,
+                p2sh_detected,
+                bip16_enforced,
+            );
+        }
+
+        if !stack_is_truthy(redeem_stack.last()) {
+            return reason_result(
+                "script failed: false top stack",
+                ScriptPhase::RedeemScript,
+                &trace,
+                p2sh_detected,
+                bip16_enforced,
+                false,
+            );
+        }
+
+        return reason_result(
+            "",
+            ScriptPhase::RedeemScript,
+            &trace,
+            p2sh_detected,
+            bip16_enforced,
+            true,
+        );
+    }
+
+    reason_result(
+        "",
+        ScriptPhase::ScriptPubKey,
+        &trace,
+        p2sh_detected,
+        bip16_enforced,
+        true,
+    )
 }
 
 fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
@@ -70,8 +234,15 @@ fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
         .get("checksighook")
         .map(|v| v.eq_ignore_ascii_case("true"))
         .unwrap_or(false);
+    let mut trace = Vec::new();
 
-    let exec = execute_script(&script_code, &mut stack, checksig_true);
+    let exec = execute_script(
+        &script_code,
+        &mut stack,
+        checksig_true,
+        ScriptPhase::ScriptPubKey,
+        &mut trace,
+    );
     match exec {
         Ok(()) => {
             if stack_is_truthy(stack.last()) {
@@ -82,6 +253,13 @@ fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
                 result
                     .details
                     .insert("checksighook".to_string(), checksig_true.to_string());
+                result.details.insert(
+                    "script_trace".to_string(),
+                    trace
+                        .last()
+                        .cloned()
+                        .unwrap_or_else(|| "<none>".to_string()),
+                );
                 result
             } else {
                 ExecResult::err("script failed: false top stack")
@@ -89,12 +267,90 @@ fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
         }
         Err(e) => {
             let mut result = ExecResult::err(format!("script failed: {}", e.reason));
+            result.details.insert(
+                "script_phase".to_string(),
+                ScriptPhase::ScriptPubKey.as_str().to_string(),
+            );
             result
                 .details
-                .insert("script_trace".to_string(), format!("op={} depth={}", e.last_opcode, e.stack_depth));
+                .insert("script_trace".to_string(), trace.join("|"));
             result
         }
     }
+}
+
+fn resolve_script_pubkey(tc: &TestCase, tx: &Transaction) -> Option<Vec<u8>> {
+    if let Some(spk_hex) = tc.metadata.get("script_pubkey_hex") {
+        if let Ok(v) = hex::decode(spk_hex) {
+            return Some(v);
+        }
+    }
+    tx.outputs.first().map(|o| o.script_pubkey.clone())
+}
+
+fn is_p2sh_scriptpubkey(script: &[u8]) -> bool {
+    script.len() == 23 && script[0] == 0xa9 && script[1] == 0x14 && script[22] == 0x87
+}
+
+fn decode_push_only_script(script: &[u8]) -> Result<Vec<Vec<u8>>, ScriptExecError> {
+    let mut i = 0usize;
+    let mut out = Vec::new();
+    while i < script.len() {
+        let opcode = script[i];
+        i += 1;
+        match opcode {
+            0x00 => out.push(Vec::new()),
+            0x01..=0x4b => {
+                let n = opcode as usize;
+                if i + n > script.len() {
+                    return Err(script_err("malformed pushdata length", "0x00", 0));
+                }
+                out.push(script[i..i + n].to_vec());
+                i += n;
+            }
+            0x4c => {
+                if i + 1 > script.len() {
+                    return Err(script_err("malformed pushdata1 header", "0x4c", 0));
+                }
+                let n = script[i] as usize;
+                i += 1;
+                if i + n > script.len() {
+                    return Err(script_err("malformed pushdata1 length", "0x4c", 0));
+                }
+                out.push(script[i..i + n].to_vec());
+                i += n;
+            }
+            0x4d => {
+                if i + 2 > script.len() {
+                    return Err(script_err("malformed pushdata2 header", "0x4d", 0));
+                }
+                let n = u16::from_le_bytes([script[i], script[i + 1]]) as usize;
+                i += 2;
+                if i + n > script.len() {
+                    return Err(script_err("malformed pushdata2 length", "0x4d", 0));
+                }
+                out.push(script[i..i + n].to_vec());
+                i += n;
+            }
+            0x4e => {
+                if i + 4 > script.len() {
+                    return Err(script_err("malformed pushdata4 header", "0x4e", 0));
+                }
+                let n = u32::from_le_bytes([script[i], script[i + 1], script[i + 2], script[i + 3]])
+                    as usize;
+                i += 4;
+                if i + n > script.len() {
+                    return Err(script_err("malformed pushdata4 length", "0x4e", 0));
+                }
+                out.push(script[i..i + n].to_vec());
+                i += n;
+            }
+            0x4f => out.push(vec![0x81]),
+            0x51..=0x60 => out.push(vec![opcode - 0x50]),
+            _ => return Err(script_err("non-push opcode in scriptsig", "0xff", 0)),
+        }
+    }
+    Ok(out)
 }
 
 fn build_p2wpkh_script_code(pubkey_hash: &[u8; 20]) -> Vec<u8> {
@@ -115,6 +371,23 @@ fn stack_is_truthy(top: Option<&Vec<u8>>) -> bool {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+enum ScriptPhase {
+    ScriptSig,
+    ScriptPubKey,
+    RedeemScript,
+}
+
+impl ScriptPhase {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::ScriptSig => "scriptsig",
+            Self::ScriptPubKey => "scriptpubkey",
+            Self::RedeemScript => "redeemscript",
+        }
+    }
+}
+
 #[derive(Debug)]
 struct ScriptExecError {
     reason: String,
@@ -122,94 +395,189 @@ struct ScriptExecError {
     stack_depth: usize,
 }
 
-fn execute_script(script: &[u8], stack: &mut Vec<Vec<u8>>, checksig_true: bool) -> Result<(), ScriptExecError> {
+fn execute_script(
+    script: &[u8],
+    stack: &mut Vec<Vec<u8>>,
+    checksig_true: bool,
+    phase: ScriptPhase,
+    trace: &mut Vec<String>,
+) -> Result<(), ScriptExecError> {
     let mut i = 0usize;
     let mut last_opcode: String;
     while i < script.len() {
         let opcode = script[i];
         i += 1;
         last_opcode = format!("0x{opcode:02x}");
+        trace.push(format!(
+            "{}:{}:d{}",
+            phase.as_str(),
+            last_opcode,
+            stack.len()
+        ));
         match opcode {
             0x00 => stack.push(Vec::new()),
             0x01..=0x4b => {
                 let n = opcode as usize;
                 if i + n > script.len() {
-                    return Err(script_err("malformed pushdata length", &last_opcode, stack.len()));
+                    return Err(script_err(
+                        "malformed pushdata length",
+                        &last_opcode,
+                        stack.len(),
+                    ));
                 }
                 stack.push(script[i..i + n].to_vec());
                 i += n;
             }
             0x4c => {
                 if i + 1 > script.len() {
-                    return Err(script_err("malformed pushdata1 header", &last_opcode, stack.len()));
+                    return Err(script_err(
+                        "malformed pushdata1 header",
+                        &last_opcode,
+                        stack.len(),
+                    ));
                 }
                 let n = script[i] as usize;
                 i += 1;
                 if i + n > script.len() {
-                    return Err(script_err("malformed pushdata1 length", &last_opcode, stack.len()));
+                    return Err(script_err(
+                        "malformed pushdata1 length",
+                        &last_opcode,
+                        stack.len(),
+                    ));
                 }
                 stack.push(script[i..i + n].to_vec());
                 i += n;
             }
             0x4d => {
                 if i + 2 > script.len() {
-                    return Err(script_err("malformed pushdata2 header", &last_opcode, stack.len()));
+                    return Err(script_err(
+                        "malformed pushdata2 header",
+                        &last_opcode,
+                        stack.len(),
+                    ));
                 }
                 let n = u16::from_le_bytes([script[i], script[i + 1]]) as usize;
                 i += 2;
                 if i + n > script.len() {
-                    return Err(script_err("malformed pushdata2 length", &last_opcode, stack.len()));
+                    return Err(script_err(
+                        "malformed pushdata2 length",
+                        &last_opcode,
+                        stack.len(),
+                    ));
                 }
                 stack.push(script[i..i + n].to_vec());
                 i += n;
             }
             0x4e => {
                 if i + 4 > script.len() {
-                    return Err(script_err("malformed pushdata4 header", &last_opcode, stack.len()));
+                    return Err(script_err(
+                        "malformed pushdata4 header",
+                        &last_opcode,
+                        stack.len(),
+                    ));
                 }
-                let n = u32::from_le_bytes([script[i], script[i + 1], script[i + 2], script[i + 3]]) as usize;
+                let n = u32::from_le_bytes([script[i], script[i + 1], script[i + 2], script[i + 3]])
+                    as usize;
                 i += 4;
                 if i + n > script.len() {
-                    return Err(script_err("malformed pushdata4 length", &last_opcode, stack.len()));
+                    return Err(script_err(
+                        "malformed pushdata4 length",
+                        &last_opcode,
+                        stack.len(),
+                    ));
                 }
                 stack.push(script[i..i + n].to_vec());
                 i += n;
             }
+            0x4f => stack.push(vec![0x81]),
             0x51..=0x60 => {
                 let n = opcode - 0x50;
                 stack.push(vec![n]);
             }
-            0x76 => {
-                let top = stack
-                    .last()
-                    .cloned()
-                    .ok_or_else(|| script_err("stack underflow on OP_DUP", &last_opcode, stack.len()))?;
-                stack.push(top);
-            }
-            0xa9 => {
-                let v = stack
-                    .pop()
-                    .ok_or_else(|| script_err("stack underflow on OP_HASH160", &last_opcode, stack.len()))?;
-                stack.push(hash160(&v).to_vec());
-            }
-            0x88 => {
-                let a = stack
-                    .pop()
-                    .ok_or_else(|| script_err("stack underflow on OP_EQUALVERIFY", &last_opcode, stack.len()))?;
-                let b = stack
-                    .pop()
-                    .ok_or_else(|| script_err("stack underflow on OP_EQUALVERIFY", &last_opcode, stack.len()))?;
-                if a != b {
-                    return Err(script_err("equalverify mismatch", &last_opcode, stack.len()));
+            0x69 => {
+                let top = stack.pop().ok_or_else(|| {
+                    script_err("stack underflow on OP_VERIFY", &last_opcode, stack.len())
+                })?;
+                if !stack_is_truthy(Some(&top)) {
+                    return Err(script_err("verify false", &last_opcode, stack.len()));
                 }
             }
+            0x6a => return Err(script_err("op_return", &last_opcode, stack.len())),
+            0x75 => {
+                let _ = stack.pop().ok_or_else(|| {
+                    script_err("stack underflow on OP_DROP", &last_opcode, stack.len())
+                })?;
+            }
+            0x76 => {
+                let top = stack.last().cloned().ok_or_else(|| {
+                    script_err("stack underflow on OP_DUP", &last_opcode, stack.len())
+                })?;
+                stack.push(top);
+            }
+            0x82 => {
+                let top = stack.last().ok_or_else(|| {
+                    script_err("stack underflow on OP_SIZE", &last_opcode, stack.len())
+                })?;
+                let n = top.len();
+                if n <= 252 {
+                    stack.push(vec![n as u8]);
+                } else {
+                    return Err(script_err(
+                        "unsupported size >252",
+                        &last_opcode,
+                        stack.len(),
+                    ));
+                }
+            }
+            0x87 => {
+                let a = stack.pop().ok_or_else(|| {
+                    script_err("stack underflow on OP_EQUAL", &last_opcode, stack.len())
+                })?;
+                let b = stack.pop().ok_or_else(|| {
+                    script_err("stack underflow on OP_EQUAL", &last_opcode, stack.len())
+                })?;
+                if a == b {
+                    stack.push(vec![1]);
+                } else {
+                    stack.push(Vec::new());
+                }
+            }
+            0x88 => {
+                let a = stack.pop().ok_or_else(|| {
+                    script_err(
+                        "stack underflow on OP_EQUALVERIFY",
+                        &last_opcode,
+                        stack.len(),
+                    )
+                })?;
+                let b = stack.pop().ok_or_else(|| {
+                    script_err(
+                        "stack underflow on OP_EQUALVERIFY",
+                        &last_opcode,
+                        stack.len(),
+                    )
+                })?;
+                if a != b {
+                    return Err(script_err(
+                        "equalverify mismatch",
+                        &last_opcode,
+                        stack.len(),
+                    ));
+                }
+            }
+            0xa9 => {
+                let v = stack.pop().ok_or_else(|| {
+                    script_err("stack underflow on OP_HASH160", &last_opcode, stack.len())
+                })?;
+                stack.push(hash160(&v).to_vec());
+            }
             0xac => {
-                let _pubkey = stack
-                    .pop()
-                    .ok_or_else(|| script_err("stack underflow on OP_CHECKSIG", &last_opcode, stack.len()))?;
-                let _sig = stack
-                    .pop()
-                    .ok_or_else(|| script_err("stack underflow on OP_CHECKSIG", &last_opcode, stack.len()))?;
+                let _pubkey = stack.pop().ok_or_else(|| {
+                    script_err("stack underflow on OP_CHECKSIG", &last_opcode, stack.len())
+                })?;
+                let _sig = stack.pop().ok_or_else(|| {
+                    script_err("stack underflow on OP_CHECKSIG", &last_opcode, stack.len())
+                })?;
                 if checksig_true {
                     stack.push(vec![1]);
                 } else {
@@ -220,6 +588,62 @@ fn execute_script(script: &[u8], stack: &mut Vec<Vec<u8>>, checksig_true: bool) 
         }
     }
     Ok(())
+}
+
+fn reason_result(
+    reason: &str,
+    phase: ScriptPhase,
+    trace: &[String],
+    p2sh_detected: bool,
+    bip16_enforced: bool,
+    ok: bool,
+) -> ExecResult {
+    let mut result = if ok {
+        ExecResult::ok()
+    } else {
+        ExecResult::err(reason)
+    };
+    result
+        .details
+        .insert("script_phase".to_string(), phase.as_str().to_string());
+    result
+        .details
+        .insert("p2sh_detected".to_string(), p2sh_detected.to_string());
+    result
+        .details
+        .insert("bip16_enforced".to_string(), bip16_enforced.to_string());
+    result
+        .details
+        .insert("script_trace".to_string(), trace.join("|"));
+    result
+}
+
+fn script_error_result(
+    e: &ScriptExecError,
+    phase: ScriptPhase,
+    trace: &[String],
+    p2sh_detected: bool,
+    bip16_enforced: bool,
+) -> ExecResult {
+    let mut result = ExecResult::err(format!("script failed: {}", e.reason));
+    result
+        .details
+        .insert("script_phase".to_string(), phase.as_str().to_string());
+    result
+        .details
+        .insert("p2sh_detected".to_string(), p2sh_detected.to_string());
+    result
+        .details
+        .insert("bip16_enforced".to_string(), bip16_enforced.to_string());
+    result.details.insert(
+        "script_trace".to_string(),
+        if trace.is_empty() {
+            format!("{}:{}:d{}", phase.as_str(), e.last_opcode, e.stack_depth)
+        } else {
+            trace.join("|")
+        },
+    );
+    result
 }
 
 fn script_err(reason: &str, last_opcode: &str, stack_depth: usize) -> ScriptExecError {
@@ -241,12 +665,19 @@ fn hash160(data: &[u8]) -> [u8; 20] {
 #[derive(Debug, Clone)]
 struct Transaction {
     inputs: Vec<TxIn>,
+    outputs: Vec<TxOut>,
 }
 
 #[derive(Debug, Clone)]
 struct TxIn {
     prevout: Prevout,
+    script_sig: Vec<u8>,
     witness: Option<Witness>,
+}
+
+#[derive(Debug, Clone)]
+struct TxOut {
+    script_pubkey: Vec<u8>,
 }
 
 #[derive(Debug, Clone)]
@@ -279,19 +710,22 @@ fn parse_transaction(tx_hex: &str) -> Result<Transaction, ()> {
         let txid_hex: String = txid_le.iter().rev().map(|b| format!("{:02x}", b)).collect();
         let vout = read_u32_le(&bytes, &mut i).ok_or(())?;
         let script_len = read_varint(&bytes, &mut i).ok_or(())? as usize;
-        i = advance(&bytes, i, script_len)?;
+        let script_sig = read_bytes(&bytes, &mut i, script_len).ok_or(())?.to_vec();
         i = advance(&bytes, i, 4)?; // sequence
         inputs.push(TxIn {
             prevout: Prevout { txid_hex, vout },
+            script_sig,
             witness: None,
         });
     }
 
     let vout_count = read_varint(&bytes, &mut i).ok_or(())? as usize;
+    let mut outputs = Vec::with_capacity(vout_count);
     for _ in 0..vout_count {
         i = advance(&bytes, i, 8)?;
         let spk_len = read_varint(&bytes, &mut i).ok_or(())? as usize;
-        i = advance(&bytes, i, spk_len)?;
+        let script_pubkey = read_bytes(&bytes, &mut i, spk_len).ok_or(())?.to_vec();
+        outputs.push(TxOut { script_pubkey });
     }
 
     if has_witness {
@@ -311,7 +745,7 @@ fn parse_transaction(tx_hex: &str) -> Result<Transaction, ()> {
         return Err(());
     }
 
-    Ok(Transaction { inputs })
+    Ok(Transaction { inputs, outputs })
 }
 
 fn advance(bytes: &[u8], idx: usize, n: usize) -> Result<usize, ()> {
@@ -361,19 +795,37 @@ fn read_varint(bytes: &[u8], idx: &mut usize) -> Option<u64> {
 
 #[cfg(test)]
 mod tests {
-    use super::{execute_script, hash160};
+    use super::{ScriptPhase, TestCase, execute_script, hash160, run_testcase_rust};
+    use jb_model::{CoreTemplate, ValidationContext};
+    use std::collections::BTreeMap;
 
     #[test]
     fn pushdata_direct_success() {
         let mut stack = Vec::new();
-        execute_script(&[0x02, 0xaa, 0xbb], &mut stack, true).expect("exec");
+        let mut trace = Vec::new();
+        execute_script(
+            &[0x02, 0xaa, 0xbb],
+            &mut stack,
+            true,
+            ScriptPhase::ScriptSig,
+            &mut trace,
+        )
+        .expect("exec");
         assert_eq!(stack, vec![vec![0xaa, 0xbb]]);
     }
 
     #[test]
     fn pushdata_malformed_fails() {
         let mut stack = Vec::new();
-        let err = execute_script(&[0x4c, 0x02, 0xaa], &mut stack, true).expect_err("must fail");
+        let mut trace = Vec::new();
+        let err = execute_script(
+            &[0x4c, 0x02, 0xaa],
+            &mut stack,
+            true,
+            ScriptPhase::ScriptSig,
+            &mut trace,
+        )
+        .expect_err("must fail");
         assert!(err.reason.contains("malformed pushdata1"));
     }
 
@@ -385,14 +837,75 @@ mod tests {
         script.extend_from_slice(&h);
         script.push(0x88);
         let mut stack = vec![pubkey];
-        execute_script(&script, &mut stack, true).expect("exec");
+        let mut trace = Vec::new();
+        execute_script(
+            &script,
+            &mut stack,
+            true,
+            ScriptPhase::ScriptSig,
+            &mut trace,
+        )
+        .expect("exec");
         assert_eq!(stack.len(), 1);
     }
 
     #[test]
     fn stack_underflow_detected() {
         let mut stack = Vec::new();
-        let err = execute_script(&[0x76], &mut stack, true).expect_err("underflow");
+        let mut trace = Vec::new();
+        let err = execute_script(
+            &[0x76],
+            &mut stack,
+            true,
+            ScriptPhase::ScriptSig,
+            &mut trace,
+        )
+        .expect_err("underflow");
         assert!(err.reason.contains("stack underflow"));
+    }
+
+    #[test]
+    fn p2sh_bip16_boundary_flip() {
+        let tx_hex = "010000000111111111111111111111111111111111111111111111111111111111111111110000000003517500ffffffff01102700000000000017a914b472a266d0bd89c13706a4132ccfb16f7c3b9fcb8700000000";
+        let mut metadata = BTreeMap::new();
+        metadata.insert(
+            "script_pubkey_hex".to_string(),
+            "a914b472a266d0bd89c13706a4132ccfb16f7c3b9fcb87".to_string(),
+        );
+
+        let tc_pre = TestCase {
+            id: "pre".to_string(),
+            description: "pre".to_string(),
+            network: "mainnet".to_string(),
+            utxo_set: Vec::new(),
+            tx_hex: tx_hex.to_string(),
+            flags: Vec::new(),
+            context: Some(ValidationContext {
+                height: 173_804,
+                median_time_past: None,
+                block_time: None,
+                epoch: Some("pre-bip16".to_string()),
+            }),
+            core_template: Some(CoreTemplate {
+                kind: "testmempoolaccept_tx_hex".to_string(),
+                spend_type: "p2sh".to_string(),
+                feerate_sats_vb: None,
+            }),
+            metadata: metadata.clone(),
+        };
+        let mut tc_post = tc_pre.clone();
+        tc_post.id = "post".to_string();
+        tc_post.context = Some(ValidationContext {
+            height: 173_805,
+            median_time_past: None,
+            block_time: None,
+            epoch: Some("post-bip16-pre-bip34".to_string()),
+        });
+
+        let pre = run_testcase_rust(&tc_pre);
+        let post = run_testcase_rust(&tc_post);
+        assert!(pre.ok);
+        assert!(!post.ok);
+        assert_eq!(post.reason.as_deref(), Some("p2sh missing redeemscript"));
     }
 }

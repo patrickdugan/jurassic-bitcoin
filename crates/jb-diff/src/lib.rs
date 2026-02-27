@@ -34,7 +34,9 @@ fn classify(core: &ExecResult, rust: &ExecResult) -> String {
     let core_reason = core.reason.as_deref().unwrap_or("");
     let rust_reason = rust.reason.as_deref().unwrap_or("");
     let both = format!("{core_reason} {rust_reason}").to_lowercase();
-    if both.contains("invalid tx encoding") {
+    if both.contains("p2sh missing redeemscript") {
+        "SCRIPT_FAIL".to_string()
+    } else if both.contains("invalid tx encoding") {
         "PARSE_FAIL".to_string()
     } else if both.contains("wrong prevout") {
         "PREVOUT_MISSING".to_string()
