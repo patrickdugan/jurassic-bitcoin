@@ -1,0 +1,47 @@
+{
+  "name": "p2sh_findanddelete_hook_poc",
+  "windows": [
+    {
+      "name": "findanddelete-pre-bip16-h173804",
+      "start_height": 173804,
+      "end_height": 173804,
+      "representative_heights": [173804],
+      "epoch": "pre-bip16"
+    },
+    {
+      "name": "findanddelete-post-bip16-h173805",
+      "start_height": 173805,
+      "end_height": 173805,
+      "representative_heights": [173805],
+      "epoch": "post-bip16-pre-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "findanddelete_pre_bip16_control",
+      "description": "Pre-BIP16 control: P2SH wrapper succeeds without redeem execution",
+      "window": "findanddelete-pre-bip16-h173804",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-hook.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "checkmultisig-findanddelete",
+        "findanddelete_hook": "true",
+        "checksighook": "false",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87"
+      }
+    },
+    {
+      "id": "findanddelete_post_bip16_multisig",
+      "description": "Post-BIP16 executes redeemScript OP_CHECKMULTISIG and emits FindAndDelete details",
+      "window": "findanddelete-post-bip16-h173805",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-hook.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "checkmultisig-findanddelete",
+        "findanddelete_hook": "true",
+        "checksighook": "false",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87"
+      }
+    }
+  ]
+}

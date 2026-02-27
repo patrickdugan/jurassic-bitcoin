@@ -2056,6 +2056,13 @@ fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggesti
         rationale: rationale.to_string(),
     };
 
+    if reason_joined.contains("findanddelete") {
+        return Some(choose(
+            "CHECKMULTISIG_FINDANDDELETE",
+            "high",
+            "reason/trace contains findanddelete hook marker",
+        ));
+    }
     if reason_joined.contains("checksighook") {
         return Some(choose(
             "CHECKSIGHOOK_FORCED_FAIL",

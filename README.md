@@ -282,6 +282,14 @@ cargo run -p jurassic-bitcoin-cli -- mint-p2wpkh-seam --out fixtures/blobs/p2wpk
 cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2wpkh_core_seam_poc.json --out-dir artifacts/p2wpkh-core-seam --limit-per-epoch 50 --force
 ```
 
+FindAndDelete hook seam (Binohash-relevant `CHECKMULTISIG` surface):
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_findanddelete_hook_poc.json --out-dir artifacts/p2sh-findanddelete-hook --limit-per-epoch 50 --force
+cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/p2sh-findanddelete-hook --compare --json
+cargo run -p jurassic-bitcoin-cli -- museum --in artifacts/p2sh-findanddelete-hook --out artifacts/p2sh-findanddelete-hook-museum
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

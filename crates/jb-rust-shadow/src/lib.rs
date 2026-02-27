@@ -154,6 +154,16 @@ fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
             );
         }
 
+        let mut finddelete = analyze_findanddelete_hook(tc, &redeem_script, &pushes);
+        if let Some(info) = &finddelete {
+            trace.push(format!(
+                "{}:findanddelete:r{}:s{}",
+                ScriptPhase::RedeemScript.as_str(),
+                info.removed_total,
+                info.signature_count
+            ));
+        }
+
         if let Err(e) = execute_script(
             &redeem_script,
             &mut redeem_stack,
@@ -161,33 +171,42 @@ fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
             ScriptPhase::RedeemScript,
             &mut trace,
         ) {
-            return script_error_result(
-                &e,
-                ScriptPhase::RedeemScript,
-                &trace,
-                p2sh_detected,
-                bip16_enforced,
+            return with_findanddelete_details(
+                script_error_result(
+                    &e,
+                    ScriptPhase::RedeemScript,
+                    &trace,
+                    p2sh_detected,
+                    bip16_enforced,
+                ),
+                finddelete.take(),
             );
         }
 
         if !stack_is_truthy(redeem_stack.last()) {
-            return reason_result(
-                "script failed: false top stack",
+            return with_findanddelete_details(
+                reason_result(
+                    "script failed: false top stack",
+                    ScriptPhase::RedeemScript,
+                    &trace,
+                    p2sh_detected,
+                    bip16_enforced,
+                    false,
+                ),
+                finddelete.take(),
+            );
+        }
+
+        return with_findanddelete_details(
+            reason_result(
+                "",
                 ScriptPhase::RedeemScript,
                 &trace,
                 p2sh_detected,
                 bip16_enforced,
-                false,
-            );
-        }
-
-        return reason_result(
-            "",
-            ScriptPhase::RedeemScript,
-            &trace,
-            p2sh_detected,
-            bip16_enforced,
-            true,
+                true,
+            ),
+            finddelete.take(),
         );
     }
 
@@ -199,6 +218,91 @@ fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
         bip16_enforced,
         true,
     )
+}
+
+#[derive(Debug, Clone)]
+struct FindAndDeleteInfo {
+    signature_count: usize,
+    removed_total: usize,
+    scriptcode_sha256_hex: String,
+}
+
+fn analyze_findanddelete_hook(
+    tc: &TestCase,
+    redeem_script: &[u8],
+    pushes: &[Vec<u8>],
+) -> Option<FindAndDeleteInfo> {
+    let enabled = tc
+        .metadata
+        .get("findanddelete_hook")
+        .map(|v| v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    if !enabled || !redeem_script.contains(&0xae) {
+        return None;
+    }
+    if pushes.is_empty() {
+        return None;
+    }
+    let sigs: Vec<Vec<u8>> = pushes
+        .iter()
+        .take(pushes.len().saturating_sub(1))
+        .filter(|v| !v.is_empty())
+        .cloned()
+        .collect();
+    let (removed_total, scriptcode) = apply_find_and_delete(redeem_script, &sigs);
+    let scriptcode_sha256_hex = hex::encode(Sha256::digest(&scriptcode));
+    Some(FindAndDeleteInfo {
+        signature_count: sigs.len(),
+        removed_total,
+        scriptcode_sha256_hex,
+    })
+}
+
+fn apply_find_and_delete(script: &[u8], signatures: &[Vec<u8>]) -> (usize, Vec<u8>) {
+    let mut out = script.to_vec();
+    let mut removed_total = 0usize;
+    for sig in signatures {
+        if sig.is_empty() {
+            continue;
+        }
+        while let Some(pos) = find_subslice(&out, sig) {
+            let end = pos + sig.len();
+            out.drain(pos..end);
+            removed_total += 1;
+        }
+    }
+    (removed_total, out)
+}
+
+fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    if needle.is_empty() || needle.len() > haystack.len() {
+        return None;
+    }
+    haystack.windows(needle.len()).position(|w| w == needle)
+}
+
+fn with_findanddelete_details(
+    mut result: ExecResult,
+    info: Option<FindAndDeleteInfo>,
+) -> ExecResult {
+    if let Some(info) = info {
+        result
+            .details
+            .insert("findanddelete_hook".to_string(), "true".to_string());
+        result.details.insert(
+            "findanddelete_signature_count".to_string(),
+            info.signature_count.to_string(),
+        );
+        result.details.insert(
+            "findanddelete_removed_total".to_string(),
+            info.removed_total.to_string(),
+        );
+        result.details.insert(
+            "findanddelete_scriptcode_sha256".to_string(),
+            info.scriptcode_sha256_hex,
+        );
+    }
+    result
 }
 
 fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
@@ -626,6 +730,24 @@ fn execute_script(
                     return Err(script_err("checksighook-false", &last_opcode, stack.len()));
                 }
             }
+            0xae => {
+                let _n_keys = stack.pop().ok_or_else(|| {
+                    script_err(
+                        "stack underflow on OP_CHECKMULTISIG",
+                        &last_opcode,
+                        stack.len(),
+                    )
+                })?;
+                if checksig_true {
+                    stack.push(vec![1]);
+                } else {
+                    return Err(script_err(
+                        "checksighook-false-multisig",
+                        &last_opcode,
+                        stack.len(),
+                    ));
+                }
+            }
             _ => return Err(script_err("unsupported opcode", &last_opcode, stack.len())),
         }
     }
@@ -837,7 +959,9 @@ fn read_varint(bytes: &[u8], idx: &mut usize) -> Option<u64> {
 
 #[cfg(test)]
 mod tests {
-    use super::{ScriptPhase, TestCase, execute_script, hash160, run_testcase_rust};
+    use super::{
+        ScriptPhase, TestCase, apply_find_and_delete, execute_script, hash160, run_testcase_rust,
+    };
     use jb_model::{CoreTemplate, ValidationContext};
     use std::collections::BTreeMap;
 
@@ -996,5 +1120,14 @@ mod tests {
         tc.tx_hex = "0100000000010111111111111111111111111111111111111111111111111111111111111111110000000000ffffffff011027000000000000160014000000000000000000000000000000000000000001010100000000".to_string();
         let bad_shape = run_testcase_rust(&tc);
         assert_eq!(bad_shape.reason.as_deref(), Some("witness invalid stack"));
+    }
+
+    #[test]
+    fn findanddelete_hook_reports_removed_occurrences() {
+        let redeem_script = hex::decode("01aa01aa01bb52ae").expect("redeem");
+        let sigs = vec![vec![0xaa], vec![0xbb]];
+        let (removed, scriptcode) = apply_find_and_delete(&redeem_script, &sigs);
+        assert_eq!(removed, 3);
+        assert_eq!(hex::encode(scriptcode), "01010152ae");
     }
 }
