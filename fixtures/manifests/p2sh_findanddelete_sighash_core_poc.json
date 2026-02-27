@@ -1,0 +1,57 @@
+{
+  "fixtures": [
+    {
+      "description": "Regtest-funded subset [aa,bb], sighash ALL",
+      "id": "findanddelete_sighash_all",
+      "metadata": {
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "findanddelete_hook": "true",
+        "quirk_target": "checkmultisig-findanddelete-sighash",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87",
+        "sighash_type": "0x01"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+      "tx_hex_field": "subset_aabb_tx_hex",
+      "window": "findanddelete-sighash-all-h173805"
+    },
+    {
+      "description": "Regtest-funded subset [aa,bb], sighash NONE",
+      "id": "findanddelete_sighash_none",
+      "metadata": {
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "findanddelete_hook": "true",
+        "quirk_target": "checkmultisig-findanddelete-sighash",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87",
+        "sighash_type": "0x02"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+      "tx_hex_field": "subset_aabb_tx_hex",
+      "window": "findanddelete-sighash-none-h173805"
+    }
+  ],
+  "name": "p2sh_findanddelete_sighash_core_poc",
+  "windows": [
+    {
+      "end_height": 173805,
+      "epoch": "post-bip16-pre-bip34",
+      "name": "findanddelete-sighash-all-h173805",
+      "representative_heights": [
+        173805
+      ],
+      "start_height": 173805
+    },
+    {
+      "end_height": 173805,
+      "epoch": "post-bip16-pre-bip34",
+      "name": "findanddelete-sighash-none-h173805",
+      "representative_heights": [
+        173805
+      ],
+      "start_height": 173805
+    }
+  ]
+}

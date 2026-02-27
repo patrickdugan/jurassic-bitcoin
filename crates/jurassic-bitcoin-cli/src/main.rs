@@ -692,8 +692,22 @@ fn mint_findanddelete_seam(out_path: &Path) -> Result<()> {
         .with_context(|| format!("writing {}", out_path.display()))?;
     let manifest_path = PathBuf::from("fixtures/manifests/p2sh_findanddelete_core_seam_poc.json");
     write_findanddelete_core_manifest(&manifest_path, &p2sh_spk)?;
+    let codeseparator_manifest_path =
+        PathBuf::from("fixtures/manifests/p2sh_findanddelete_codeseparator_core_poc.json");
+    write_findanddelete_codeseparator_manifest(&codeseparator_manifest_path, &p2sh_spk)?;
+    let sighash_manifest_path =
+        PathBuf::from("fixtures/manifests/p2sh_findanddelete_sighash_core_poc.json");
+    write_findanddelete_sighash_manifest(&sighash_manifest_path, &p2sh_spk)?;
     println!("minted findanddelete core seam fixture -> {}", out_path.display());
     println!("minted findanddelete core seam manifest -> {}", manifest_path.display());
+    println!(
+        "minted findanddelete codeseparator manifest -> {}",
+        codeseparator_manifest_path.display()
+    );
+    println!(
+        "minted findanddelete sighash manifest -> {}",
+        sighash_manifest_path.display()
+    );
     Ok(())
 }
 
@@ -838,6 +852,130 @@ fn write_findanddelete_core_manifest(path: &Path, script_pubkey_hex: &str) -> Re
             "checksighook": "false",
             "codeseparator_pos": "-1",
             "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        }
+      ]
+    });
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(path, serde_json::to_vec_pretty(&manifest)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(())
+}
+
+fn write_findanddelete_codeseparator_manifest(path: &Path, script_pubkey_hex: &str) -> Result<()> {
+    let manifest = json!({
+      "name": "p2sh_findanddelete_codeseparator_core_poc",
+      "windows": [
+        {
+          "name": "findanddelete-codeseparator-neg1-h173805",
+          "start_height": 173805,
+          "end_height": 173805,
+          "representative_heights": [173805],
+          "epoch": "post-bip16-pre-bip34"
+        },
+        {
+          "name": "findanddelete-codeseparator-3-h173805",
+          "start_height": 173805,
+          "end_height": 173805,
+          "representative_heights": [173805],
+          "epoch": "post-bip16-pre-bip34"
+        }
+      ],
+      "fixtures": [
+        {
+          "id": "findanddelete_codeseparator_neg1",
+          "description": "Regtest-funded subset [aa,bb], CODESEPARATOR position -1",
+          "window": "findanddelete-codeseparator-neg1-h173805",
+          "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+          "tx_hex_field": "subset_aabb_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "checkmultisig-findanddelete-codeseparator",
+            "findanddelete_hook": "true",
+            "checksighook": "false",
+            "codeseparator_pos": "-1",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "findanddelete_codeseparator_3",
+          "description": "Regtest-funded subset [aa,bb], CODESEPARATOR position 3",
+          "window": "findanddelete-codeseparator-3-h173805",
+          "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+          "tx_hex_field": "subset_aabb_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "checkmultisig-findanddelete-codeseparator",
+            "findanddelete_hook": "true",
+            "checksighook": "false",
+            "codeseparator_pos": "3",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        }
+      ]
+    });
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(path, serde_json::to_vec_pretty(&manifest)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(())
+}
+
+fn write_findanddelete_sighash_manifest(path: &Path, script_pubkey_hex: &str) -> Result<()> {
+    let manifest = json!({
+      "name": "p2sh_findanddelete_sighash_core_poc",
+      "windows": [
+        {
+          "name": "findanddelete-sighash-all-h173805",
+          "start_height": 173805,
+          "end_height": 173805,
+          "representative_heights": [173805],
+          "epoch": "post-bip16-pre-bip34"
+        },
+        {
+          "name": "findanddelete-sighash-none-h173805",
+          "start_height": 173805,
+          "end_height": 173805,
+          "representative_heights": [173805],
+          "epoch": "post-bip16-pre-bip34"
+        }
+      ],
+      "fixtures": [
+        {
+          "id": "findanddelete_sighash_all",
+          "description": "Regtest-funded subset [aa,bb], sighash ALL",
+          "window": "findanddelete-sighash-all-h173805",
+          "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+          "tx_hex_field": "subset_aabb_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "checkmultisig-findanddelete-sighash",
+            "findanddelete_hook": "true",
+            "checksighook": "false",
+            "codeseparator_pos": "-1",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "findanddelete_sighash_none",
+          "description": "Regtest-funded subset [aa,bb], sighash NONE",
+          "window": "findanddelete-sighash-none-h173805",
+          "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+          "tx_hex_field": "subset_aabb_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "checkmultisig-findanddelete-sighash",
+            "findanddelete_hook": "true",
+            "checksighook": "false",
+            "codeseparator_pos": "-1",
+            "sighash_type": "0x02",
             "script_pubkey_hex": script_pubkey_hex
           }
         }

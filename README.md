@@ -312,6 +312,18 @@ cargo run -p jurassic-bitcoin-cli -- mint-findanddelete-seam --out fixtures/blob
 cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_findanddelete_core_seam_poc.json --out-dir artifacts/p2sh-findanddelete-core-seam --limit-per-epoch 50 --force
 ```
 
+Regtest-funded CODESEPARATOR axis:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_findanddelete_codeseparator_core_poc.json --out-dir artifacts/p2sh-findanddelete-codeseparator --limit-per-epoch 50 --force
+```
+
+Regtest-funded sighash-flag axis:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_findanddelete_sighash_core_poc.json --out-dir artifacts/p2sh-findanddelete-sighash --limit-per-epoch 50 --force
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:
