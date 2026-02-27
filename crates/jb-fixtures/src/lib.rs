@@ -33,6 +33,8 @@ pub struct ManifestFixture {
     #[serde(default)]
     pub tx_hex_blob: Option<String>,
     #[serde(default)]
+    pub tx_hex_field: Option<String>,
+    #[serde(default)]
     pub txid: Option<String>,
     #[serde(default = "default_spend_type")]
     pub spend_type: String,
@@ -272,7 +274,7 @@ fn resolve_tx_hex(
         return Ok(tx_hex.clone());
     }
     if let Some(blob_path) = &fixture.tx_hex_blob {
-        return read_blob_tx_hex(&manifest_dir.join(blob_path));
+        return read_blob_tx_hex(&manifest_dir.join(blob_path), fixture.tx_hex_field.as_deref());
     }
     if let Some(txid) = &fixture.txid {
         if let Some(cached) = read_cached_tx_hex(cache_dir, txid)? {
@@ -300,12 +302,22 @@ struct BlobFile {
     tx_hex: String,
 }
 
-fn read_blob_tx_hex(path: &Path) -> Result<String> {
+fn read_blob_tx_hex(path: &Path, field: Option<&str>) -> Result<String> {
     let bytes = fs::read(path).with_context(|| format!("reading blob {}", path.display()))?;
-    if let Ok(v) = serde_json::from_slice::<BlobFile>(&bytes) {
-        return Ok(v.tx_hex);
-    }
     if let Ok(v) = serde_json::from_slice::<Value>(&bytes) {
+        if let Some(field) = field {
+            if let Some(s) = v.get(field).and_then(|x| x.as_str()) {
+                return Ok(s.to_string());
+            }
+            return Err(anyhow!(
+                "blob {} missing requested tx_hex_field {}",
+                path.display(),
+                field
+            ));
+        }
+        if let Ok(v2) = serde_json::from_value::<BlobFile>(v.clone()) {
+            return Ok(v2.tx_hex);
+        }
         if let Some(s) = v.as_str() {
             return Ok(s.to_string());
         }

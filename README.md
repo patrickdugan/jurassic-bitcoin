@@ -266,6 +266,12 @@ $env:BITCOIND_RPC_PASS = "pass"
 cargo run -p jurassic-bitcoin-cli -- mint-p2sh-seam --out fixtures/blobs/p2sh-core-seam.json
 ```
 
+Then replay against the seam manifest:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_core_seam_poc.json --out-dir artifacts/p2sh-core-seam --limit-per-epoch 50 --force
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:
