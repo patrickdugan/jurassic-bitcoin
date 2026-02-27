@@ -157,10 +157,11 @@ fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
         let mut finddelete = analyze_findanddelete_hook(tc, &redeem_script, &pushes);
         if let Some(info) = &finddelete {
             trace.push(format!(
-                "{}:findanddelete:r{}:s{}",
+                "{}:findanddelete:r{}:s{}:tag{}",
                 ScriptPhase::RedeemScript.as_str(),
                 info.removed_total,
-                info.signature_count
+                info.signature_count,
+                &info.sighash_context_tag[..8]
             ));
         }
 
@@ -225,6 +226,9 @@ struct FindAndDeleteInfo {
     signature_count: usize,
     removed_total: usize,
     scriptcode_sha256_hex: String,
+    codeseparator_pos: i32,
+    sighash_type: u32,
+    sighash_context_tag: String,
 }
 
 fn analyze_findanddelete_hook(
@@ -251,10 +255,19 @@ fn analyze_findanddelete_hook(
         .collect();
     let (removed_total, scriptcode) = apply_find_and_delete(redeem_script, &sigs);
     let scriptcode_sha256_hex = hex::encode(Sha256::digest(&scriptcode));
+    let codeseparator_pos = parse_i32_metadata(tc, "codeseparator_pos").unwrap_or(-1);
+    let sighash_type = parse_u32_metadata(tc, "sighash_type").unwrap_or(1);
+    let mut tag_material = scriptcode.clone();
+    tag_material.extend_from_slice(&codeseparator_pos.to_le_bytes());
+    tag_material.extend_from_slice(&sighash_type.to_le_bytes());
+    let sighash_context_tag = hex::encode(Sha256::digest(&tag_material));
     Some(FindAndDeleteInfo {
         signature_count: sigs.len(),
         removed_total,
         scriptcode_sha256_hex,
+        codeseparator_pos,
+        sighash_type,
+        sighash_context_tag,
     })
 }
 
@@ -301,8 +314,37 @@ fn with_findanddelete_details(
             "findanddelete_scriptcode_sha256".to_string(),
             info.scriptcode_sha256_hex,
         );
+        result.details.insert(
+            "findanddelete_codeseparator_pos".to_string(),
+            info.codeseparator_pos.to_string(),
+        );
+        result.details.insert(
+            "findanddelete_sighash_type".to_string(),
+            info.sighash_type.to_string(),
+        );
+        result
+            .details
+            .insert("sighash_context_tag".to_string(), info.sighash_context_tag);
     }
     result
+}
+
+fn parse_i32_metadata(tc: &TestCase, key: &str) -> Option<i32> {
+    let raw = tc.metadata.get(key)?;
+    raw.parse::<i32>().ok()
+}
+
+fn parse_u32_metadata(tc: &TestCase, key: &str) -> Option<u32> {
+    let raw = tc.metadata.get(key)?;
+    if let Some(hex) = raw.strip_prefix("0x").or_else(|| raw.strip_prefix("0X")) {
+        return u32::from_str_radix(hex, 16).ok();
+    }
+    if raw.len() == 2 {
+        if let Ok(v) = u32::from_str_radix(raw, 16) {
+            return Some(v);
+        }
+    }
+    raw.parse::<u32>().ok()
 }
 
 fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
@@ -1129,5 +1171,51 @@ mod tests {
         let (removed, scriptcode) = apply_find_and_delete(&redeem_script, &sigs);
         assert_eq!(removed, 3);
         assert_eq!(hex::encode(scriptcode), "01010152ae");
+    }
+
+    #[test]
+    fn findanddelete_sighash_context_tag_changes_by_subset() {
+        let base = "01000000011111111111111111111111111111111111111111111111111111111111111111000000000d01aa01bb0801aa01aa01bb52aeffffffff01102700000000000017a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a8700000000";
+        let subset = "01000000011111111111111111111111111111111111111111111111111111111111111111000000000b01aa0801aa01aa01bb52aeffffffff01102700000000000017a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a8700000000";
+        let mk = |id: &str, tx_hex: &str| TestCase {
+            id: id.to_string(),
+            description: id.to_string(),
+            network: "mainnet".to_string(),
+            utxo_set: Vec::new(),
+            tx_hex: tx_hex.to_string(),
+            flags: Vec::new(),
+            context: Some(ValidationContext {
+                height: 173_805,
+                median_time_past: None,
+                block_time: None,
+                epoch: Some("post-bip16-pre-bip34".to_string()),
+            }),
+            core_template: Some(CoreTemplate {
+                kind: "testmempoolaccept_tx_hex".to_string(),
+                spend_type: "p2sh".to_string(),
+                feerate_sats_vb: None,
+            }),
+            metadata: BTreeMap::from([
+                ("checksighook".to_string(), "false".to_string()),
+                ("findanddelete_hook".to_string(), "true".to_string()),
+                (
+                    "script_pubkey_hex".to_string(),
+                    "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87".to_string(),
+                ),
+            ]),
+        };
+        let a = run_testcase_rust(&mk("a", base));
+        let b = run_testcase_rust(&mk("b", subset));
+        let ta = a
+            .details
+            .get("sighash_context_tag")
+            .cloned()
+            .expect("tag a");
+        let tb = b
+            .details
+            .get("sighash_context_tag")
+            .cloned()
+            .expect("tag b");
+        assert_ne!(ta, tb);
     }
 }

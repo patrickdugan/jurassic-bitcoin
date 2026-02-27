@@ -1485,6 +1485,8 @@ struct EpochCompareRow {
     reasons_only_in_epoch: Vec<String>,
     mutations_only_in_epoch: Vec<String>,
     unique_specimen_count: usize,
+    sighash_context_tag_count: usize,
+    sighash_context_tags_only_in_epoch: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1506,6 +1508,7 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
     let mut reason_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let mut mutation_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let mut specimen_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut sighash_tag_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let mut rows = Vec::new();
 
     for (epoch, epoch_dir) in &epoch_dirs {
@@ -1530,6 +1533,7 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
         let mut reasons = BTreeSet::new();
         let mut mutations = BTreeSet::new();
         let mut specimen_ids = BTreeSet::new();
+        let mut sighash_tags = BTreeSet::new();
         for event_path in files {
             let bytes = match fs::read(&event_path) {
                 Ok(v) => v,
@@ -1544,6 +1548,11 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
             }
             for m in &event.mutations_applied {
                 mutations.insert(m.clone());
+            }
+            if let Some(tag) = event.rust.details.get("sighash_context_tag") {
+                if !tag.is_empty() {
+                    sighash_tags.insert(tag.clone());
+                }
             }
             let testcase_path = event_path
                 .parent()
@@ -1560,6 +1569,7 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
         reason_sets.insert(epoch.clone(), reasons);
         mutation_sets.insert(epoch.clone(), mutations);
         specimen_sets.insert(epoch.clone(), specimen_ids);
+        sighash_tag_sets.insert(epoch.clone(), sighash_tags);
 
         let top_mutations = top_reasons(summary.mutation_histogram, 5);
         rows.push(EpochCompareRow {
@@ -1570,6 +1580,8 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
             reasons_only_in_epoch: Vec::new(),
             mutations_only_in_epoch: Vec::new(),
             unique_specimen_count: 0,
+            sighash_context_tag_count: 0,
+            sighash_context_tags_only_in_epoch: Vec::new(),
         });
     }
 
@@ -1600,6 +1612,16 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
                     .any(|(_, set)| set.contains(id))
             })
             .collect::<Vec<_>>();
+        let own_tags = sighash_tag_sets
+            .get(&row.epoch)
+            .cloned()
+            .unwrap_or_default();
+        let mut other_tags = BTreeSet::new();
+        for (epoch, set) in &sighash_tag_sets {
+            if *epoch != row.epoch {
+                other_tags.extend(set.iter().cloned());
+            }
+        }
 
         row.reasons_only_in_epoch = own_reasons
             .difference(&other_reasons)
@@ -1612,6 +1634,12 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
             .collect::<Vec<_>>();
         row.mutations_only_in_epoch.sort();
         row.unique_specimen_count = unique_specimens.len();
+        row.sighash_context_tag_count = own_tags.len();
+        row.sighash_context_tags_only_in_epoch = own_tags
+            .difference(&other_tags)
+            .cloned()
+            .collect::<Vec<_>>();
+        row.sighash_context_tags_only_in_epoch.sort();
     }
 
     rows.sort_by(|a, b| a.epoch.cmp(&b.epoch));
@@ -1703,6 +1731,18 @@ fn print_compare_table(root: &Path, c: &CompareOutput) {
             }
         );
         println!("  unique_specimen_count={}", row.unique_specimen_count);
+        println!(
+            "  sighash_context_tag_count={}",
+            row.sighash_context_tag_count
+        );
+        println!(
+            "  sighash_context_tags_only_in_epoch={}",
+            if row.sighash_context_tags_only_in_epoch.is_empty() {
+                "<none>".to_string()
+            } else {
+                row.sighash_context_tags_only_in_epoch.join(", ")
+            }
+        );
     }
 }
 
@@ -1724,6 +1764,7 @@ struct MuseumSpecimen {
     core_reason: Option<String>,
     rust_reason: Option<String>,
     script_trace: Option<String>,
+    sighash_context_tag: Option<String>,
     mutations_applied: Vec<String>,
     label: Option<String>,
     event_path: String,
@@ -1879,6 +1920,7 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             .or_insert(0) += 1;
 
         let script_trace = event.rust.details.get("script_trace").cloned();
+        let sighash_context_tag = event.rust.details.get("sighash_context_tag").cloned();
         specimens.push(MuseumSpecimen {
             specimen_id: specimen_id.clone(),
             testcase_id: event.testcase_id.clone(),
@@ -1887,6 +1929,7 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             core_reason: event.core_reason.clone(),
             rust_reason: event.rust_reason.clone(),
             script_trace,
+            sighash_context_tag,
             mutations_applied: event.mutations_applied.clone(),
             label: labels.get(&specimen_id).cloned(),
             event_path: event_path.display().to_string(),
@@ -2061,6 +2104,13 @@ fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggesti
             "CHECKMULTISIG_FINDANDDELETE",
             "high",
             "reason/trace contains findanddelete hook marker",
+        ));
+    }
+    if specimen.sighash_context_tag.is_some() {
+        return Some(choose(
+            "SCRIPT_CODE_MUTATION",
+            "medium",
+            "specimen includes derived sighash context tag from mutated scriptCode",
         ));
     }
     if reason_joined.contains("checksighook") {

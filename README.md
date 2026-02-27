@@ -290,6 +290,14 @@ cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/p2sh-findanddelet
 cargo run -p jurassic-bitcoin-cli -- museum --in artifacts/p2sh-findanddelete-hook --out artifacts/p2sh-findanddelete-hook-museum
 ```
 
+FindAndDelete subset variation seam (compare derived `sighash_context_tag` values):
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_findanddelete_subsets_poc.json --out-dir artifacts/p2sh-findanddelete-subsets --limit-per-epoch 50 --force
+cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/p2sh-findanddelete-subsets --compare --json
+cargo run -p jurassic-bitcoin-cli -- suggest-labels --in artifacts/p2sh-findanddelete-subsets --out artifacts/p2sh-findanddelete-subsets/suggestions.json
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

@@ -1,0 +1,73 @@
+{
+  "name": "p2sh_findanddelete_subsets_poc",
+  "windows": [
+    {
+      "name": "findanddelete-subset-aabb-h173805",
+      "start_height": 173805,
+      "end_height": 173805,
+      "representative_heights": [173805],
+      "epoch": "post-bip16-pre-bip34"
+    },
+    {
+      "name": "findanddelete-subset-aa-h173805",
+      "start_height": 173805,
+      "end_height": 173805,
+      "representative_heights": [173805],
+      "epoch": "post-bip16-pre-bip34"
+    },
+    {
+      "name": "findanddelete-subset-aaaa-h173805",
+      "start_height": 173805,
+      "end_height": 173805,
+      "representative_heights": [173805],
+      "epoch": "post-bip16-pre-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "findanddelete_subset_aabb",
+      "description": "Subset [aa,bb] removal pattern",
+      "window": "findanddelete-subset-aabb-h173805",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-hook.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "checkmultisig-findanddelete-subsets",
+        "findanddelete_hook": "true",
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "sighash_type": "0x01",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87"
+      }
+    },
+    {
+      "id": "findanddelete_subset_aa",
+      "description": "Subset [aa] removal pattern",
+      "window": "findanddelete-subset-aa-h173805",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-subset-aa.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "checkmultisig-findanddelete-subsets",
+        "findanddelete_hook": "true",
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "sighash_type": "0x01",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87"
+      }
+    },
+    {
+      "id": "findanddelete_subset_aaaa",
+      "description": "Subset [aa,aa] removal multiplicity pattern",
+      "window": "findanddelete-subset-aaaa-h173805",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-subset-aa-aa.json",
+      "spend_type": "p2sh",
+      "metadata": {
+        "quirk_target": "checkmultisig-findanddelete-subsets",
+        "findanddelete_hook": "true",
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "sighash_type": "0x01",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87"
+      }
+    }
+  ]
+}
