@@ -155,7 +155,7 @@ fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
             );
         }
 
-        let mut finddelete = analyze_findanddelete_hook(tc, &redeem_script, &pushes);
+        let mut finddelete = analyze_findanddelete_hook(tc, &tx, &redeem_script, &pushes);
         if let Some(info) = &finddelete {
             trace.push(format!(
                 "{}:findanddelete:r{}:s{}:tag{}",
@@ -230,10 +230,13 @@ struct FindAndDeleteInfo {
     codeseparator_pos: i32,
     sighash_type: u32,
     sighash_context_tag: String,
+    sighash_digest_hex: String,
+    sighash_single_bug: bool,
 }
 
 fn analyze_findanddelete_hook(
     tc: &TestCase,
+    tx: &Transaction,
     redeem_script: &[u8],
     pushes: &[Vec<u8>],
 ) -> Option<FindAndDeleteInfo> {
@@ -258,10 +261,13 @@ fn analyze_findanddelete_hook(
     let scriptcode_sha256_hex = hex::encode(Sha256::digest(&scriptcode));
     let codeseparator_pos = parse_i32_metadata(tc, "codeseparator_pos").unwrap_or(-1);
     let sighash_type = parse_u32_metadata(tc, "sighash_type").unwrap_or(1);
+    let scriptcode_for_sighash = apply_modeled_codeseparator(&scriptcode, codeseparator_pos);
     let mut tag_material = scriptcode.clone();
     tag_material.extend_from_slice(&codeseparator_pos.to_le_bytes());
     tag_material.extend_from_slice(&sighash_type.to_le_bytes());
     let sighash_context_tag = hex::encode(Sha256::digest(&tag_material));
+    let input_index = parse_u32_metadata(tc, "input_index").unwrap_or(0) as usize;
+    let legacy = compute_legacy_sighash(tx, input_index, &scriptcode_for_sighash, sighash_type).ok()?;
     Some(FindAndDeleteInfo {
         signature_count: sigs.len(),
         removed_total,
@@ -269,6 +275,8 @@ fn analyze_findanddelete_hook(
         codeseparator_pos,
         sighash_type,
         sighash_context_tag,
+        sighash_digest_hex: hex::encode(legacy.digest_bytes),
+        sighash_single_bug: legacy.single_bug,
     })
 }
 
@@ -293,6 +301,17 @@ fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
         return None;
     }
     haystack.windows(needle.len()).position(|w| w == needle)
+}
+
+fn apply_modeled_codeseparator(scriptcode: &[u8], codeseparator_pos: i32) -> Vec<u8> {
+    if codeseparator_pos < 0 {
+        return scriptcode.to_vec();
+    }
+    let pos = codeseparator_pos as usize;
+    if pos + 1 >= scriptcode.len() {
+        return Vec::new();
+    }
+    scriptcode[pos + 1..].to_vec()
 }
 
 fn with_findanddelete_details(
@@ -326,6 +345,14 @@ fn with_findanddelete_details(
         result
             .details
             .insert("sighash_context_tag".to_string(), info.sighash_context_tag);
+        result.details.insert(
+            "sighash_digest_hex".to_string(),
+            info.sighash_digest_hex,
+        );
+        result.details.insert(
+            "sighash_single_bug".to_string(),
+            info.sighash_single_bug.to_string(),
+        );
     }
     result
 }

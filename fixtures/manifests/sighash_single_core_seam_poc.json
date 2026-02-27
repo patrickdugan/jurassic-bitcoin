@@ -6,7 +6,7 @@
       "metadata": {
         "input_index": "1",
         "quirk_target": "sighash-single-degeneracy",
-        "script_code_hex": "76a914d90a022e2cd5950d8a1e8c93f8550f3165ec1a0988ac",
+        "script_code_hex": "76a914c69cf1df7d0e48eac29662431c23b474f5a13d5f88ac",
         "sighash_type": "0x03"
       },
       "spend_type": "legacy_sighash",
@@ -20,7 +20,7 @@
       "metadata": {
         "input_index": "1",
         "quirk_target": "sighash-single-degeneracy",
-        "script_code_hex": "76a914d90a022e2cd5950d8a1e8c93f8550f3165ec1a0988ac",
+        "script_code_hex": "76a914c69cf1df7d0e48eac29662431c23b474f5a13d5f88ac",
         "sighash_type": "0x83"
       },
       "spend_type": "legacy_sighash",
@@ -34,13 +34,27 @@
       "metadata": {
         "input_index": "1",
         "quirk_target": "sighash-single-degeneracy",
-        "script_code_hex": "76a914d90a022e2cd5950d8a1e8c93f8550f3165ec1a0988ac",
+        "script_code_hex": "76a914c69cf1df7d0e48eac29662431c23b474f5a13d5f88ac",
         "sighash_type": "0x03"
       },
       "spend_type": "legacy_sighash",
       "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
       "tx_hex_field": "single_control_tx_hex",
       "window": "sighash-single-control-h300000"
+    },
+    {
+      "description": "Two-input two-output SINGLE|ANYONECANPAY control specimen",
+      "id": "sighash_single_control_anyonecanpay",
+      "metadata": {
+        "input_index": "1",
+        "quirk_target": "sighash-single-degeneracy",
+        "script_code_hex": "76a914c69cf1df7d0e48eac29662431c23b474f5a13d5f88ac",
+        "sighash_type": "0x83"
+      },
+      "spend_type": "legacy_sighash",
+      "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+      "tx_hex_field": "single_control_anyonecanpay_tx_hex",
+      "window": "sighash-single-control-acp-h300000"
     }
   ],
   "name": "sighash_single_core_seam_poc",
@@ -67,6 +81,15 @@
       "end_height": 300000,
       "epoch": "post-bip34",
       "name": "sighash-single-control-h300000",
+      "representative_heights": [
+        300000
+      ],
+      "start_height": 300000
+    },
+    {
+      "end_height": 300000,
+      "epoch": "post-bip34",
+      "name": "sighash-single-control-acp-h300000",
       "representative_heights": [
         300000
       ],

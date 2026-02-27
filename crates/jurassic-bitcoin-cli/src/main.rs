@@ -357,9 +357,11 @@ struct SighashSingleSeamFixture {
     single_bug_tx_hex: String,
     single_bug_anyonecanpay_tx_hex: String,
     single_control_tx_hex: String,
+    single_control_anyonecanpay_tx_hex: String,
     single_bug_core: SeamAccept,
     single_bug_anyonecanpay_core: SeamAccept,
     single_control_core: SeamAccept,
+    single_control_anyonecanpay_core: SeamAccept,
 }
 
 fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
@@ -845,11 +847,14 @@ fn mint_sighash_single_seam(out_path: &Path) -> Result<()> {
             LegacyTxOutputRef::new(1_000, &script_code),
         ],
     )?;
+    let single_control_anyonecanpay_tx_hex = single_control_tx_hex.clone();
 
     let single_bug_core = testmempoolaccept_once(&rpc, &single_bug_tx_hex)?;
     let single_bug_anyonecanpay_core =
         testmempoolaccept_once(&rpc, &single_bug_anyonecanpay_tx_hex)?;
     let single_control_core = testmempoolaccept_once(&rpc, &single_control_tx_hex)?;
+    let single_control_anyonecanpay_core =
+        testmempoolaccept_once(&rpc, &single_control_anyonecanpay_tx_hex)?;
 
     let fixture = SighashSingleSeamFixture {
         name: "sighash_single_core_seam".to_string(),
@@ -863,9 +868,11 @@ fn mint_sighash_single_seam(out_path: &Path) -> Result<()> {
         single_bug_tx_hex,
         single_bug_anyonecanpay_tx_hex,
         single_control_tx_hex,
+        single_control_anyonecanpay_tx_hex,
         single_bug_core,
         single_bug_anyonecanpay_core,
         single_control_core,
+        single_control_anyonecanpay_core,
     };
     if let Some(parent) = out_path.parent() {
         fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
@@ -1187,6 +1194,13 @@ fn write_sighash_single_manifest(path: &Path, script_code_hex: &str) -> Result<(
           "end_height": 300000,
           "representative_heights": [300000],
           "epoch": "post-bip34"
+        },
+        {
+          "name": "sighash-single-control-acp-h300000",
+          "start_height": 300000,
+          "end_height": 300000,
+          "representative_heights": [300000],
+          "epoch": "post-bip34"
         }
       ],
       "fixtures": [
@@ -1229,6 +1243,20 @@ fn write_sighash_single_manifest(path: &Path, script_code_hex: &str) -> Result<(
             "quirk_target": "sighash-single-degeneracy",
             "input_index": "1",
             "sighash_type": "0x03",
+            "script_code_hex": script_code_hex
+          }
+        },
+        {
+          "id": "sighash_single_control_anyonecanpay",
+          "description": "Two-input two-output SINGLE|ANYONECANPAY control specimen",
+          "window": "sighash-single-control-acp-h300000",
+          "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+          "tx_hex_field": "single_control_anyonecanpay_tx_hex",
+          "spend_type": "legacy_sighash",
+          "metadata": {
+            "quirk_target": "sighash-single-degeneracy",
+            "input_index": "1",
+            "sighash_type": "0x83",
             "script_code_hex": script_code_hex
           }
         }
@@ -2623,6 +2651,7 @@ struct MuseumSpecimen {
     script_trace: Option<String>,
     sighash_context_tag: Option<String>,
     sighash_digest_hex: Option<String>,
+    sighash_type: Option<String>,
     sighash_single_bug: Option<String>,
     mutations_applied: Vec<String>,
     label: Option<String>,
@@ -2806,6 +2835,12 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
         let script_trace = event.rust.details.get("script_trace").cloned();
         let sighash_context_tag = event.rust.details.get("sighash_context_tag").cloned();
         let sighash_digest_hex = event.rust.details.get("sighash_digest_hex").cloned();
+        let sighash_type = event
+            .rust
+            .details
+            .get("sighash_type")
+            .cloned()
+            .or_else(|| event.rust.details.get("findanddelete_sighash_type").cloned());
         let sighash_single_bug = event.rust.details.get("sighash_single_bug").cloned();
         specimens.push(MuseumSpecimen {
             specimen_id: specimen_id.clone(),
@@ -2824,6 +2859,7 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             script_trace,
             sighash_context_tag,
             sighash_digest_hex,
+            sighash_type,
             sighash_single_bug,
             mutations_applied: event.mutations_applied.clone(),
             label: labels.get(&specimen_id).cloned(),
@@ -3016,6 +3052,19 @@ fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggesti
             "specimen records the legacy SIGHASH_SINGLE bug path",
         ));
     }
+    if specimen
+        .sighash_type
+        .as_deref()
+        .and_then(parse_sighash_type_label)
+        .map(|v| (v & 0x80) != 0)
+        .unwrap_or(false)
+    {
+        return Some(choose(
+            "ANYONECANPAY_AXIS",
+            "medium",
+            "sighash type includes the ANYONECANPAY bit",
+        ));
+    }
     if specimen.sighash_digest_hex.is_some() {
         return None;
     }
@@ -3078,6 +3127,13 @@ fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggesti
         ));
     }
     None
+}
+
+fn parse_sighash_type_label(raw: &str) -> Option<u32> {
+    if let Some(hex) = raw.strip_prefix("0x").or_else(|| raw.strip_prefix("0X")) {
+        return u32::from_str_radix(hex, 16).ok();
+    }
+    raw.parse::<u32>().ok()
 }
 
 fn museum_html_template() -> &'static str {
