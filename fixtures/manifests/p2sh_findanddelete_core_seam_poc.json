@@ -1,0 +1,82 @@
+{
+  "fixtures": [
+    {
+      "description": "Regtest-funded subset [aa,bb] specimen",
+      "id": "findanddelete_core_aabb",
+      "metadata": {
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "findanddelete_hook": "true",
+        "quirk_target": "checkmultisig-findanddelete-core",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87",
+        "sighash_type": "0x01"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+      "tx_hex_field": "subset_aabb_tx_hex",
+      "window": "findanddelete-core-aabb-h173805"
+    },
+    {
+      "description": "Regtest-funded subset [aa] specimen",
+      "id": "findanddelete_core_aa",
+      "metadata": {
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "findanddelete_hook": "true",
+        "quirk_target": "checkmultisig-findanddelete-core",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87",
+        "sighash_type": "0x01"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+      "tx_hex_field": "subset_aa_tx_hex",
+      "window": "findanddelete-core-aa-h173805"
+    },
+    {
+      "description": "Regtest-funded subset [aa,aa] specimen",
+      "id": "findanddelete_core_aaaa",
+      "metadata": {
+        "checksighook": "false",
+        "codeseparator_pos": "-1",
+        "findanddelete_hook": "true",
+        "quirk_target": "checkmultisig-findanddelete-core",
+        "script_pubkey_hex": "a91425f71fe2e821d78bfcae8f031eb893fd5eb2177a87",
+        "sighash_type": "0x01"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+      "tx_hex_field": "subset_aaaa_tx_hex",
+      "window": "findanddelete-core-aaaa-h173805"
+    }
+  ],
+  "name": "p2sh_findanddelete_core_seam_poc",
+  "windows": [
+    {
+      "end_height": 173805,
+      "epoch": "post-bip16-pre-bip34",
+      "name": "findanddelete-core-aabb-h173805",
+      "representative_heights": [
+        173805
+      ],
+      "start_height": 173805
+    },
+    {
+      "end_height": 173805,
+      "epoch": "post-bip16-pre-bip34",
+      "name": "findanddelete-core-aa-h173805",
+      "representative_heights": [
+        173805
+      ],
+      "start_height": 173805
+    },
+    {
+      "end_height": 173805,
+      "epoch": "post-bip16-pre-bip34",
+      "name": "findanddelete-core-aaaa-h173805",
+      "representative_heights": [
+        173805
+      ],
+      "start_height": 173805
+    }
+  ]
+}

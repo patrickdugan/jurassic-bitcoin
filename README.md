@@ -302,6 +302,16 @@ If `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASS` are set, rep
 the same specimens with live Core policy results so the museum shows both script-context
 divergence and current relay policy outcome.
 
+Regtest-funded FindAndDelete seam (real prevout for policy-specific Core reasons):
+
+```powershell
+$env:BITCOIND_RPC_URL  = "http://127.0.0.1:18443"
+$env:BITCOIND_RPC_USER = "user"
+$env:BITCOIND_RPC_PASS = "pass"
+cargo run -p jurassic-bitcoin-cli -- mint-findanddelete-seam --out fixtures/blobs/p2sh-findanddelete-core-seam.json
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_findanddelete_core_seam_poc.json --out-dir artifacts/p2sh-findanddelete-core-seam --limit-per-epoch 50 --force
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

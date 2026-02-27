@@ -142,6 +142,10 @@ enum Command {
         #[arg(long, default_value = "fixtures/blobs/p2wpkh-core-seam.json")]
         out: PathBuf,
     },
+    MintFindanddeleteSeam {
+        #[arg(long, default_value = "fixtures/blobs/p2sh-findanddelete-core-seam.json")]
+        out: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -203,6 +207,7 @@ fn main() -> Result<()> {
         ),
         Command::MintP2shSeam { out } => mint_p2sh_seam(&out),
         Command::MintP2wpkhSeam { out } => mint_p2wpkh_seam(&out),
+        Command::MintFindanddeleteSeam { out } => mint_findanddelete_seam(&out),
     }
 }
 
@@ -316,6 +321,22 @@ struct P2wpkhSeamFixture {
     good_core: SeamAccept,
     bad_witness_shape_core: SeamAccept,
     bad_program_mismatch_core: SeamAccept,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct FindAndDeleteCoreSeamFixture {
+    name: String,
+    network: String,
+    redeem_script_hex: String,
+    funding_outpoint: String,
+    context_heights: Vec<u32>,
+    script_pubkey_hex: String,
+    subset_aabb_tx_hex: String,
+    subset_aa_tx_hex: String,
+    subset_aaaa_tx_hex: String,
+    subset_aabb_core: SeamAccept,
+    subset_aa_core: SeamAccept,
+    subset_aaaa_core: SeamAccept,
 }
 
 fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
@@ -530,6 +551,152 @@ fn mint_p2wpkh_seam(out_path: &Path) -> Result<()> {
     Ok(())
 }
 
+fn mint_findanddelete_seam(out_path: &Path) -> Result<()> {
+    let report = doctor_report().map_err(|e| {
+        anyhow!(
+            "doctor failed: {e:#}\nSet BITCOIND_RPC_URL/USER/PASS and start regtest bitcoind first."
+        )
+    })?;
+    if report.chain != "regtest" {
+        return Err(anyhow!(
+            "mint-findanddelete-seam requires regtest, got {}",
+            report.chain
+        ));
+    }
+
+    let rpc = SimpleRpc::from_env()?;
+    ensure_wallet_loaded_simple(&rpc, "jb_harness")?;
+    let wallet = rpc.for_wallet("jb_harness");
+
+    let mine_addr = wallet.call("getnewaddress", json!(["jb_fd_mining", "bech32"]))?;
+    let mine_addr = mine_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing mining addr"))?
+        .to_string();
+    let block_count = rpc.call("getblockcount", json!([]))?.as_u64().unwrap_or(0);
+    if block_count < 101 {
+        wallet.call("generatetoaddress", json!([101 - block_count, mine_addr]))?;
+    }
+
+    let redeem_script_hex = "01aa01aa01bb52ae".to_string();
+    let decoded = rpc.call("decodescript", json!([redeem_script_hex.clone()]))?;
+    let p2sh_addr = decoded["p2sh"]
+        .as_str()
+        .ok_or_else(|| anyhow!("decodescript missing p2sh address"))?
+        .to_string();
+    let p2sh_spk = format!("a914{}87", hex::encode(hash160_cli(&hex::decode(&redeem_script_hex)?)));
+
+    let funding_txid = wallet.call("sendtoaddress", json!([p2sh_addr, 1.0]))?;
+    let funding_txid = funding_txid
+        .as_str()
+        .ok_or_else(|| anyhow!("sendtoaddress missing txid"))?
+        .to_string();
+
+    let mining_addr = wallet.call("getnewaddress", json!(["jb_fd_confirm", "bech32"]))?;
+    let mining_addr = mining_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing confirm addr"))?
+        .to_string();
+    wallet.call("generatetoaddress", json!([1, mining_addr]))?;
+
+    let tx = wallet.call("gettransaction", json!([funding_txid, true, true]))?;
+    let funding_hex = tx["hex"]
+        .as_str()
+        .ok_or_else(|| anyhow!("gettransaction missing hex"))?
+        .to_string();
+    let decoded_funding = rpc.call("decoderawtransaction", json!([funding_hex]))?;
+    let vouts = decoded_funding["vout"]
+        .as_array()
+        .ok_or_else(|| anyhow!("decoderawtransaction missing vout"))?;
+    let mut funding_vout = None::<u32>;
+    let mut funding_sats = None::<u64>;
+    for v in vouts {
+        let spk_hex = v["scriptPubKey"]["hex"].as_str().unwrap_or_default();
+        if spk_hex == p2sh_spk {
+            funding_vout = v["n"].as_u64().map(|n| n as u32);
+            funding_sats = v["value"]
+                .as_f64()
+                .map(|btc| (btc * 100_000_000.0).round() as u64);
+            break;
+        }
+    }
+    let funding_vout =
+        funding_vout.ok_or_else(|| anyhow!("could not locate findanddelete funding output"))?;
+    let funding_sats =
+        funding_sats.ok_or_else(|| anyhow!("missing findanddelete funding output value"))?;
+    if funding_sats <= 1_000 {
+        return Err(anyhow!("funding output too small"));
+    }
+
+    let sink_addr = wallet.call("getnewaddress", json!(["jb_fd_sink", "bech32"]))?;
+    let sink_addr = sink_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing sink addr"))?
+        .to_string();
+    let sink_info = wallet.call("getaddressinfo", json!([sink_addr]))?;
+    let sink_spk = sink_info["scriptPubKey"]
+        .as_str()
+        .ok_or_else(|| anyhow!("getaddressinfo missing scriptPubKey"))?;
+    let sink_spk = hex::decode(sink_spk).context("decode sink scriptPubKey hex")?;
+    let spend_sats = funding_sats - 1_000;
+
+    let redeem_script = hex::decode(&redeem_script_hex).context("decode redeem script")?;
+    let subset_aabb_sig = build_push_only_scriptsig(&[&[0xaa], &[0xbb]], &redeem_script)?;
+    let subset_aa_sig = build_push_only_scriptsig(&[&[0xaa]], &redeem_script)?;
+    let subset_aaaa_sig = build_push_only_scriptsig(&[&[0xaa], &[0xaa]], &redeem_script)?;
+
+    let subset_aabb_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &subset_aabb_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+    let subset_aa_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &subset_aa_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+    let subset_aaaa_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &subset_aaaa_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+
+    let subset_aabb_core = testmempoolaccept_once(&rpc, &subset_aabb_tx_hex)?;
+    let subset_aa_core = testmempoolaccept_once(&rpc, &subset_aa_tx_hex)?;
+    let subset_aaaa_core = testmempoolaccept_once(&rpc, &subset_aaaa_tx_hex)?;
+
+    let fixture = FindAndDeleteCoreSeamFixture {
+        name: "p2sh_findanddelete_core_seam".to_string(),
+        network: "regtest".to_string(),
+        redeem_script_hex,
+        funding_outpoint: format!("{}:{}", funding_txid, funding_vout),
+        context_heights: vec![173_805],
+        script_pubkey_hex: p2sh_spk.clone(),
+        subset_aabb_tx_hex,
+        subset_aa_tx_hex,
+        subset_aaaa_tx_hex,
+        subset_aabb_core,
+        subset_aa_core,
+        subset_aaaa_core,
+    };
+    if let Some(parent) = out_path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(out_path, serde_json::to_vec_pretty(&fixture)?)
+        .with_context(|| format!("writing {}", out_path.display()))?;
+    let manifest_path = PathBuf::from("fixtures/manifests/p2sh_findanddelete_core_seam_poc.json");
+    write_findanddelete_core_manifest(&manifest_path, &p2sh_spk)?;
+    println!("minted findanddelete core seam fixture -> {}", out_path.display());
+    println!("minted findanddelete core seam manifest -> {}", manifest_path.display());
+    Ok(())
+}
+
 fn write_p2wpkh_seam_manifest(path: &Path, script_pubkey_hex: &str) -> Result<()> {
     let manifest = json!({
       "name": "p2wpkh_core_seam_poc",
@@ -586,6 +753,91 @@ fn write_p2wpkh_seam_manifest(path: &Path, script_pubkey_hex: &str) -> Result<()
           "metadata": {
             "quirk_target": "segwit-shape-seam",
             "checksighook": "true",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        }
+      ]
+    });
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(path, serde_json::to_vec_pretty(&manifest)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(())
+}
+
+fn write_findanddelete_core_manifest(path: &Path, script_pubkey_hex: &str) -> Result<()> {
+    let manifest = json!({
+      "name": "p2sh_findanddelete_core_seam_poc",
+      "windows": [
+        {
+          "name": "findanddelete-core-aabb-h173805",
+          "start_height": 173805,
+          "end_height": 173805,
+          "representative_heights": [173805],
+          "epoch": "post-bip16-pre-bip34"
+        },
+        {
+          "name": "findanddelete-core-aa-h173805",
+          "start_height": 173805,
+          "end_height": 173805,
+          "representative_heights": [173805],
+          "epoch": "post-bip16-pre-bip34"
+        },
+        {
+          "name": "findanddelete-core-aaaa-h173805",
+          "start_height": 173805,
+          "end_height": 173805,
+          "representative_heights": [173805],
+          "epoch": "post-bip16-pre-bip34"
+        }
+      ],
+      "fixtures": [
+        {
+          "id": "findanddelete_core_aabb",
+          "description": "Regtest-funded subset [aa,bb] specimen",
+          "window": "findanddelete-core-aabb-h173805",
+          "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+          "tx_hex_field": "subset_aabb_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "checkmultisig-findanddelete-core",
+            "findanddelete_hook": "true",
+            "checksighook": "false",
+            "codeseparator_pos": "-1",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "findanddelete_core_aa",
+          "description": "Regtest-funded subset [aa] specimen",
+          "window": "findanddelete-core-aa-h173805",
+          "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+          "tx_hex_field": "subset_aa_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "checkmultisig-findanddelete-core",
+            "findanddelete_hook": "true",
+            "checksighook": "false",
+            "codeseparator_pos": "-1",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "findanddelete_core_aaaa",
+          "description": "Regtest-funded subset [aa,aa] specimen",
+          "window": "findanddelete-core-aaaa-h173805",
+          "tx_hex_blob": "../blobs/p2sh-findanddelete-core-seam.json",
+          "tx_hex_field": "subset_aaaa_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "checkmultisig-findanddelete-core",
+            "findanddelete_hook": "true",
+            "checksighook": "false",
+            "codeseparator_pos": "-1",
+            "sighash_type": "0x01",
             "script_pubkey_hex": script_pubkey_hex
           }
         }
@@ -1139,6 +1391,37 @@ fn build_legacy_tx(
     out.extend_from_slice(output_spk);
     out.extend_from_slice(&0u32.to_le_bytes()); // locktime
     Ok(hex::encode(out))
+}
+
+fn build_push_only_scriptsig(pushes: &[&[u8]], redeem_script: &[u8]) -> Result<Vec<u8>> {
+    let mut out = Vec::new();
+    for push in pushes {
+        append_pushdata(&mut out, push)?;
+    }
+    append_pushdata(&mut out, redeem_script)?;
+    Ok(out)
+}
+
+fn append_pushdata(out: &mut Vec<u8>, data: &[u8]) -> Result<()> {
+    match data.len() {
+        0 => out.push(0x00),
+        1..=75 => {
+            out.push(data.len() as u8);
+            out.extend_from_slice(data);
+        }
+        76..=0xff => {
+            out.push(0x4c);
+            out.push(data.len() as u8);
+            out.extend_from_slice(data);
+        }
+        0x100..=0xffff => {
+            out.push(0x4d);
+            out.extend_from_slice(&(data.len() as u16).to_le_bytes());
+            out.extend_from_slice(data);
+        }
+        _ => return Err(anyhow!("pushdata too large")),
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone)]
@@ -2572,6 +2855,20 @@ mod tests {
                 assert!(out.ends_with("p2wpkh-core-seam.json"));
             }
             _ => panic!("expected mint-p2wpkh-seam"),
+        }
+
+        let mint_fd = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "mint-findanddelete-seam",
+            "--out",
+            "fixtures/blobs/p2sh-findanddelete-core-seam.json",
+        ])
+        .expect("parse mint-findanddelete-seam");
+        match mint_fd.cmd {
+            Command::MintFindanddeleteSeam { out } => {
+                assert!(out.ends_with("p2sh-findanddelete-core-seam.json"));
+            }
+            _ => panic!("expected mint-findanddelete-seam"),
         }
     }
 
