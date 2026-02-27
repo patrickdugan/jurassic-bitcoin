@@ -1,8 +1,8 @@
-use anyhow::{anyhow, Context, Result};
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use anyhow::{Context, Result, anyhow};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use jb_model::{CoreTemplate, ExecResult, TestCase};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
@@ -41,10 +41,10 @@ pub fn run_testcase_core(tc: &TestCase) -> ExecResult {
 pub fn doctor_report() -> Result<DoctorReport> {
     let rpc_url = env::var("BITCOIND_RPC_URL")
         .context("missing BITCOIND_RPC_URL (example: http://127.0.0.1:18443)")?;
-    let _rpc_user = env::var("BITCOIND_RPC_USER")
-        .context("missing BITCOIND_RPC_USER (set in your shell)")?;
-    let _rpc_pass = env::var("BITCOIND_RPC_PASS")
-        .context("missing BITCOIND_RPC_PASS (set in your shell)")?;
+    let _rpc_user =
+        env::var("BITCOIND_RPC_USER").context("missing BITCOIND_RPC_USER (set in your shell)")?;
+    let _rpc_pass =
+        env::var("BITCOIND_RPC_PASS").context("missing BITCOIND_RPC_PASS (set in your shell)")?;
 
     let rpc = RpcClient::from_env()?;
     let info = rpc
@@ -58,8 +58,9 @@ pub fn doctor_report() -> Result<DoctorReport> {
         return Err(anyhow!("wrong chain: expected regtest, got {chain}"));
     }
 
-    ensure_wallet_loaded(&rpc)
-        .map_err(|e| anyhow!("wallet {HARNESS_WALLET} unavailable and could not be created: {e:#}"))?;
+    ensure_wallet_loaded(&rpc).map_err(|e| {
+        anyhow!("wallet {HARNESS_WALLET} unavailable and could not be created: {e:#}")
+    })?;
 
     let state_path = resolve_state_path();
     let state = load_state(&state_path).ok();
@@ -81,7 +82,8 @@ pub fn doctor_report() -> Result<DoctorReport> {
         false
     };
 
-    let datadir = env::var("JB_BITCOIND_DATADIR").unwrap_or_else(|_| "D:\\bitcoin-regtest".to_string());
+    let datadir =
+        env::var("JB_BITCOIND_DATADIR").unwrap_or_else(|_| "D:\\bitcoin-regtest".to_string());
     let conf = format!("{datadir}\\bitcoin.conf");
     let suggested_start_command = format!(
         "bitcoind -datadir=\"{datadir}\" -conf=\"{conf}\" -regtest -server -prune=550 -txindex=0 -fallbackfee=0.0002 -rpcbind=127.0.0.1 -rpcallowip=127.0.0.1"
@@ -123,7 +125,9 @@ pub fn mint_seed_testcase(out_id: impl Into<String>) -> Result<TestCase> {
 
 fn stub_result(tc: &TestCase) -> ExecResult {
     let mut result = parse_only_result(tc);
-    result.details.insert("mode".to_string(), "stub".to_string());
+    result
+        .details
+        .insert("mode".to_string(), "stub".to_string());
     result.details.insert(
         "note".to_string(),
         "BITCOIND_RPC_* not set; running deterministic placeholder".to_string(),
@@ -190,11 +194,15 @@ fn run_decode_tx_hex(rpc: &RpcClient, tx_hex: &str, template: &CoreTemplate) -> 
     match rpc.call("decoderawtransaction", json!([tx_hex])) {
         Ok(decoded) => {
             let mut r = ExecResult::ok();
-            r.details.insert("mode".to_string(), "rpc-template".to_string());
-            r.details.insert("kind".to_string(), "decode_tx_hex".to_string());
-            r.details.insert("spend_type".to_string(), template.spend_type.clone());
+            r.details
+                .insert("mode".to_string(), "rpc-template".to_string());
+            r.details
+                .insert("kind".to_string(), "decode_tx_hex".to_string());
+            r.details
+                .insert("spend_type".to_string(), template.spend_type.clone());
             if let Some(txid) = decoded["txid"].as_str() {
-                r.details.insert("decoded_txid".to_string(), txid.to_string());
+                r.details
+                    .insert("decoded_txid".to_string(), txid.to_string());
             }
             Ok(r)
         }
@@ -319,7 +327,9 @@ fn build_signed_spend_harness_tx(state: &HarnessState, fee_sats: u64) -> Result<
         .as_str()
         .ok_or_else(|| anyhow!("signrawtransactionwithwallet missing hex"))?;
     if !signed["complete"].as_bool().unwrap_or(false) {
-        return Err(anyhow!("signrawtransactionwithwallet returned incomplete=false"));
+        return Err(anyhow!(
+            "signrawtransactionwithwallet returned incomplete=false"
+        ));
     }
     Ok(signed_hex.to_string())
 }
@@ -345,7 +355,10 @@ fn testmempoolaccept_result(
     details.insert("wallet".to_string(), HARNESS_WALLET.to_string());
     details.insert("chain".to_string(), state.chain.clone());
     details.insert("spend_type".to_string(), spend_type.to_string());
-    details.insert("state_path".to_string(), state.state_path.display().to_string());
+    details.insert(
+        "state_path".to_string(),
+        state.state_path.display().to_string(),
+    );
     details.insert(
         "funding_outpoint".to_string(),
         format!("{}:{}", state.funding.txid, state.funding.vout),
@@ -439,7 +452,8 @@ fn ensure_harness_state(rpc: &RpcClient) -> Result<HarnessState> {
             .ok_or_else(|| anyhow!("could not find receive entry for funding tx"))?;
         let vout = entry["vout"]
             .as_u64()
-            .ok_or_else(|| anyhow!("funding receive entry missing vout"))? as u32;
+            .ok_or_else(|| anyhow!("funding receive entry missing vout"))?
+            as u32;
         let amount_btc = entry["amount"]
             .as_f64()
             .ok_or_else(|| anyhow!("funding receive entry missing amount"))?;
@@ -549,7 +563,10 @@ impl RpcClient {
             "method": method,
             "params": params,
         });
-        let auth = format!("Basic {}", STANDARD.encode(format!("{}:{}", self.user, self.pass)));
+        let auth = format!(
+            "Basic {}",
+            STANDARD.encode(format!("{}:{}", self.user, self.pass))
+        );
         let response: RpcResponse = ureq::post(&self.url)
             .set("content-type", "text/plain")
             .set("authorization", &auth)
@@ -629,12 +646,17 @@ fn lock_other_unspents(wallet: &RpcClient, funding: &FundingOutpoint) -> Result<
         to_lock.push(json!({ "txid": txid, "vout": vout }));
     }
 
-    wallet.call(
+    if let Err(err) = wallet.call(
         "lockunspent",
         json!([false, [{ "txid": funding.txid, "vout": funding.vout }]]),
-    )?;
+    ) {
+        eprintln!("warning: lockunspent failed for funding outpoint: {err:#}");
+        return Ok(());
+    }
     if !to_lock.is_empty() {
-        wallet.call("lockunspent", json!([true, to_lock]))?;
+        if let Err(err) = wallet.call("lockunspent", json!([true, to_lock])) {
+            eprintln!("warning: lockunspent failed for non-funding outpoints: {err:#}");
+        }
     }
     Ok(())
 }
@@ -674,9 +696,11 @@ fn parse_input_outpoints(tx_hex: &str) -> Result<Vec<TxInputOutpoint>> {
 
     if has_witness {
         for _ in 0..vin_count {
-            let item_count = read_varint(&tx, &mut i).ok_or_else(|| anyhow!("invalid tx encoding"))?;
+            let item_count =
+                read_varint(&tx, &mut i).ok_or_else(|| anyhow!("invalid tx encoding"))?;
             for _ in 0..item_count {
-                let item_len = read_varint(&tx, &mut i).ok_or_else(|| anyhow!("invalid tx encoding"))?;
+                let item_len =
+                    read_varint(&tx, &mut i).ok_or_else(|| anyhow!("invalid tx encoding"))?;
                 i = advance(&tx, i, item_len as usize)?;
             }
         }

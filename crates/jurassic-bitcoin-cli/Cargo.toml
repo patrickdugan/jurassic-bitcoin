@@ -21,6 +21,7 @@ jb-mutator = { path = "../jb-mutator" }
 jb-reducer = { path = "../jb-reducer" }
 jb-rust-shadow = { path = "../jb-rust-shadow" }
 rand.workspace = true
+ripemd = "0.1"
 serde.workspace = true
 serde_json.workspace = true
 sha2 = "0.10"

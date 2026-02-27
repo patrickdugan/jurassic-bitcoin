@@ -138,6 +138,10 @@ enum Command {
         #[arg(long, default_value = "fixtures/blobs/p2sh-core-seam.json")]
         out: PathBuf,
     },
+    MintP2wpkhSeam {
+        #[arg(long, default_value = "fixtures/blobs/p2wpkh-core-seam.json")]
+        out: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -198,6 +202,7 @@ fn main() -> Result<()> {
             force,
         ),
         Command::MintP2shSeam { out } => mint_p2sh_seam(&out),
+        Command::MintP2wpkhSeam { out } => mint_p2wpkh_seam(&out),
     }
 }
 
@@ -297,6 +302,20 @@ struct P2shSeamFixture {
     with_redeem_tx_hex: String,
     missing_redeem_core: SeamAccept,
     with_redeem_core: SeamAccept,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct P2wpkhSeamFixture {
+    name: String,
+    network: String,
+    context_heights: Vec<u32>,
+    script_pubkey_hex: String,
+    good_tx_hex: String,
+    bad_witness_shape_tx_hex: String,
+    bad_program_mismatch_tx_hex: String,
+    good_core: SeamAccept,
+    bad_witness_shape_core: SeamAccept,
+    bad_program_mismatch_core: SeamAccept,
 }
 
 fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
@@ -435,6 +454,148 @@ fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
     fs::write(out_path, serde_json::to_vec_pretty(&fixture)?)
         .with_context(|| format!("writing {}", out_path.display()))?;
     println!("minted p2sh seam fixture -> {}", out_path.display());
+    Ok(())
+}
+
+fn mint_p2wpkh_seam(out_path: &Path) -> Result<()> {
+    let report = doctor_report().map_err(|e| {
+        anyhow!(
+            "doctor failed: {e:#}\nSet BITCOIND_RPC_URL/USER/PASS and start regtest bitcoind first."
+        )
+    })?;
+    if report.chain != "regtest" {
+        return Err(anyhow!(
+            "mint-p2wpkh-seam requires regtest, got {}",
+            report.chain
+        ));
+    }
+    let rpc = SimpleRpc::from_env()?;
+
+    let seed = mint_seed_testcase("p2wpkh-seam-seed".to_string())?;
+    let good_tx_hex = seed.tx_hex.clone();
+
+    let mut parsed = parse_segwit_tx_one_input(&good_tx_hex)?;
+    if parsed.witness_items.len() != 2 {
+        return Err(anyhow!(
+            "expected 2 witness items in seed tx, got {}",
+            parsed.witness_items.len()
+        ));
+    }
+    let pubkey = parsed.witness_items[1].clone();
+    let program = hash160_cli(&pubkey);
+    let mut script_pubkey = vec![0x00, 0x14];
+    script_pubkey.extend_from_slice(&program);
+    let script_pubkey_hex = hex::encode(&script_pubkey);
+
+    parsed.witness_items = vec![parsed.witness_items[0].clone()];
+    let bad_witness_shape_tx_hex = serialize_segwit_tx_one_input(&parsed);
+
+    let mut parsed_mismatch = parse_segwit_tx_one_input(&good_tx_hex)?;
+    if let Some(last) = parsed_mismatch.witness_items.get_mut(1) {
+        if let Some(first) = last.first_mut() {
+            *first ^= 0x01;
+        } else {
+            return Err(anyhow!("pubkey witness item empty"));
+        }
+    } else {
+        return Err(anyhow!("missing pubkey witness item"));
+    }
+    let bad_program_mismatch_tx_hex = serialize_segwit_tx_one_input(&parsed_mismatch);
+
+    let good_core = testmempoolaccept_once(&rpc, &good_tx_hex)?;
+    let bad_witness_shape_core = testmempoolaccept_once(&rpc, &bad_witness_shape_tx_hex)?;
+    let bad_program_mismatch_core = testmempoolaccept_once(&rpc, &bad_program_mismatch_tx_hex)?;
+
+    let fixture = P2wpkhSeamFixture {
+        name: "p2wpkh_core_seam".to_string(),
+        network: "regtest".to_string(),
+        context_heights: vec![481_823, 700_000],
+        script_pubkey_hex: script_pubkey_hex.clone(),
+        good_tx_hex,
+        bad_witness_shape_tx_hex,
+        bad_program_mismatch_tx_hex,
+        good_core,
+        bad_witness_shape_core,
+        bad_program_mismatch_core,
+    };
+    if let Some(parent) = out_path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(out_path, serde_json::to_vec_pretty(&fixture)?)
+        .with_context(|| format!("writing {}", out_path.display()))?;
+    let manifest_path = PathBuf::from("fixtures/manifests/p2wpkh_core_seam_poc.json");
+    write_p2wpkh_seam_manifest(&manifest_path, &script_pubkey_hex)?;
+    println!("minted p2wpkh seam fixture -> {}", out_path.display());
+    println!("minted p2wpkh seam manifest -> {}", manifest_path.display());
+    Ok(())
+}
+
+fn write_p2wpkh_seam_manifest(path: &Path, script_pubkey_hex: &str) -> Result<()> {
+    let manifest = json!({
+      "name": "p2wpkh_core_seam_poc",
+      "windows": [
+        {
+          "name": "p2wpkh-shape-h481823",
+          "start_height": 481823,
+          "end_height": 481823,
+          "representative_heights": [481823],
+          "epoch": "segwit-active"
+        },
+        {
+          "name": "p2wpkh-shape-h700000",
+          "start_height": 700000,
+          "end_height": 700000,
+          "representative_heights": [700000],
+          "epoch": "segwit-active"
+        }
+      ],
+      "fixtures": [
+        {
+          "id": "p2wpkh_good",
+          "description": "Wallet-signed P2WPKH spend (control)",
+          "window": "p2wpkh-shape-h700000",
+          "tx_hex_blob": "../blobs/p2wpkh-core-seam.json",
+          "tx_hex_field": "good_tx_hex",
+          "spend_type": "p2wpkh",
+          "metadata": {
+            "quirk_target": "segwit-shape-seam",
+            "checksighook": "true",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "p2wpkh_bad_witness_shape",
+          "description": "Witness stack shape mutation",
+          "window": "p2wpkh-shape-h481823",
+          "tx_hex_blob": "../blobs/p2wpkh-core-seam.json",
+          "tx_hex_field": "bad_witness_shape_tx_hex",
+          "spend_type": "p2wpkh",
+          "metadata": {
+            "quirk_target": "segwit-shape-seam",
+            "checksighook": "true",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "p2wpkh_bad_program_mismatch",
+          "description": "Witness pubkey/program mismatch mutation",
+          "window": "p2wpkh-shape-h700000",
+          "tx_hex_blob": "../blobs/p2wpkh-core-seam.json",
+          "tx_hex_field": "bad_program_mismatch_tx_hex",
+          "spend_type": "p2wpkh",
+          "metadata": {
+            "quirk_target": "segwit-shape-seam",
+            "checksighook": "true",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        }
+      ]
+    });
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(path, serde_json::to_vec_pretty(&manifest)?)
+        .with_context(|| format!("writing {}", path.display()))?;
     Ok(())
 }
 
@@ -974,6 +1135,151 @@ fn build_legacy_tx(
     out.extend_from_slice(output_spk);
     out.extend_from_slice(&0u32.to_le_bytes()); // locktime
     Ok(hex::encode(out))
+}
+
+#[derive(Debug, Clone)]
+struct SegwitOneInputTx {
+    version: [u8; 4],
+    prev_txid_le: [u8; 32],
+    prev_vout: [u8; 4],
+    script_sig: Vec<u8>,
+    sequence: [u8; 4],
+    outputs_raw: Vec<u8>,
+    witness_items: Vec<Vec<u8>>,
+    locktime: [u8; 4],
+}
+
+fn parse_segwit_tx_one_input(tx_hex: &str) -> Result<SegwitOneInputTx> {
+    let bytes = hex::decode(tx_hex).context("decode tx hex")?;
+    let mut i = 0usize;
+    if bytes.len() < 10 {
+        return Err(anyhow!("tx too short"));
+    }
+    let version = bytes[i..i + 4]
+        .try_into()
+        .map_err(|_| anyhow!("version parse"))?;
+    i += 4;
+    if bytes.get(i) != Some(&0x00) || bytes.get(i + 1) != Some(&0x01) {
+        return Err(anyhow!("not segwit marker/flag tx"));
+    }
+    i += 2;
+    let vin = read_varint_bytes(&bytes, &mut i).ok_or_else(|| anyhow!("read vin"))?;
+    if vin != 1 {
+        return Err(anyhow!("expected one input, got {}", vin));
+    }
+    let prev_txid_le = bytes[i..i + 32]
+        .try_into()
+        .map_err(|_| anyhow!("prev txid parse"))?;
+    i += 32;
+    let prev_vout = bytes[i..i + 4]
+        .try_into()
+        .map_err(|_| anyhow!("prev vout parse"))?;
+    i += 4;
+    let script_len = read_varint_bytes(&bytes, &mut i).ok_or_else(|| anyhow!("script len"))?;
+    let script_sig = bytes[i..i + script_len as usize].to_vec();
+    i += script_len as usize;
+    let sequence = bytes[i..i + 4]
+        .try_into()
+        .map_err(|_| anyhow!("sequence parse"))?;
+    i += 4;
+
+    let out_count_pos = i;
+    let vout_count = read_varint_bytes(&bytes, &mut i).ok_or_else(|| anyhow!("vout count"))?;
+    for _ in 0..vout_count {
+        i += 8;
+        let spk_len = read_varint_bytes(&bytes, &mut i).ok_or_else(|| anyhow!("spk len"))?;
+        i += spk_len as usize;
+        if i > bytes.len() {
+            return Err(anyhow!("malformed vout"));
+        }
+    }
+    let outputs_raw = bytes[out_count_pos..i].to_vec();
+
+    let witness_count = read_varint_bytes(&bytes, &mut i).ok_or_else(|| anyhow!("wit count"))?;
+    let mut witness_items = Vec::new();
+    for _ in 0..witness_count {
+        let n = read_varint_bytes(&bytes, &mut i).ok_or_else(|| anyhow!("wit item len"))?;
+        let item = bytes
+            .get(i..i + n as usize)
+            .ok_or_else(|| anyhow!("wit item bytes"))?
+            .to_vec();
+        i += n as usize;
+        witness_items.push(item);
+    }
+    let locktime = bytes
+        .get(i..i + 4)
+        .ok_or_else(|| anyhow!("locktime"))?
+        .try_into()
+        .map_err(|_| anyhow!("locktime parse"))?;
+    i += 4;
+    if i != bytes.len() {
+        return Err(anyhow!("unexpected trailing bytes"));
+    }
+
+    Ok(SegwitOneInputTx {
+        version,
+        prev_txid_le,
+        prev_vout,
+        script_sig,
+        sequence,
+        outputs_raw,
+        witness_items,
+        locktime,
+    })
+}
+
+fn serialize_segwit_tx_one_input(tx: &SegwitOneInputTx) -> String {
+    let mut out = Vec::new();
+    out.extend_from_slice(&tx.version);
+    out.push(0x00);
+    out.push(0x01);
+    out.extend_from_slice(&encode_varint(1));
+    out.extend_from_slice(&tx.prev_txid_le);
+    out.extend_from_slice(&tx.prev_vout);
+    out.extend_from_slice(&encode_varint(tx.script_sig.len() as u64));
+    out.extend_from_slice(&tx.script_sig);
+    out.extend_from_slice(&tx.sequence);
+    out.extend_from_slice(&tx.outputs_raw);
+    out.extend_from_slice(&encode_varint(tx.witness_items.len() as u64));
+    for item in &tx.witness_items {
+        out.extend_from_slice(&encode_varint(item.len() as u64));
+        out.extend_from_slice(item);
+    }
+    out.extend_from_slice(&tx.locktime);
+    hex::encode(out)
+}
+
+fn read_varint_bytes(bytes: &[u8], idx: &mut usize) -> Option<u64> {
+    let first = *bytes.get(*idx)?;
+    *idx += 1;
+    match first {
+        0x00..=0xfc => Some(first as u64),
+        0xfd => {
+            let raw = bytes.get(*idx..*idx + 2)?;
+            *idx += 2;
+            Some(u16::from_le_bytes([raw[0], raw[1]]) as u64)
+        }
+        0xfe => {
+            let raw = bytes.get(*idx..*idx + 4)?;
+            *idx += 4;
+            Some(u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as u64)
+        }
+        _ => {
+            let raw = bytes.get(*idx..*idx + 8)?;
+            *idx += 8;
+            Some(u64::from_le_bytes([
+                raw[0], raw[1], raw[2], raw[3], raw[4], raw[5], raw[6], raw[7],
+            ]))
+        }
+    }
+}
+
+fn hash160_cli(data: &[u8]) -> [u8; 20] {
+    let sha = sha2::Sha256::digest(data);
+    let ripe = ripemd::Ripemd160::digest(sha);
+    let mut out = [0u8; 20];
+    out.copy_from_slice(&ripe);
+    out
 }
 
 fn encode_varint(n: u64) -> Vec<u8> {
@@ -2083,6 +2389,20 @@ mod tests {
                 assert!(out.ends_with("p2sh-core-seam.json"));
             }
             _ => panic!("expected mint-p2sh-seam"),
+        }
+
+        let mint_w = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "mint-p2wpkh-seam",
+            "--out",
+            "fixtures/blobs/p2wpkh-core-seam.json",
+        ])
+        .expect("parse mint-p2wpkh-seam");
+        match mint_w.cmd {
+            Command::MintP2wpkhSeam { out } => {
+                assert!(out.ends_with("p2wpkh-core-seam.json"));
+            }
+            _ => panic!("expected mint-p2wpkh-seam"),
         }
     }
 

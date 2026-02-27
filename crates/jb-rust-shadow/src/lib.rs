@@ -220,13 +220,35 @@ fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
     }
 
     let witness = match &input.witness {
-        Some(w) if w.items.len() >= 2 => w,
-        _ => return ExecResult::err("script failed: missing witness stack"),
+        Some(w) => w,
+        None => return ExecResult::err("witness invalid stack"),
     };
-    let signature = witness.items[witness.items.len() - 2].clone();
-    let pubkey = witness.items[witness.items.len() - 1].clone();
+    if witness.items.len() != 2 {
+        let mut r = ExecResult::err("witness invalid stack");
+        r.details.insert("segwit".to_string(), "true".to_string());
+        r.details
+            .insert("witness_items".to_string(), witness.items.len().to_string());
+        r.details
+            .insert("script_phase".to_string(), "witness".to_string());
+        return r;
+    }
+    let program = match resolve_p2wpkh_program(tc) {
+        Some(p) => p,
+        None => return ExecResult::err("missing p2wpkh witness program"),
+    };
+    let signature = witness.items[0].clone();
+    let pubkey = witness.items[1].clone();
     let pubkey_hash = hash160(&pubkey);
-    let script_code = build_p2wpkh_script_code(&pubkey_hash);
+    if pubkey_hash != program {
+        let mut r = ExecResult::err("witness program mismatch");
+        r.details.insert("segwit".to_string(), "true".to_string());
+        r.details
+            .insert("witness_items".to_string(), "2".to_string());
+        r.details
+            .insert("script_phase".to_string(), "witness".to_string());
+        return r;
+    }
+    let script_code = build_p2wpkh_script_code(&program);
 
     let mut stack = vec![signature, pubkey];
     let checksig_true = tc
@@ -253,6 +275,15 @@ fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
                 result
                     .details
                     .insert("checksighook".to_string(), checksig_true.to_string());
+                result
+                    .details
+                    .insert("segwit".to_string(), "true".to_string());
+                result
+                    .details
+                    .insert("witness_items".to_string(), "2".to_string());
+                result
+                    .details
+                    .insert("script_phase".to_string(), "witness".to_string());
                 result.details.insert(
                     "script_trace".to_string(),
                     trace
@@ -277,6 +308,17 @@ fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
             result
         }
     }
+}
+
+fn resolve_p2wpkh_program(tc: &TestCase) -> Option<[u8; 20]> {
+    let spk_hex = tc.metadata.get("script_pubkey_hex")?;
+    let spk = hex::decode(spk_hex).ok()?;
+    if spk.len() != 22 || spk[0] != 0x00 || spk[1] != 0x14 {
+        return None;
+    }
+    let mut out = [0u8; 20];
+    out.copy_from_slice(&spk[2..22]);
+    Some(out)
 }
 
 fn resolve_script_pubkey(tc: &TestCase, tx: &Transaction) -> Option<Vec<u8>> {
@@ -907,5 +949,52 @@ mod tests {
         assert!(pre.ok);
         assert!(!post.ok);
         assert_eq!(post.reason.as_deref(), Some("p2sh missing redeemscript"));
+    }
+
+    #[test]
+    fn p2wpkh_witness_shape_and_program_mismatch() {
+        let good = "0100000000010111111111111111111111111111111111111111111111111111111111111111110000000000ffffffff01102700000000000016001400000000000000000000000000000000000000000201012102000000000000000000000000000000000000000000000000000000000000000000000000";
+        let mut pubkey = vec![0x02u8];
+        pubkey.extend_from_slice(&[0u8; 32]);
+        let witness_program = hex::encode(hash160(&pubkey));
+        let mut tc = TestCase {
+            id: "w".to_string(),
+            description: "w".to_string(),
+            network: "mainnet".to_string(),
+            utxo_set: Vec::new(),
+            tx_hex: good.to_string(),
+            flags: Vec::new(),
+            context: Some(ValidationContext {
+                height: 700_000,
+                median_time_past: None,
+                block_time: None,
+                epoch: Some("segwit-active".to_string()),
+            }),
+            core_template: Some(CoreTemplate {
+                kind: "testmempoolaccept_tx_hex".to_string(),
+                spend_type: "p2wpkh".to_string(),
+                feerate_sats_vb: None,
+            }),
+            metadata: BTreeMap::from([
+                ("checksighook".to_string(), "true".to_string()),
+                (
+                    "script_pubkey_hex".to_string(),
+                    format!("0014{}", witness_program),
+                ),
+            ]),
+        };
+        let ok = run_testcase_rust(&tc);
+        assert!(ok.ok);
+
+        tc.metadata.insert(
+            "script_pubkey_hex".to_string(),
+            "00141111111111111111111111111111111111111111".to_string(),
+        );
+        let mismatch = run_testcase_rust(&tc);
+        assert_eq!(mismatch.reason.as_deref(), Some("witness program mismatch"));
+
+        tc.tx_hex = "0100000000010111111111111111111111111111111111111111111111111111111111111111110000000000ffffffff011027000000000000160014000000000000000000000000000000000000000001010100000000".to_string();
+        let bad_shape = run_testcase_rust(&tc);
+        assert_eq!(bad_shape.reason.as_deref(), Some("witness invalid stack"));
     }
 }

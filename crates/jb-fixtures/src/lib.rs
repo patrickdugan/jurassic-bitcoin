@@ -274,7 +274,10 @@ fn resolve_tx_hex(
         return Ok(tx_hex.clone());
     }
     if let Some(blob_path) = &fixture.tx_hex_blob {
-        return read_blob_tx_hex(&manifest_dir.join(blob_path), fixture.tx_hex_field.as_deref());
+        return read_blob_tx_hex(
+            &manifest_dir.join(blob_path),
+            fixture.tx_hex_field.as_deref(),
+        );
     }
     if let Some(txid) = &fixture.txid {
         if let Some(cached) = read_cached_tx_hex(cache_dir, txid)? {

@@ -159,7 +159,11 @@ fn mutate_u32_field<R: Rng>(bytes: &mut [u8], off: usize, rng: &mut R) {
         2 => 0xffff_fffe,
         _ => 0xffff_ffff,
     };
-    let val = if rng.gen_bool(0.5) { next } else { current ^ (1u32 << rng.gen_range(0..31)) };
+    let val = if rng.gen_bool(0.5) {
+        next
+    } else {
+        current ^ (1u32 << rng.gen_range(0..31))
+    };
     bytes[off..off + 4].copy_from_slice(&val.to_le_bytes());
 }
 

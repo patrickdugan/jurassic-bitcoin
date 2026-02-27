@@ -1,0 +1,64 @@
+{
+  "fixtures": [
+    {
+      "description": "Wallet-signed P2WPKH spend (control)",
+      "id": "p2wpkh_good",
+      "metadata": {
+        "checksighook": "true",
+        "quirk_target": "segwit-shape-seam",
+        "script_pubkey_hex": "00146865f5357415756a232a47b7db3117043cf2ac10"
+      },
+      "spend_type": "p2wpkh",
+      "tx_hex_blob": "../blobs/p2wpkh-core-seam.json",
+      "tx_hex_field": "good_tx_hex",
+      "window": "p2wpkh-shape-h700000"
+    },
+    {
+      "description": "Witness stack shape mutation",
+      "id": "p2wpkh_bad_witness_shape",
+      "metadata": {
+        "checksighook": "true",
+        "quirk_target": "segwit-shape-seam",
+        "script_pubkey_hex": "00146865f5357415756a232a47b7db3117043cf2ac10"
+      },
+      "spend_type": "p2wpkh",
+      "tx_hex_blob": "../blobs/p2wpkh-core-seam.json",
+      "tx_hex_field": "bad_witness_shape_tx_hex",
+      "window": "p2wpkh-shape-h481823"
+    },
+    {
+      "description": "Witness pubkey/program mismatch mutation",
+      "id": "p2wpkh_bad_program_mismatch",
+      "metadata": {
+        "checksighook": "true",
+        "quirk_target": "segwit-shape-seam",
+        "script_pubkey_hex": "00146865f5357415756a232a47b7db3117043cf2ac10"
+      },
+      "spend_type": "p2wpkh",
+      "tx_hex_blob": "../blobs/p2wpkh-core-seam.json",
+      "tx_hex_field": "bad_program_mismatch_tx_hex",
+      "window": "p2wpkh-shape-h700000"
+    }
+  ],
+  "name": "p2wpkh_core_seam_poc",
+  "windows": [
+    {
+      "end_height": 481823,
+      "epoch": "segwit-active",
+      "name": "p2wpkh-shape-h481823",
+      "representative_heights": [
+        481823
+      ],
+      "start_height": 481823
+    },
+    {
+      "end_height": 700000,
+      "epoch": "segwit-active",
+      "name": "p2wpkh-shape-h700000",
+      "representative_heights": [
+        700000
+      ],
+      "start_height": 700000
+    }
+  ]
+}

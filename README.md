@@ -272,6 +272,16 @@ Then replay against the seam manifest:
 cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_core_seam_poc.json --out-dir artifacts/p2sh-core-seam --limit-per-epoch 50 --force
 ```
 
+SegWit shape seam fixture minting (also writes manifest):
+
+```powershell
+$env:BITCOIND_RPC_URL  = "http://127.0.0.1:18443"
+$env:BITCOIND_RPC_USER = "user"
+$env:BITCOIND_RPC_PASS = "pass"
+cargo run -p jurassic-bitcoin-cli -- mint-p2wpkh-seam --out fixtures/blobs/p2wpkh-core-seam.json
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2wpkh_core_seam_poc.json --out-dir artifacts/p2wpkh-core-seam --limit-per-epoch 50 --force
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

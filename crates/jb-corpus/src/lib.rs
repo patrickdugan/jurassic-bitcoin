@@ -24,7 +24,11 @@ pub fn load_corpus(dir: &Path) -> Result<Vec<TestCase>> {
     Ok(cases)
 }
 
-pub fn write_divergence_event(base_dir: &Path, event: &DivergenceEvent, case: &TestCase) -> Result<PathBuf> {
+pub fn write_divergence_event(
+    base_dir: &Path,
+    event: &DivergenceEvent,
+    case: &TestCase,
+) -> Result<PathBuf> {
     let day = Utc::now().format("%Y-%m-%d").to_string();
     let out_dir = base_dir.join(day);
     fs::create_dir_all(&out_dir).with_context(|| format!("creating {}", out_dir.display()))?;
@@ -82,8 +86,16 @@ mod tests {
         a.id = "b".to_string();
         let mut b = sample_case();
         b.id = "a".to_string();
-        std::fs::write(temp.join("b.json"), serde_json::to_vec(&a).expect("serialize a")).expect("write b.json");
-        std::fs::write(temp.join("a.json"), serde_json::to_vec(&b).expect("serialize b")).expect("write a.json");
+        std::fs::write(
+            temp.join("b.json"),
+            serde_json::to_vec(&a).expect("serialize a"),
+        )
+        .expect("write b.json");
+        std::fs::write(
+            temp.join("a.json"),
+            serde_json::to_vec(&b).expect("serialize b"),
+        )
+        .expect("write a.json");
 
         let loaded = load_corpus(&temp).expect("load corpus");
         assert_eq!(loaded.len(), 2);
