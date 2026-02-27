@@ -298,6 +298,10 @@ cargo run -p jurassic-bitcoin-cli -- summarize --dir artifacts/p2sh-findanddelet
 cargo run -p jurassic-bitcoin-cli -- suggest-labels --in artifacts/p2sh-findanddelete-subsets --out artifacts/p2sh-findanddelete-subsets/suggestions.json
 ```
 
+If `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASS` are set, replay stamps
+the same specimens with live Core policy results so the museum shows both script-context
+divergence and current relay policy outcome.
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

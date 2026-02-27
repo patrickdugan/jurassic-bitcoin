@@ -652,6 +652,10 @@ struct SummaryOutput {
     counts_by_normalized_class: BTreeMap<String, usize>,
     counts_by_core_reason: BTreeMap<String, usize>,
     top_core_reasons: Vec<ReasonCount>,
+    policy_allowed_count: usize,
+    policy_rejected_count: usize,
+    counts_by_policy_reason: BTreeMap<String, usize>,
+    top_policy_reasons: Vec<ReasonCount>,
     counts_by_rust_reason: BTreeMap<String, usize>,
     mutation_histogram: BTreeMap<String, usize>,
     unique_core_reason_count: usize,
@@ -1340,6 +1344,7 @@ fn summarize_dir_offline(dir: &Path) -> Result<SummaryOutput> {
     let events_root = dir.join("events");
     let mut counts_by_normalized_class: BTreeMap<String, usize> = BTreeMap::new();
     let mut counts_by_core_reason: BTreeMap<String, usize> = BTreeMap::new();
+    let mut counts_by_policy_reason: BTreeMap<String, usize> = BTreeMap::new();
     let mut counts_by_rust_reason: BTreeMap<String, usize> = BTreeMap::new();
     let mut mutation_histogram: BTreeMap<String, usize> = BTreeMap::new();
     let mut unique_core_reasons: BTreeSet<String> = BTreeSet::new();
@@ -1347,6 +1352,8 @@ fn summarize_dir_offline(dir: &Path) -> Result<SummaryOutput> {
 
     let mut parsed_events = 0usize;
     let mut malformed_files = 0usize;
+    let mut policy_allowed_count = 0usize;
+    let mut policy_rejected_count = 0usize;
 
     let mut files = Vec::new();
     collect_json_files(&events_root, &mut files)?;
@@ -1373,10 +1380,22 @@ fn summarize_dir_offline(dir: &Path) -> Result<SummaryOutput> {
             .entry(event.normalized_class.clone())
             .or_insert(0) += 1;
 
+        if event.core_allowed {
+            policy_allowed_count += 1;
+        } else {
+            policy_rejected_count += 1;
+        }
+
         let core_reason = event.core_reason.unwrap_or_else(|| "<none>".to_string());
         *counts_by_core_reason
             .entry(core_reason.clone())
             .or_insert(0) += 1;
+        let policy_reason = if event.core_allowed {
+            "<allowed>".to_string()
+        } else {
+            core_reason.clone()
+        };
+        *counts_by_policy_reason.entry(policy_reason).or_insert(0) += 1;
         if core_reason != "<none>" {
             unique_core_reasons.insert(core_reason);
         }
@@ -1407,6 +1426,15 @@ fn summarize_dir_offline(dir: &Path) -> Result<SummaryOutput> {
         .collect();
     top_core_reasons.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.reason.cmp(&b.reason)));
     top_core_reasons.truncate(10);
+    let mut top_policy_reasons: Vec<ReasonCount> = counts_by_policy_reason
+        .iter()
+        .map(|(reason, count)| ReasonCount {
+            reason: reason.clone(),
+            count: *count,
+        })
+        .collect();
+    top_policy_reasons.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.reason.cmp(&b.reason)));
+    top_policy_reasons.truncate(10);
 
     Ok(SummaryOutput {
         total_events: parsed_events,
@@ -1416,6 +1444,10 @@ fn summarize_dir_offline(dir: &Path) -> Result<SummaryOutput> {
         counts_by_normalized_class,
         counts_by_core_reason,
         top_core_reasons,
+        policy_allowed_count,
+        policy_rejected_count,
+        counts_by_policy_reason,
+        top_policy_reasons,
         counts_by_rust_reason,
         mutation_histogram,
         unique_core_reason_count: unique_core_reasons.len(),
@@ -1465,6 +1497,14 @@ fn print_summary_table(dir: &Path, s: &SummaryOutput) {
         println!("{:5} {}", rc.count, rc.reason);
     }
 
+    println!(
+        "\nPolicy Surface\nallowed={} rejected={}",
+        s.policy_allowed_count, s.policy_rejected_count
+    );
+    for rc in &s.top_policy_reasons {
+        println!("{:5} {}", rc.count, rc.reason);
+    }
+
     println!("\nRust Reasons");
     for (k, v) in &s.counts_by_rust_reason {
         println!("{:5} {}", v, k);
@@ -1481,6 +1521,9 @@ struct EpochCompareRow {
     epoch: String,
     counts_by_normalized_class: BTreeMap<String, usize>,
     top_core_reasons: Vec<ReasonCount>,
+    policy_allowed_count: usize,
+    policy_rejected_count: usize,
+    top_policy_reasons: Vec<ReasonCount>,
     top_mutations: Vec<ReasonCount>,
     reasons_only_in_epoch: Vec<String>,
     mutations_only_in_epoch: Vec<String>,
@@ -1576,6 +1619,9 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
             epoch: epoch.clone(),
             counts_by_normalized_class: summary.counts_by_normalized_class,
             top_core_reasons: top_reasons(summary.counts_by_core_reason, 5),
+            policy_allowed_count: summary.policy_allowed_count,
+            policy_rejected_count: summary.policy_rejected_count,
+            top_policy_reasons: top_reasons(summary.counts_by_policy_reason, 5),
             top_mutations,
             reasons_only_in_epoch: Vec::new(),
             mutations_only_in_epoch: Vec::new(),
@@ -1703,6 +1749,18 @@ fn print_compare_table(root: &Path, c: &CompareOutput) {
         }
     }
 
+    println!("\nPolicy Surface Per Epoch");
+    for row in &c.epochs {
+        println!("[{}]", row.epoch);
+        println!(
+            "  allowed={} rejected={}",
+            row.policy_allowed_count, row.policy_rejected_count
+        );
+        for r in &row.top_policy_reasons {
+            println!("  {:5} {}", r.count, r.reason);
+        }
+    }
+
     println!("\nTop Mutations Per Epoch");
     for row in &c.epochs {
         println!("[{}]", row.epoch);
@@ -1751,7 +1809,10 @@ struct MuseumEpochSummary {
     epoch: String,
     total_events: usize,
     counts_by_normalized_class: BTreeMap<String, usize>,
+    policy_allowed_count: usize,
+    policy_rejected_count: usize,
     top_core_reasons: Vec<ReasonCount>,
+    top_policy_reasons: Vec<ReasonCount>,
     top_rust_reasons: Vec<ReasonCount>,
 }
 
@@ -1762,6 +1823,9 @@ struct MuseumSpecimen {
     epoch: String,
     normalized_class: String,
     core_reason: Option<String>,
+    policy_allowed: bool,
+    policy_reason: Option<String>,
+    core_mode: Option<String>,
     rust_reason: Option<String>,
     script_trace: Option<String>,
     sighash_context_tag: Option<String>,
@@ -1857,7 +1921,10 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
     let reduced_map = index_reduced_testcases(in_dir)?;
     let mut epoch_class_counts: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
     let mut epoch_core_reason_counts: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+    let mut epoch_policy_reason_counts: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
     let mut epoch_rust_reason_counts: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+    let mut epoch_policy_allowed_counts: BTreeMap<String, usize> = BTreeMap::new();
+    let mut epoch_policy_rejected_counts: BTreeMap<String, usize> = BTreeMap::new();
 
     let mut specimens = Vec::new();
     for event_path in &event_files {
@@ -1908,6 +1975,28 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
                     .unwrap_or_else(|| "<none>".to_string()),
             )
             .or_insert(0) += 1;
+        if event.core_allowed {
+            *epoch_policy_allowed_counts
+                .entry(epoch.clone())
+                .or_insert(0) += 1;
+        } else {
+            *epoch_policy_rejected_counts
+                .entry(epoch.clone())
+                .or_insert(0) += 1;
+        }
+        let policy_reason = if event.core_allowed {
+            "<allowed>".to_string()
+        } else {
+            event
+                .core_reason
+                .clone()
+                .unwrap_or_else(|| "<none>".to_string())
+        };
+        *epoch_policy_reason_counts
+            .entry(epoch.clone())
+            .or_default()
+            .entry(policy_reason)
+            .or_insert(0) += 1;
         *epoch_rust_reason_counts
             .entry(epoch.clone())
             .or_default()
@@ -1927,6 +2016,13 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             epoch,
             normalized_class: event.normalized_class.clone(),
             core_reason: event.core_reason.clone(),
+            policy_allowed: event.core_allowed,
+            policy_reason: if event.core_allowed {
+                Some("<allowed>".to_string())
+            } else {
+                event.core_reason.clone()
+            },
+            core_mode: event.core.details.get("mode").cloned(),
             rust_reason: event.rust_reason.clone(),
             script_trace,
             sighash_context_tag,
@@ -1957,10 +2053,25 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             5,
         );
         epochs.push(MuseumEpochSummary {
-            epoch,
+            epoch: epoch.clone(),
             total_events,
             counts_by_normalized_class,
+            policy_allowed_count: epoch_policy_allowed_counts
+                .get(&epoch)
+                .copied()
+                .unwrap_or(0),
+            policy_rejected_count: epoch_policy_rejected_counts
+                .get(&epoch)
+                .copied()
+                .unwrap_or(0),
             top_core_reasons,
+            top_policy_reasons: top_reasons(
+                epoch_policy_reason_counts
+                    .get(&epoch)
+                    .cloned()
+                    .unwrap_or_default(),
+                5,
+            ),
             top_rust_reasons,
         });
     }
@@ -2200,7 +2311,7 @@ fn museum_html_template() -> &'static str {
   <main class="main">
     <div class="card"><span id="counts" class="pill"></span></div>
     <table>
-      <thead><tr><th>Specimen</th><th>Epoch</th><th>Class</th><th>Label</th><th>Core</th><th>Rust</th><th>Trace</th><th>Mutations</th><th>Links</th></tr></thead>
+      <thead><tr><th>Specimen</th><th>Epoch</th><th>Class</th><th>Label</th><th>Policy</th><th>Core</th><th>Rust</th><th>Trace</th><th>Mutations</th><th>Links</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
   </main>
@@ -2244,6 +2355,7 @@ function renderRows(){
       <td>${s.epoch}</td>
       <td>${s.normalized_class}</td>
       <td>${s.label||''}</td>
+      <td>${s.policy_allowed ? 'allowed' : 'rejected'}<br/><span class="muted">${s.policy_reason||''}${s.core_mode ? ` [${s.core_mode}]` : ''}</span></td>
       <td>${s.core_reason||''}</td>
       <td>${s.rust_reason||''}</td>
       <td>${s.script_trace||''}</td>
@@ -2262,7 +2374,7 @@ function renderEpochSummary(){
   for (const e of state.data.epochs){
     const div = document.createElement('div');
     div.className = 'card';
-    div.innerHTML = `<strong>${e.epoch}</strong><div class="muted">${e.total_events} events</div>`;
+    div.innerHTML = `<strong>${e.epoch}</strong><div class="muted">${e.total_events} events</div><div class="muted">policy allowed=${e.policy_allowed_count} rejected=${e.policy_rejected_count}</div>`;
     host.appendChild(div);
   }
 }
@@ -2596,6 +2708,13 @@ mod tests {
                 reason: "reason-a".to_string(),
                 count: 1,
             }],
+            policy_allowed_count: 0,
+            policy_rejected_count: 1,
+            counts_by_policy_reason: BTreeMap::from([(String::from("reason-a"), 1usize)]),
+            top_policy_reasons: vec![super::ReasonCount {
+                reason: "reason-a".to_string(),
+                count: 1,
+            }],
             counts_by_rust_reason: BTreeMap::new(),
             mutation_histogram: BTreeMap::from([(String::from("mut-a"), 1usize)]),
             unique_core_reason_count: 1,
@@ -2610,6 +2729,13 @@ mod tests {
             counts_by_normalized_class: BTreeMap::from([(String::from("PARSE_FAIL"), 1usize)]),
             counts_by_core_reason: BTreeMap::from([(String::from("reason-b"), 1usize)]),
             top_core_reasons: vec![super::ReasonCount {
+                reason: "reason-b".to_string(),
+                count: 1,
+            }],
+            policy_allowed_count: 0,
+            policy_rejected_count: 1,
+            counts_by_policy_reason: BTreeMap::from([(String::from("reason-b"), 1usize)]),
+            top_policy_reasons: vec![super::ReasonCount {
                 reason: "reason-b".to_string(),
                 count: 1,
             }],
