@@ -1,0 +1,76 @@
+{
+  "fixtures": [
+    {
+      "description": "Two-input one-output SINGLE bug specimen",
+      "id": "sighash_single_bug",
+      "metadata": {
+        "input_index": "1",
+        "quirk_target": "sighash-single-degeneracy",
+        "script_code_hex": "76a914d90a022e2cd5950d8a1e8c93f8550f3165ec1a0988ac",
+        "sighash_type": "0x03"
+      },
+      "spend_type": "legacy_sighash",
+      "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+      "tx_hex_field": "single_bug_tx_hex",
+      "window": "sighash-single-bug-h133000"
+    },
+    {
+      "description": "Two-input one-output SINGLE|ANYONECANPAY bug specimen",
+      "id": "sighash_single_bug_anyonecanpay",
+      "metadata": {
+        "input_index": "1",
+        "quirk_target": "sighash-single-degeneracy",
+        "script_code_hex": "76a914d90a022e2cd5950d8a1e8c93f8550f3165ec1a0988ac",
+        "sighash_type": "0x83"
+      },
+      "spend_type": "legacy_sighash",
+      "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+      "tx_hex_field": "single_bug_anyonecanpay_tx_hex",
+      "window": "sighash-single-bug-acp-h133000"
+    },
+    {
+      "description": "Two-input two-output SINGLE control specimen",
+      "id": "sighash_single_control",
+      "metadata": {
+        "input_index": "1",
+        "quirk_target": "sighash-single-degeneracy",
+        "script_code_hex": "76a914d90a022e2cd5950d8a1e8c93f8550f3165ec1a0988ac",
+        "sighash_type": "0x03"
+      },
+      "spend_type": "legacy_sighash",
+      "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+      "tx_hex_field": "single_control_tx_hex",
+      "window": "sighash-single-control-h300000"
+    }
+  ],
+  "name": "sighash_single_core_seam_poc",
+  "windows": [
+    {
+      "end_height": 133000,
+      "epoch": "pre-bip16",
+      "name": "sighash-single-bug-h133000",
+      "representative_heights": [
+        133000
+      ],
+      "start_height": 133000
+    },
+    {
+      "end_height": 133000,
+      "epoch": "pre-bip16",
+      "name": "sighash-single-bug-acp-h133000",
+      "representative_heights": [
+        133000
+      ],
+      "start_height": 133000
+    },
+    {
+      "end_height": 300000,
+      "epoch": "post-bip34",
+      "name": "sighash-single-control-h300000",
+      "representative_heights": [
+        300000
+      ],
+      "start_height": 300000
+    }
+  ]
+}

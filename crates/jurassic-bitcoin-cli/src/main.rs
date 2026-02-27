@@ -143,7 +143,14 @@ enum Command {
         out: PathBuf,
     },
     MintFindanddeleteSeam {
-        #[arg(long, default_value = "fixtures/blobs/p2sh-findanddelete-core-seam.json")]
+        #[arg(
+            long,
+            default_value = "fixtures/blobs/p2sh-findanddelete-core-seam.json"
+        )]
+        out: PathBuf,
+    },
+    MintSighashSingleSeam {
+        #[arg(long, default_value = "fixtures/blobs/sighash-single-core-seam.json")]
         out: PathBuf,
     },
 }
@@ -208,6 +215,7 @@ fn main() -> Result<()> {
         Command::MintP2shSeam { out } => mint_p2sh_seam(&out),
         Command::MintP2wpkhSeam { out } => mint_p2wpkh_seam(&out),
         Command::MintFindanddeleteSeam { out } => mint_findanddelete_seam(&out),
+        Command::MintSighashSingleSeam { out } => mint_sighash_single_seam(&out),
     }
 }
 
@@ -337,6 +345,21 @@ struct FindAndDeleteCoreSeamFixture {
     subset_aabb_core: SeamAccept,
     subset_aa_core: SeamAccept,
     subset_aaaa_core: SeamAccept,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct SighashSingleSeamFixture {
+    name: String,
+    network: String,
+    funding_outpoints: Vec<String>,
+    script_code_hex: String,
+    context_heights: Vec<u32>,
+    single_bug_tx_hex: String,
+    single_bug_anyonecanpay_tx_hex: String,
+    single_control_tx_hex: String,
+    single_bug_core: SeamAccept,
+    single_bug_anyonecanpay_core: SeamAccept,
+    single_control_core: SeamAccept,
 }
 
 fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
@@ -584,7 +607,10 @@ fn mint_findanddelete_seam(out_path: &Path) -> Result<()> {
         .as_str()
         .ok_or_else(|| anyhow!("decodescript missing p2sh address"))?
         .to_string();
-    let p2sh_spk = format!("a914{}87", hex::encode(hash160_cli(&hex::decode(&redeem_script_hex)?)));
+    let p2sh_spk = format!(
+        "a914{}87",
+        hex::encode(hash160_cli(&hex::decode(&redeem_script_hex)?))
+    );
 
     let funding_txid = wallet.call("sendtoaddress", json!([p2sh_addr, 1.0]))?;
     let funding_txid = funding_txid
@@ -698,8 +724,14 @@ fn mint_findanddelete_seam(out_path: &Path) -> Result<()> {
     let sighash_manifest_path =
         PathBuf::from("fixtures/manifests/p2sh_findanddelete_sighash_core_poc.json");
     write_findanddelete_sighash_manifest(&sighash_manifest_path, &p2sh_spk)?;
-    println!("minted findanddelete core seam fixture -> {}", out_path.display());
-    println!("minted findanddelete core seam manifest -> {}", manifest_path.display());
+    println!(
+        "minted findanddelete core seam fixture -> {}",
+        out_path.display()
+    );
+    println!(
+        "minted findanddelete core seam manifest -> {}",
+        manifest_path.display()
+    );
     println!(
         "minted findanddelete codeseparator manifest -> {}",
         codeseparator_manifest_path.display()
@@ -707,6 +739,148 @@ fn mint_findanddelete_seam(out_path: &Path) -> Result<()> {
     println!(
         "minted findanddelete sighash manifest -> {}",
         sighash_manifest_path.display()
+    );
+    Ok(())
+}
+
+fn mint_sighash_single_seam(out_path: &Path) -> Result<()> {
+    let report = doctor_report().map_err(|e| {
+        anyhow!(
+            "doctor failed: {e:#}\nSet BITCOIND_RPC_URL/USER/PASS and start regtest bitcoind first."
+        )
+    })?;
+    if report.chain != "regtest" {
+        return Err(anyhow!(
+            "mint-sighash-single-seam requires regtest, got {}",
+            report.chain
+        ));
+    }
+
+    let rpc = SimpleRpc::from_env()?;
+    ensure_wallet_loaded_simple(&rpc, "jb_harness")?;
+    let wallet = rpc.for_wallet("jb_harness");
+
+    let mine_addr = wallet.call("getnewaddress", json!(["jb_sighash_mining", "bech32"]))?;
+    let mine_addr = mine_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing mining addr"))?
+        .to_string();
+    let block_count = rpc.call("getblockcount", json!([]))?.as_u64().unwrap_or(0);
+    if block_count < 101 {
+        wallet.call("generatetoaddress", json!([101 - block_count, mine_addr]))?;
+    }
+
+    let legacy_addr = wallet.call("getnewaddress", json!(["jb_sighash_legacy", "legacy"]))?;
+    let legacy_addr = legacy_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing legacy addr"))?
+        .to_string();
+    let legacy_info = wallet.call("getaddressinfo", json!([legacy_addr]))?;
+    let script_code_hex = legacy_info["scriptPubKey"]
+        .as_str()
+        .ok_or_else(|| anyhow!("getaddressinfo missing scriptPubKey"))?
+        .to_string();
+    let script_code = hex::decode(&script_code_hex).context("decode script_code_hex")?;
+
+    let funding_txid_a = wallet.call("sendtoaddress", json!([legacy_addr, 1.0]))?;
+    let funding_txid_a = funding_txid_a
+        .as_str()
+        .ok_or_else(|| anyhow!("sendtoaddress A missing txid"))?
+        .to_string();
+    let funding_txid_b = wallet.call("sendtoaddress", json!([legacy_addr, 1.0]))?;
+    let funding_txid_b = funding_txid_b
+        .as_str()
+        .ok_or_else(|| anyhow!("sendtoaddress B missing txid"))?
+        .to_string();
+
+    let confirm_addr = wallet.call("getnewaddress", json!(["jb_sighash_confirm", "bech32"]))?;
+    let confirm_addr = confirm_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing confirm addr"))?
+        .to_string();
+    wallet.call("generatetoaddress", json!([1, confirm_addr]))?;
+
+    let (vout_a, sats_a) =
+        locate_output_by_script(&rpc, &wallet, &funding_txid_a, &script_code_hex)?;
+    let (vout_b, sats_b) =
+        locate_output_by_script(&rpc, &wallet, &funding_txid_b, &script_code_hex)?;
+    let total_sats = sats_a + sats_b;
+    if total_sats <= 2_000 {
+        return Err(anyhow!("funding outputs too small"));
+    }
+
+    let sink_addr = wallet.call("getnewaddress", json!(["jb_sighash_sink", "bech32"]))?;
+    let sink_addr = sink_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing sink addr"))?
+        .to_string();
+    let sink_info = wallet.call("getaddressinfo", json!([sink_addr]))?;
+    let sink_spk = sink_info["scriptPubKey"]
+        .as_str()
+        .ok_or_else(|| anyhow!("getaddressinfo missing sink scriptPubKey"))?;
+    let sink_spk = hex::decode(sink_spk).context("decode sink scriptPubKey")?;
+
+    let spend_total = total_sats - 1_500;
+    let single_bug_tx_hex = build_legacy_tx_multi(
+        &[
+            LegacyTxInputRef::empty(&funding_txid_a, vout_a),
+            LegacyTxInputRef::empty(&funding_txid_b, vout_b),
+        ],
+        &[LegacyTxOutputRef::new(spend_total, &sink_spk)],
+    )?;
+    let single_bug_anyonecanpay_tx_hex = build_legacy_tx_multi(
+        &[
+            LegacyTxInputRef::empty(&funding_txid_a, vout_a),
+            LegacyTxInputRef::empty(&funding_txid_b, vout_b),
+        ],
+        &[LegacyTxOutputRef::new(spend_total, &sink_spk)],
+    )?;
+    let single_control_tx_hex = build_legacy_tx_multi(
+        &[
+            LegacyTxInputRef::empty(&funding_txid_a, vout_a),
+            LegacyTxInputRef::empty(&funding_txid_b, vout_b),
+        ],
+        &[
+            LegacyTxOutputRef::new(spend_total - 1_000, &sink_spk),
+            LegacyTxOutputRef::new(1_000, &script_code),
+        ],
+    )?;
+
+    let single_bug_core = testmempoolaccept_once(&rpc, &single_bug_tx_hex)?;
+    let single_bug_anyonecanpay_core =
+        testmempoolaccept_once(&rpc, &single_bug_anyonecanpay_tx_hex)?;
+    let single_control_core = testmempoolaccept_once(&rpc, &single_control_tx_hex)?;
+
+    let fixture = SighashSingleSeamFixture {
+        name: "sighash_single_core_seam".to_string(),
+        network: "regtest".to_string(),
+        funding_outpoints: vec![
+            format!("{}:{}", funding_txid_a, vout_a),
+            format!("{}:{}", funding_txid_b, vout_b),
+        ],
+        script_code_hex: script_code_hex.clone(),
+        context_heights: vec![133_000, 300_000],
+        single_bug_tx_hex,
+        single_bug_anyonecanpay_tx_hex,
+        single_control_tx_hex,
+        single_bug_core,
+        single_bug_anyonecanpay_core,
+        single_control_core,
+    };
+    if let Some(parent) = out_path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(out_path, serde_json::to_vec_pretty(&fixture)?)
+        .with_context(|| format!("writing {}", out_path.display()))?;
+    let manifest_path = PathBuf::from("fixtures/manifests/sighash_single_core_seam_poc.json");
+    write_sighash_single_manifest(&manifest_path, &script_code_hex)?;
+    println!(
+        "minted sighash single seam fixture -> {}",
+        out_path.display()
+    );
+    println!(
+        "minted sighash single seam manifest -> {}",
+        manifest_path.display()
     );
     Ok(())
 }
@@ -977,6 +1151,85 @@ fn write_findanddelete_sighash_manifest(path: &Path, script_pubkey_hex: &str) ->
             "codeseparator_pos": "-1",
             "sighash_type": "0x02",
             "script_pubkey_hex": script_pubkey_hex
+          }
+        }
+      ]
+    });
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(path, serde_json::to_vec_pretty(&manifest)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(())
+}
+
+fn write_sighash_single_manifest(path: &Path, script_code_hex: &str) -> Result<()> {
+    let manifest = json!({
+      "name": "sighash_single_core_seam_poc",
+      "windows": [
+        {
+          "name": "sighash-single-bug-h133000",
+          "start_height": 133000,
+          "end_height": 133000,
+          "representative_heights": [133000],
+          "epoch": "pre-bip16"
+        },
+        {
+          "name": "sighash-single-bug-acp-h133000",
+          "start_height": 133000,
+          "end_height": 133000,
+          "representative_heights": [133000],
+          "epoch": "pre-bip16"
+        },
+        {
+          "name": "sighash-single-control-h300000",
+          "start_height": 300000,
+          "end_height": 300000,
+          "representative_heights": [300000],
+          "epoch": "post-bip34"
+        }
+      ],
+      "fixtures": [
+        {
+          "id": "sighash_single_bug",
+          "description": "Two-input one-output SINGLE bug specimen",
+          "window": "sighash-single-bug-h133000",
+          "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+          "tx_hex_field": "single_bug_tx_hex",
+          "spend_type": "legacy_sighash",
+          "metadata": {
+            "quirk_target": "sighash-single-degeneracy",
+            "input_index": "1",
+            "sighash_type": "0x03",
+            "script_code_hex": script_code_hex
+          }
+        },
+        {
+          "id": "sighash_single_bug_anyonecanpay",
+          "description": "Two-input one-output SINGLE|ANYONECANPAY bug specimen",
+          "window": "sighash-single-bug-acp-h133000",
+          "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+          "tx_hex_field": "single_bug_anyonecanpay_tx_hex",
+          "spend_type": "legacy_sighash",
+          "metadata": {
+            "quirk_target": "sighash-single-degeneracy",
+            "input_index": "1",
+            "sighash_type": "0x83",
+            "script_code_hex": script_code_hex
+          }
+        },
+        {
+          "id": "sighash_single_control",
+          "description": "Two-input two-output SINGLE control specimen",
+          "window": "sighash-single-control-h300000",
+          "tx_hex_blob": "../blobs/sighash-single-core-seam.json",
+          "tx_hex_field": "single_control_tx_hex",
+          "spend_type": "legacy_sighash",
+          "metadata": {
+            "quirk_target": "sighash-single-degeneracy",
+            "input_index": "1",
+            "sighash_type": "0x03",
+            "script_code_hex": script_code_hex
           }
         }
       ]
@@ -1508,27 +1761,109 @@ fn build_legacy_tx(
     output_sats: u64,
     output_spk: &[u8],
 ) -> Result<String> {
+    let input = LegacyTxInputRef {
+        prev_txid_hex: prev_txid_hex.to_string(),
+        prev_vout,
+        script_sig: script_sig.to_vec(),
+        sequence: 0xffff_ffff,
+    };
+    let output = LegacyTxOutputRef::new(output_sats, output_spk);
+    build_legacy_tx_multi(&[input], &[output])
+}
+
+#[derive(Debug, Clone)]
+struct LegacyTxInputRef {
+    prev_txid_hex: String,
+    prev_vout: u32,
+    script_sig: Vec<u8>,
+    sequence: u32,
+}
+
+impl LegacyTxInputRef {
+    fn empty(prev_txid_hex: &str, prev_vout: u32) -> Self {
+        Self {
+            prev_txid_hex: prev_txid_hex.to_string(),
+            prev_vout,
+            script_sig: Vec::new(),
+            sequence: 0xffff_ffff,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct LegacyTxOutputRef {
+    value_sats: u64,
+    script_pubkey: Vec<u8>,
+}
+
+impl LegacyTxOutputRef {
+    fn new(value_sats: u64, script_pubkey: &[u8]) -> Self {
+        Self {
+            value_sats,
+            script_pubkey: script_pubkey.to_vec(),
+        }
+    }
+}
+
+fn build_legacy_tx_multi(
+    inputs: &[LegacyTxInputRef],
+    outputs: &[LegacyTxOutputRef],
+) -> Result<String> {
     let mut out = Vec::new();
     out.extend_from_slice(&1u32.to_le_bytes()); // version
-    out.extend_from_slice(&encode_varint(1)); // vin
-
-    let mut txid = hex::decode(prev_txid_hex).context("decode prev txid")?;
-    if txid.len() != 32 {
-        return Err(anyhow!("prev txid must be 32 bytes"));
+    out.extend_from_slice(&encode_varint(inputs.len() as u64));
+    for input in inputs {
+        let mut txid = hex::decode(&input.prev_txid_hex).context("decode prev txid")?;
+        if txid.len() != 32 {
+            return Err(anyhow!("prev txid must be 32 bytes"));
+        }
+        txid.reverse();
+        out.extend_from_slice(&txid);
+        out.extend_from_slice(&input.prev_vout.to_le_bytes());
+        out.extend_from_slice(&encode_varint(input.script_sig.len() as u64));
+        out.extend_from_slice(&input.script_sig);
+        out.extend_from_slice(&input.sequence.to_le_bytes());
     }
-    txid.reverse();
-    out.extend_from_slice(&txid);
-    out.extend_from_slice(&prev_vout.to_le_bytes());
-    out.extend_from_slice(&encode_varint(script_sig.len() as u64));
-    out.extend_from_slice(script_sig);
-    out.extend_from_slice(&0xffff_ffffu32.to_le_bytes()); // sequence
 
-    out.extend_from_slice(&encode_varint(1)); // vout
-    out.extend_from_slice(&output_sats.to_le_bytes());
-    out.extend_from_slice(&encode_varint(output_spk.len() as u64));
-    out.extend_from_slice(output_spk);
+    out.extend_from_slice(&encode_varint(outputs.len() as u64));
+    for output in outputs {
+        out.extend_from_slice(&output.value_sats.to_le_bytes());
+        out.extend_from_slice(&encode_varint(output.script_pubkey.len() as u64));
+        out.extend_from_slice(&output.script_pubkey);
+    }
     out.extend_from_slice(&0u32.to_le_bytes()); // locktime
     Ok(hex::encode(out))
+}
+
+fn locate_output_by_script(
+    rpc: &SimpleRpc,
+    wallet: &SimpleRpc,
+    txid: &str,
+    script_pubkey_hex: &str,
+) -> Result<(u32, u64)> {
+    let tx = wallet.call("gettransaction", json!([txid, true, true]))?;
+    let funding_hex = tx["hex"]
+        .as_str()
+        .ok_or_else(|| anyhow!("gettransaction missing hex"))?
+        .to_string();
+    let decoded_funding = rpc.call("decoderawtransaction", json!([funding_hex]))?;
+    let vouts = decoded_funding["vout"]
+        .as_array()
+        .ok_or_else(|| anyhow!("decoderawtransaction missing vout"))?;
+    for v in vouts {
+        let spk_hex = v["scriptPubKey"]["hex"].as_str().unwrap_or_default();
+        if spk_hex == script_pubkey_hex {
+            let vout = v["n"]
+                .as_u64()
+                .ok_or_else(|| anyhow!("funding output missing n"))? as u32;
+            let sats = v["value"]
+                .as_f64()
+                .map(|btc| (btc * 100_000_000.0).round() as u64)
+                .ok_or_else(|| anyhow!("funding output missing value"))?;
+            return Ok((vout, sats));
+        }
+    }
+    Err(anyhow!("could not locate funding output for script"))
 }
 
 fn build_push_only_scriptsig(pushes: &[&[u8]], redeem_script: &[u8]) -> Result<Vec<u8>> {
@@ -1951,6 +2286,8 @@ struct EpochCompareRow {
     unique_specimen_count: usize,
     sighash_context_tag_count: usize,
     sighash_context_tags_only_in_epoch: Vec<String>,
+    sighash_digest_count: usize,
+    sighash_digests_only_in_epoch: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1973,6 +2310,7 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
     let mut mutation_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let mut specimen_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let mut sighash_tag_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut sighash_digest_sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let mut rows = Vec::new();
 
     for (epoch, epoch_dir) in &epoch_dirs {
@@ -1998,6 +2336,7 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
         let mut mutations = BTreeSet::new();
         let mut specimen_ids = BTreeSet::new();
         let mut sighash_tags = BTreeSet::new();
+        let mut sighash_digests = BTreeSet::new();
         for event_path in files {
             let bytes = match fs::read(&event_path) {
                 Ok(v) => v,
@@ -2018,6 +2357,11 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
                     sighash_tags.insert(tag.clone());
                 }
             }
+            if let Some(digest) = event.rust.details.get("sighash_digest_hex") {
+                if !digest.is_empty() {
+                    sighash_digests.insert(digest.clone());
+                }
+            }
             let testcase_path = event_path
                 .parent()
                 .map(|p| p.join(format!("{}-testcase.json", event.testcase_id)));
@@ -2034,6 +2378,7 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
         mutation_sets.insert(epoch.clone(), mutations);
         specimen_sets.insert(epoch.clone(), specimen_ids);
         sighash_tag_sets.insert(epoch.clone(), sighash_tags);
+        sighash_digest_sets.insert(epoch.clone(), sighash_digests);
 
         let top_mutations = top_reasons(summary.mutation_histogram, 5);
         rows.push(EpochCompareRow {
@@ -2049,6 +2394,8 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
             unique_specimen_count: 0,
             sighash_context_tag_count: 0,
             sighash_context_tags_only_in_epoch: Vec::new(),
+            sighash_digest_count: 0,
+            sighash_digests_only_in_epoch: Vec::new(),
         });
     }
 
@@ -2089,6 +2436,16 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
                 other_tags.extend(set.iter().cloned());
             }
         }
+        let own_digests = sighash_digest_sets
+            .get(&row.epoch)
+            .cloned()
+            .unwrap_or_default();
+        let mut other_digests = BTreeSet::new();
+        for (epoch, set) in &sighash_digest_sets {
+            if *epoch != row.epoch {
+                other_digests.extend(set.iter().cloned());
+            }
+        }
 
         row.reasons_only_in_epoch = own_reasons
             .difference(&other_reasons)
@@ -2107,6 +2464,12 @@ fn summarize_compare_offline(root: &Path) -> Result<CompareOutput> {
             .cloned()
             .collect::<Vec<_>>();
         row.sighash_context_tags_only_in_epoch.sort();
+        row.sighash_digest_count = own_digests.len();
+        row.sighash_digests_only_in_epoch = own_digests
+            .difference(&other_digests)
+            .cloned()
+            .collect::<Vec<_>>();
+        row.sighash_digests_only_in_epoch.sort();
     }
 
     rows.sort_by(|a, b| a.epoch.cmp(&b.epoch));
@@ -2222,6 +2585,15 @@ fn print_compare_table(root: &Path, c: &CompareOutput) {
                 row.sighash_context_tags_only_in_epoch.join(", ")
             }
         );
+        println!("  sighash_digest_count={}", row.sighash_digest_count);
+        println!(
+            "  sighash_digests_only_in_epoch={}",
+            if row.sighash_digests_only_in_epoch.is_empty() {
+                "<none>".to_string()
+            } else {
+                row.sighash_digests_only_in_epoch.join(", ")
+            }
+        );
     }
 }
 
@@ -2250,6 +2622,8 @@ struct MuseumSpecimen {
     rust_reason: Option<String>,
     script_trace: Option<String>,
     sighash_context_tag: Option<String>,
+    sighash_digest_hex: Option<String>,
+    sighash_single_bug: Option<String>,
     mutations_applied: Vec<String>,
     label: Option<String>,
     event_path: String,
@@ -2431,6 +2805,8 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
 
         let script_trace = event.rust.details.get("script_trace").cloned();
         let sighash_context_tag = event.rust.details.get("sighash_context_tag").cloned();
+        let sighash_digest_hex = event.rust.details.get("sighash_digest_hex").cloned();
+        let sighash_single_bug = event.rust.details.get("sighash_single_bug").cloned();
         specimens.push(MuseumSpecimen {
             specimen_id: specimen_id.clone(),
             testcase_id: event.testcase_id.clone(),
@@ -2447,6 +2823,8 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             rust_reason: event.rust_reason.clone(),
             script_trace,
             sighash_context_tag,
+            sighash_digest_hex,
+            sighash_single_bug,
             mutations_applied: event.mutations_applied.clone(),
             label: labels.get(&specimen_id).cloned(),
             event_path: event_path.display().to_string(),
@@ -2631,6 +3009,16 @@ fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggesti
         rationale: rationale.to_string(),
     };
 
+    if specimen.sighash_single_bug.as_deref() == Some("true") {
+        return Some(choose(
+            "SIGHASH_SINGLE_DEGENERACY",
+            "high",
+            "specimen records the legacy SIGHASH_SINGLE bug path",
+        ));
+    }
+    if specimen.sighash_digest_hex.is_some() {
+        return None;
+    }
     if reason_joined.contains("findanddelete") {
         return Some(choose(
             "CHECKMULTISIG_FINDANDDELETE",
@@ -3007,6 +3395,20 @@ mod tests {
                 assert!(out.ends_with("p2sh-findanddelete-core-seam.json"));
             }
             _ => panic!("expected mint-findanddelete-seam"),
+        }
+
+        let mint_ss = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "mint-sighash-single-seam",
+            "--out",
+            "fixtures/blobs/sighash-single-core-seam.json",
+        ])
+        .expect("parse mint-sighash-single-seam");
+        match mint_ss.cmd {
+            Command::MintSighashSingleSeam { out } => {
+                assert!(out.ends_with("sighash-single-core-seam.json"));
+            }
+            _ => panic!("expected mint-sighash-single-seam"),
         }
     }
 

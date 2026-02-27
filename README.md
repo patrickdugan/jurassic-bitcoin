@@ -324,6 +324,16 @@ Regtest-funded sighash-flag axis:
 cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_findanddelete_sighash_core_poc.json --out-dir artifacts/p2sh-findanddelete-sighash --limit-per-epoch 50 --force
 ```
 
+Regtest-funded `SIGHASH_SINGLE` degeneracy seam:
+
+```powershell
+$env:BITCOIND_RPC_URL  = "http://127.0.0.1:18443"
+$env:BITCOIND_RPC_USER = "user"
+$env:BITCOIND_RPC_PASS = "pass"
+cargo run -p jurassic-bitcoin-cli -- mint-sighash-single-seam --out fixtures/blobs/sighash-single-core-seam.json
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/sighash_single_core_seam_poc.json --out-dir artifacts/sighash-single-core-seam --limit-per-epoch 50 --force
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

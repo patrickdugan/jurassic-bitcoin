@@ -234,7 +234,10 @@ fn run_testmempoolaccept_tx_hex_template(
     template: &CoreTemplate,
     tc: &TestCase,
 ) -> Result<ExecResult> {
-    if template.spend_type != "p2wpkh" && template.spend_type != "p2sh" {
+    if template.spend_type != "p2wpkh"
+        && template.spend_type != "p2sh"
+        && template.spend_type != "legacy_sighash"
+    {
         return Ok(ExecResult::err(format!(
             "unsupported core_template.spend_type {}",
             template.spend_type
@@ -244,7 +247,7 @@ fn run_testmempoolaccept_tx_hex_template(
         Ok(v) => v,
         Err(_) => return Ok(ExecResult::err("invalid tx encoding")),
     };
-    if template.spend_type == "p2sh" {
+    if template.spend_type == "p2sh" || template.spend_type == "legacy_sighash" {
         return testmempoolaccept_result_direct(
             rpc,
             tc.tx_hex.as_str(),

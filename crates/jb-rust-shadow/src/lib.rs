@@ -16,6 +16,7 @@ pub fn run_testcase_rust(tc: &TestCase) -> ExecResult {
     if is_txhex_template {
         let spend_type = template.map(|t| t.spend_type.as_str()).unwrap_or("");
         return match spend_type {
+            "legacy_sighash" => run_txhex_legacy_sighash_slice(tc),
             "p2wpkh" => run_txhex_p2wpkh_slice(tc),
             "p2sh" => run_txhex_p2sh_slice(tc),
             other => ExecResult::err(format!("unsupported spend_type in rust_shadow: {other}")),
@@ -456,6 +457,170 @@ fn run_txhex_p2wpkh_slice(tc: &TestCase) -> ExecResult {
     }
 }
 
+fn run_txhex_legacy_sighash_slice(tc: &TestCase) -> ExecResult {
+    let tx = match parse_transaction(&tc.tx_hex) {
+        Ok(v) => v,
+        Err(_) => return ExecResult::err("invalid tx encoding"),
+    };
+    let input_index = parse_u32_metadata(tc, "input_index").unwrap_or(0) as usize;
+    let script_code_hex = match tc.metadata.get("script_code_hex") {
+        Some(v) => v,
+        None => return ExecResult::err("missing script_code_hex"),
+    };
+    let script_code = match hex::decode(script_code_hex) {
+        Ok(v) => v,
+        Err(_) => return ExecResult::err("invalid script_code_hex"),
+    };
+    let sighash_type = parse_u32_metadata(tc, "sighash_type").unwrap_or(1);
+    let digest = match compute_legacy_sighash(&tx, input_index, &script_code, sighash_type) {
+        Ok(v) => v,
+        Err(e) => return ExecResult::err(e),
+    };
+
+    let mut result = ExecResult::ok();
+    result
+        .details
+        .insert("validation".to_string(), "legacy-sighash".to_string());
+    result.details.insert(
+        "sighash_digest_hex".to_string(),
+        hex::encode(digest.digest_bytes),
+    );
+    result.details.insert(
+        "sighash_type".to_string(),
+        format!("0x{:02x}", sighash_type),
+    );
+    result
+        .details
+        .insert("input_index".to_string(), input_index.to_string());
+    result.details.insert(
+        "sighash_single_bug".to_string(),
+        digest.single_bug.to_string(),
+    );
+    result
+}
+
+struct LegacySighashDigest {
+    digest_bytes: [u8; 32],
+    single_bug: bool,
+}
+
+fn compute_legacy_sighash(
+    tx: &Transaction,
+    input_index: usize,
+    script_code: &[u8],
+    sighash_type: u32,
+) -> Result<LegacySighashDigest, String> {
+    if tx.has_witness {
+        return Err("legacy_sighash requires non-segwit tx".to_string());
+    }
+    if input_index >= tx.inputs.len() {
+        return Err("input_index out of range".to_string());
+    }
+
+    let anyonecanpay = (sighash_type & 0x80) != 0;
+    let base_type = sighash_type & 0x1f;
+    if base_type == 0x03 && input_index >= tx.outputs.len() {
+        let mut one = [0u8; 32];
+        one[0] = 1;
+        return Ok(LegacySighashDigest {
+            digest_bytes: one,
+            single_bug: true,
+        });
+    }
+
+    let mut ser = Vec::new();
+    ser.extend_from_slice(&tx.version.to_le_bytes());
+
+    if anyonecanpay {
+        ser.extend_from_slice(&encode_varint_shadow(1));
+        serialize_legacy_input_for_sighash(
+            &mut ser,
+            &tx.inputs[input_index],
+            script_code,
+            tx.inputs[input_index].sequence,
+        );
+    } else {
+        ser.extend_from_slice(&encode_varint_shadow(tx.inputs.len() as u64));
+        for (idx, input) in tx.inputs.iter().enumerate() {
+            let script = if idx == input_index { script_code } else { &[] };
+            let mut sequence = input.sequence;
+            if idx != input_index && (base_type == 0x02 || base_type == 0x03) {
+                sequence = 0;
+            }
+            serialize_legacy_input_for_sighash(&mut ser, input, script, sequence);
+        }
+    }
+
+    match base_type {
+        0x02 => ser.extend_from_slice(&encode_varint_shadow(0)),
+        0x03 => {
+            ser.extend_from_slice(&encode_varint_shadow((input_index + 1) as u64));
+            for _idx in 0..input_index {
+                ser.extend_from_slice(&u64::MAX.to_le_bytes());
+                ser.extend_from_slice(&encode_varint_shadow(0));
+            }
+            let out = &tx.outputs[input_index];
+            serialize_legacy_output(&mut ser, out);
+        }
+        _ => {
+            ser.extend_from_slice(&encode_varint_shadow(tx.outputs.len() as u64));
+            for out in &tx.outputs {
+                serialize_legacy_output(&mut ser, out);
+            }
+        }
+    }
+
+    ser.extend_from_slice(&tx.locktime.to_le_bytes());
+    ser.extend_from_slice(&sighash_type.to_le_bytes());
+    let first = Sha256::digest(&ser);
+    let second = Sha256::digest(first);
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&second);
+    Ok(LegacySighashDigest {
+        digest_bytes: out,
+        single_bug: false,
+    })
+}
+
+fn serialize_legacy_input_for_sighash(
+    out: &mut Vec<u8>,
+    input: &TxIn,
+    script_code: &[u8],
+    sequence: u32,
+) {
+    let mut txid = hex::decode(&input.prevout.txid_hex).unwrap_or_default();
+    txid.reverse();
+    out.extend_from_slice(&txid);
+    out.extend_from_slice(&input.prevout.vout.to_le_bytes());
+    out.extend_from_slice(&encode_varint_shadow(script_code.len() as u64));
+    out.extend_from_slice(script_code);
+    out.extend_from_slice(&sequence.to_le_bytes());
+}
+
+fn serialize_legacy_output(out: &mut Vec<u8>, txout: &TxOut) {
+    out.extend_from_slice(&txout.value_sats.to_le_bytes());
+    out.extend_from_slice(&encode_varint_shadow(txout.script_pubkey.len() as u64));
+    out.extend_from_slice(&txout.script_pubkey);
+}
+
+fn encode_varint_shadow(n: u64) -> Vec<u8> {
+    if n <= 0xfc {
+        vec![n as u8]
+    } else if n <= 0xffff {
+        let mut out = vec![0xfd];
+        out.extend_from_slice(&(n as u16).to_le_bytes());
+        out
+    } else if n <= 0xffff_ffff {
+        let mut out = vec![0xfe];
+        out.extend_from_slice(&(n as u32).to_le_bytes());
+        out
+    } else {
+        let mut out = vec![0xff];
+        out.extend_from_slice(&n.to_le_bytes());
+        out
+    }
+}
+
 fn resolve_p2wpkh_program(tc: &TestCase) -> Option<[u8; 20]> {
     let spk_hex = tc.metadata.get("script_pubkey_hex")?;
     let spk = hex::decode(spk_hex).ok()?;
@@ -870,19 +1035,24 @@ fn hash160(data: &[u8]) -> [u8; 20] {
 
 #[derive(Debug, Clone)]
 struct Transaction {
+    version: u32,
     inputs: Vec<TxIn>,
     outputs: Vec<TxOut>,
+    locktime: u32,
+    has_witness: bool,
 }
 
 #[derive(Debug, Clone)]
 struct TxIn {
     prevout: Prevout,
     script_sig: Vec<u8>,
+    sequence: u32,
     witness: Option<Witness>,
 }
 
 #[derive(Debug, Clone)]
 struct TxOut {
+    value_sats: u64,
     script_pubkey: Vec<u8>,
 }
 
@@ -903,7 +1073,7 @@ fn parse_transaction(tx_hex: &str) -> Result<Transaction, ()> {
         return Err(());
     }
     let mut i = 0usize;
-    i = advance(&bytes, i, 4)?; // version
+    let version = read_u32_le(&bytes, &mut i).ok_or(())?;
     let has_witness = bytes.get(i) == Some(&0x00) && bytes.get(i + 1) == Some(&0x01);
     if has_witness {
         i = advance(&bytes, i, 2)?;
@@ -917,10 +1087,11 @@ fn parse_transaction(tx_hex: &str) -> Result<Transaction, ()> {
         let vout = read_u32_le(&bytes, &mut i).ok_or(())?;
         let script_len = read_varint(&bytes, &mut i).ok_or(())? as usize;
         let script_sig = read_bytes(&bytes, &mut i, script_len).ok_or(())?.to_vec();
-        i = advance(&bytes, i, 4)?; // sequence
+        let sequence = read_u32_le(&bytes, &mut i).ok_or(())?;
         inputs.push(TxIn {
             prevout: Prevout { txid_hex, vout },
             script_sig,
+            sequence,
             witness: None,
         });
     }
@@ -928,10 +1099,13 @@ fn parse_transaction(tx_hex: &str) -> Result<Transaction, ()> {
     let vout_count = read_varint(&bytes, &mut i).ok_or(())? as usize;
     let mut outputs = Vec::with_capacity(vout_count);
     for _ in 0..vout_count {
-        i = advance(&bytes, i, 8)?;
+        let value_sats = read_u64_le(&bytes, &mut i).ok_or(())?;
         let spk_len = read_varint(&bytes, &mut i).ok_or(())? as usize;
         let script_pubkey = read_bytes(&bytes, &mut i, spk_len).ok_or(())?.to_vec();
-        outputs.push(TxOut { script_pubkey });
+        outputs.push(TxOut {
+            value_sats,
+            script_pubkey,
+        });
     }
 
     if has_witness {
@@ -946,12 +1120,18 @@ fn parse_transaction(tx_hex: &str) -> Result<Transaction, ()> {
             input.witness = Some(Witness { items });
         }
     }
-    i = advance(&bytes, i, 4)?; // locktime
+    let locktime = read_u32_le(&bytes, &mut i).ok_or(())?;
     if i != bytes.len() {
         return Err(());
     }
 
-    Ok(Transaction { inputs, outputs })
+    Ok(Transaction {
+        version,
+        inputs,
+        outputs,
+        locktime,
+        has_witness,
+    })
 }
 
 fn advance(bytes: &[u8], idx: usize, n: usize) -> Result<usize, ()> {
@@ -1217,5 +1397,46 @@ mod tests {
             .cloned()
             .expect("tag b");
         assert_ne!(ta, tb);
+    }
+
+    #[test]
+    fn legacy_sighash_single_bug_returns_constant_one() {
+        let tx_hex = "010000000211111111111111111111111111111111111111111111111111111111111111110000000000ffffffff22222222222222222222222222222222222222222222222222222222222222220100000000ffffffff0110270000000000001976a914000000000000000000000000000000000000000088ac00000000";
+        let tc = TestCase {
+            id: "s".to_string(),
+            description: "s".to_string(),
+            network: "mainnet".to_string(),
+            utxo_set: Vec::new(),
+            tx_hex: tx_hex.to_string(),
+            flags: Vec::new(),
+            context: Some(ValidationContext {
+                height: 133_000,
+                median_time_past: None,
+                block_time: None,
+                epoch: Some("pre-bip16".to_string()),
+            }),
+            core_template: Some(CoreTemplate {
+                kind: "testmempoolaccept_tx_hex".to_string(),
+                spend_type: "legacy_sighash".to_string(),
+                feerate_sats_vb: None,
+            }),
+            metadata: BTreeMap::from([
+                ("input_index".to_string(), "1".to_string()),
+                ("sighash_type".to_string(), "0x03".to_string()),
+                (
+                    "script_code_hex".to_string(),
+                    "76a914000000000000000000000000000000000000000088ac".to_string(),
+                ),
+            ]),
+        };
+        let out = run_testcase_rust(&tc);
+        assert_eq!(
+            out.details.get("sighash_digest_hex").map(String::as_str),
+            Some("0100000000000000000000000000000000000000000000000000000000000000")
+        );
+        assert_eq!(
+            out.details.get("sighash_single_bug").map(String::as_str),
+            Some("true")
+        );
     }
 }

@@ -14,3 +14,4 @@
 /fixtures/blobs/p2sh-core-seam.json
 /fixtures/blobs/p2wpkh-core-seam.json
 /fixtures/blobs/p2sh-findanddelete-core-seam.json
+/fixtures/blobs/sighash-single-core-seam.json
