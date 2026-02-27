@@ -312,12 +312,21 @@ fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
         ));
     }
 
-    let _ = mint_seed_testcase("p2sh-seam-bootstrap".to_string())?;
     let rpc = SimpleRpc::from_env()?;
     ensure_wallet_loaded_simple(&rpc, "jb_harness")?;
     let wallet = rpc.for_wallet("jb_harness");
 
-    let redeem_script_hex = "69".to_string(); // OP_VERIFY
+    let mine_addr = wallet.call("getnewaddress", json!(["jb_bootstrap", "bech32"]))?;
+    let mine_addr = mine_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing bootstrap addr"))?
+        .to_string();
+    let block_count = rpc.call("getblockcount", json!([]))?.as_u64().unwrap_or(0);
+    if block_count < 101 {
+        wallet.call("generatetoaddress", json!([101 - block_count, mine_addr]))?;
+    }
+
+    let redeem_script_hex = "5169".to_string(); // OP_1 OP_VERIFY
     let decoded = rpc.call("decodescript", json!([redeem_script_hex]))?;
     let p2sh_addr = decoded["p2sh"]
         .as_str()
@@ -387,8 +396,8 @@ fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
     let sink_spk = hex::decode(sink_spk).context("decode sink scriptPubKey hex")?;
 
     let spend_sats = funding_sats - 1_000;
-    let missing_redeem_sig = vec![0x01, 0x01];
-    let with_redeem_sig = vec![0x01, 0x01, 0x01, 0x69];
+    let missing_redeem_sig = vec![0x51];
+    let with_redeem_sig = vec![0x51, 0x02, 0x51, 0x69];
 
     let missing_redeem_tx_hex = build_legacy_tx(
         &funding_txid,
@@ -411,7 +420,7 @@ fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
     let fixture = P2shSeamFixture {
         name: "p2sh_core_seam".to_string(),
         network: "regtest".to_string(),
-        redeem_script_hex: "69".to_string(),
+        redeem_script_hex: "5169".to_string(),
         context_heights: vec![173_804, 173_805],
         funding_outpoint: format!("{}:{}", funding_txid, funding_vout),
         missing_redeem_tx_hex,

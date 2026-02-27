@@ -26,7 +26,7 @@
       "spend_type": "p2sh",
       "metadata": {
         "quirk_target": "core-aligned-p2sh-seam",
-        "script_pubkey_hex": "a914e97675e96a56a4207930165e30651fafcb71be4487"
+        "script_pubkey_hex": "a9144d5aad88e3daf7ca980ccfb40d1855f7904bbc8087"
       }
     },
     {
@@ -38,7 +38,7 @@
       "spend_type": "p2sh",
       "metadata": {
         "quirk_target": "core-aligned-p2sh-seam",
-        "script_pubkey_hex": "a914e97675e96a56a4207930165e30651fafcb71be4487"
+        "script_pubkey_hex": "a9144d5aad88e3daf7ca980ccfb40d1855f7904bbc8087"
       }
     },
     {
@@ -50,7 +50,7 @@
       "spend_type": "p2sh",
       "metadata": {
         "quirk_target": "core-aligned-p2sh-seam",
-        "script_pubkey_hex": "a914e97675e96a56a4207930165e30651fafcb71be4487"
+        "script_pubkey_hex": "a9144d5aad88e3daf7ca980ccfb40d1855f7904bbc8087"
       }
     }
   ]

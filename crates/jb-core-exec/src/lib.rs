@@ -226,24 +226,35 @@ fn run_testmempoolaccept_tx_hex_template(
     template: &CoreTemplate,
     tc: &TestCase,
 ) -> Result<ExecResult> {
-    if template.spend_type != "p2wpkh" {
+    if template.spend_type != "p2wpkh" && template.spend_type != "p2sh" {
         return Ok(ExecResult::err(format!(
             "unsupported core_template.spend_type {}",
             template.spend_type
         )));
     }
-    let state = ensure_harness_state(rpc)?;
     let inputs = match parse_input_outpoints(&tc.tx_hex) {
         Ok(v) => v,
         Err(_) => return Ok(ExecResult::err("invalid tx encoding")),
     };
-    let funding_match = inputs
-        .iter()
-        .any(|i| i.txid == state.funding.txid && i.vout == state.funding.vout);
-    if !funding_match {
-        return Ok(ExecResult::err(
-            "wrong prevout (not harness funding outpoint)",
-        ));
+    if template.spend_type == "p2sh" {
+        return testmempoolaccept_result_direct(
+            rpc,
+            tc.tx_hex.as_str(),
+            "testmempoolaccept_tx_hex",
+            template.spend_type.as_str(),
+        );
+    }
+
+    let state = ensure_harness_state(rpc)?;
+    if template.spend_type == "p2wpkh" {
+        let funding_match = inputs
+            .iter()
+            .any(|i| i.txid == state.funding.txid && i.vout == state.funding.vout);
+        if !funding_match {
+            return Ok(ExecResult::err(
+                "wrong prevout (not harness funding outpoint)",
+            ));
+        }
     }
     testmempoolaccept_result(
         &state,
@@ -252,6 +263,32 @@ fn run_testmempoolaccept_tx_hex_template(
         template.spend_type.as_str(),
         None,
     )
+}
+
+fn testmempoolaccept_result_direct(
+    rpc: &RpcClient,
+    tx_hex: &str,
+    kind: &str,
+    spend_type: &str,
+) -> Result<ExecResult> {
+    let accept = rpc.call("testmempoolaccept", json!([[tx_hex]]))?;
+    let first = accept
+        .as_array()
+        .and_then(|arr| arr.first())
+        .ok_or_else(|| anyhow!("testmempoolaccept missing result"))?;
+
+    let allowed = first["allowed"].as_bool().unwrap_or(false);
+    let reject_reason = first["reject-reason"].as_str().map(ToOwned::to_owned);
+    let mut details = BTreeMap::new();
+    details.insert("mode".to_string(), "rpc-template".to_string());
+    details.insert("kind".to_string(), kind.to_string());
+    details.insert("spend_type".to_string(), spend_type.to_string());
+    details.insert("wallet".to_string(), HARNESS_WALLET.to_string());
+    Ok(ExecResult {
+        ok: allowed,
+        reason: reject_reason,
+        details,
+    })
 }
 
 fn build_signed_spend_harness_tx(state: &HarnessState, fee_sats: u64) -> Result<String> {
