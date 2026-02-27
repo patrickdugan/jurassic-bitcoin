@@ -334,6 +334,16 @@ cargo run -p jurassic-bitcoin-cli -- mint-sighash-single-seam --out fixtures/blo
 cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/sighash_single_core_seam_poc.json --out-dir artifacts/sighash-single-core-seam --limit-per-epoch 50 --force
 ```
 
+Regtest-funded `DUMMYGRIND` seam:
+
+```powershell
+$env:BITCOIND_RPC_URL  = "http://127.0.0.1:18443"
+$env:BITCOIND_RPC_USER = "user"
+$env:BITCOIND_RPC_PASS = "pass"
+cargo run -p jurassic-bitcoin-cli -- mint-dummygrind-seam --out fixtures/blobs/p2sh-dummygrind-core-seam.json
+cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_dummygrind_core_seam_poc.json --out-dir artifacts/p2sh-dummygrind-core-seam --limit-per-epoch 50 --force
+```
+
 ## Grant Package
 
 Grant-ready materials are in `docs/grants/`:

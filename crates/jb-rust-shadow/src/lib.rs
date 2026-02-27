@@ -166,6 +166,23 @@ fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
             ));
         }
 
+        if tc
+            .metadata
+            .get("dummygrind_hook")
+            .map(|v| v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false)
+        {
+            return run_p2sh_dummygrind_slice(
+                tc,
+                &tx,
+                &trace,
+                p2sh_detected,
+                bip16_enforced,
+                &pushes,
+                &redeem_script,
+            );
+        }
+
         if let Err(e) = execute_script(
             &redeem_script,
             &mut redeem_stack,
@@ -222,6 +239,72 @@ fn run_txhex_p2sh_slice(tc: &TestCase) -> ExecResult {
     )
 }
 
+fn run_p2sh_dummygrind_slice(
+    tc: &TestCase,
+    tx: &Transaction,
+    trace: &[String],
+    p2sh_detected: bool,
+    bip16_enforced: bool,
+    pushes: &[Vec<u8>],
+    redeem_script: &[u8],
+) -> ExecResult {
+    let checksig_true = tc
+        .metadata
+        .get("checksighook")
+        .map(|v| v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    let mut result = if checksig_true {
+        reason_result(
+            "",
+            ScriptPhase::RedeemScript,
+            trace,
+            p2sh_detected,
+            bip16_enforced,
+            true,
+        )
+    } else {
+        reason_result(
+            "script failed: checksighook-false-multisig",
+            ScriptPhase::RedeemScript,
+            trace,
+            p2sh_detected,
+            bip16_enforced,
+            false,
+        )
+    };
+    let dummy = pushes.first().cloned().unwrap_or_default();
+    let input_index = parse_u32_metadata(tc, "input_index").unwrap_or(0) as usize;
+    let sighash_type = parse_u32_metadata(tc, "sighash_type").unwrap_or(1);
+    if let Ok(digest) = compute_legacy_sighash(tx, input_index, redeem_script, sighash_type) {
+        result.details.insert(
+            "sighash_digest_hex".to_string(),
+            hex::encode(digest.digest_bytes),
+        );
+        result.details.insert(
+            "sighash_single_bug".to_string(),
+            digest.single_bug.to_string(),
+        );
+    }
+    result.details.insert(
+        "sighash_type".to_string(),
+        format!("0x{:02x}", sighash_type),
+    );
+    result
+        .details
+        .insert("dummygrind_hook".to_string(), "true".to_string());
+    result
+        .details
+        .insert("dummy_len".to_string(), dummy.len().to_string());
+    result
+        .details
+        .insert("dummy_affects_sighash".to_string(), "false".to_string());
+    result.details.insert(
+        "txid_hex".to_string(),
+        txid_hex_from_tx_hex(&tc.tx_hex).unwrap_or_default(),
+    );
+    result
+}
+
 #[derive(Debug, Clone)]
 struct FindAndDeleteInfo {
     signature_count: usize,
@@ -267,7 +350,8 @@ fn analyze_findanddelete_hook(
     tag_material.extend_from_slice(&sighash_type.to_le_bytes());
     let sighash_context_tag = hex::encode(Sha256::digest(&tag_material));
     let input_index = parse_u32_metadata(tc, "input_index").unwrap_or(0) as usize;
-    let legacy = compute_legacy_sighash(tx, input_index, &scriptcode_for_sighash, sighash_type).ok()?;
+    let legacy =
+        compute_legacy_sighash(tx, input_index, &scriptcode_for_sighash, sighash_type).ok()?;
     Some(FindAndDeleteInfo {
         signature_count: sigs.len(),
         removed_total,
@@ -345,10 +429,9 @@ fn with_findanddelete_details(
         result
             .details
             .insert("sighash_context_tag".to_string(), info.sighash_context_tag);
-        result.details.insert(
-            "sighash_digest_hex".to_string(),
-            info.sighash_digest_hex,
-        );
+        result
+            .details
+            .insert("sighash_digest_hex".to_string(), info.sighash_digest_hex);
         result.details.insert(
             "sighash_single_bug".to_string(),
             info.sighash_single_bug.to_string(),
@@ -646,6 +729,15 @@ fn encode_varint_shadow(n: u64) -> Vec<u8> {
         out.extend_from_slice(&n.to_le_bytes());
         out
     }
+}
+
+fn txid_hex_from_tx_hex(tx_hex: &str) -> Option<String> {
+    let bytes = hex::decode(tx_hex).ok()?;
+    let first = Sha256::digest(&bytes);
+    let second = Sha256::digest(first);
+    let mut rev = second.to_vec();
+    rev.reverse();
+    Some(hex::encode(rev))
 }
 
 fn resolve_p2wpkh_program(tc: &TestCase) -> Option<[u8; 20]> {

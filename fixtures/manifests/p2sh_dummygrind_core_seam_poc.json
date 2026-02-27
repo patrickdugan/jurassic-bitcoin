@@ -1,0 +1,82 @@
+{
+  "fixtures": [
+    {
+      "description": "Funded multisig control with empty dummy",
+      "id": "dummygrind_empty",
+      "metadata": {
+        "checksighook": "true",
+        "dummygrind_hook": "true",
+        "input_index": "0",
+        "quirk_target": "dummygrind-txid-axis",
+        "script_pubkey_hex": "a914d3477c062a2074a00f231993be6912d66ceaefab87",
+        "sighash_type": "0x01"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-dummygrind-core-seam.json",
+      "tx_hex_field": "dummy_empty_tx_hex",
+      "window": "dummygrind-empty-h170000"
+    },
+    {
+      "description": "Funded multisig variant with one-byte zero dummy",
+      "id": "dummygrind_zero",
+      "metadata": {
+        "checksighook": "true",
+        "dummygrind_hook": "true",
+        "input_index": "0",
+        "quirk_target": "dummygrind-txid-axis",
+        "script_pubkey_hex": "a914d3477c062a2074a00f231993be6912d66ceaefab87",
+        "sighash_type": "0x01"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-dummygrind-core-seam.json",
+      "tx_hex_field": "dummy_zero_tx_hex",
+      "window": "dummygrind-zero-h300000"
+    },
+    {
+      "description": "Funded multisig variant with 32-byte dummy",
+      "id": "dummygrind_32",
+      "metadata": {
+        "checksighook": "true",
+        "dummygrind_hook": "true",
+        "input_index": "0",
+        "quirk_target": "dummygrind-txid-axis",
+        "script_pubkey_hex": "a914d3477c062a2074a00f231993be6912d66ceaefab87",
+        "sighash_type": "0x01"
+      },
+      "spend_type": "p2sh",
+      "tx_hex_blob": "../blobs/p2sh-dummygrind-core-seam.json",
+      "tx_hex_field": "dummy_32_tx_hex",
+      "window": "dummygrind-32-h300000"
+    }
+  ],
+  "name": "p2sh_dummygrind_core_seam_poc",
+  "windows": [
+    {
+      "end_height": 170000,
+      "epoch": "pre-bip16",
+      "name": "dummygrind-empty-h170000",
+      "representative_heights": [
+        170000
+      ],
+      "start_height": 170000
+    },
+    {
+      "end_height": 300000,
+      "epoch": "post-bip34",
+      "name": "dummygrind-zero-h300000",
+      "representative_heights": [
+        300000
+      ],
+      "start_height": 300000
+    },
+    {
+      "end_height": 300000,
+      "epoch": "post-bip34",
+      "name": "dummygrind-32-h300000",
+      "representative_heights": [
+        300000
+      ],
+      "start_height": 300000
+    }
+  ]
+}

@@ -16,6 +16,7 @@ use jb_mutator::mutate_testcase_with_trace;
 use jb_reducer::reduce_divergence;
 use jb_rust_shadow::run_testcase_rust;
 use rand::{SeedableRng, rngs::StdRng};
+use secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -153,6 +154,10 @@ enum Command {
         #[arg(long, default_value = "fixtures/blobs/sighash-single-core-seam.json")]
         out: PathBuf,
     },
+    MintDummygrindSeam {
+        #[arg(long, default_value = "fixtures/blobs/p2sh-dummygrind-core-seam.json")]
+        out: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -216,6 +221,7 @@ fn main() -> Result<()> {
         Command::MintP2wpkhSeam { out } => mint_p2wpkh_seam(&out),
         Command::MintFindanddeleteSeam { out } => mint_findanddelete_seam(&out),
         Command::MintSighashSingleSeam { out } => mint_sighash_single_seam(&out),
+        Command::MintDummygrindSeam { out } => mint_dummygrind_seam(&out),
     }
 }
 
@@ -364,6 +370,22 @@ struct SighashSingleSeamFixture {
     single_control_anyonecanpay_core: SeamAccept,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct DummygrindSeamFixture {
+    name: String,
+    network: String,
+    redeem_script_hex: String,
+    funding_outpoint: String,
+    script_pubkey_hex: String,
+    context_heights: Vec<u32>,
+    dummy_empty_tx_hex: String,
+    dummy_zero_tx_hex: String,
+    dummy_32_tx_hex: String,
+    dummy_empty_core: SeamAccept,
+    dummy_zero_core: SeamAccept,
+    dummy_32_core: SeamAccept,
+}
+
 fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
     let report = doctor_report().map_err(|e| {
         anyhow!(
@@ -378,8 +400,9 @@ fn mint_p2sh_seam(out_path: &Path) -> Result<()> {
     }
 
     let rpc = SimpleRpc::from_env()?;
-    ensure_wallet_loaded_simple(&rpc, "jb_harness")?;
-    let wallet = rpc.for_wallet("jb_harness");
+    let wallet_name = "jb_legacy_ms";
+    ensure_wallet_loaded_simple_with_descriptors(&rpc, wallet_name, false)?;
+    let wallet = rpc.for_wallet(wallet_name);
 
     let mine_addr = wallet.call("getnewaddress", json!(["jb_bootstrap", "bech32"]))?;
     let mine_addr = mine_addr
@@ -590,8 +613,9 @@ fn mint_findanddelete_seam(out_path: &Path) -> Result<()> {
     }
 
     let rpc = SimpleRpc::from_env()?;
-    ensure_wallet_loaded_simple(&rpc, "jb_harness")?;
-    let wallet = rpc.for_wallet("jb_harness");
+    let wallet_name = "jb_legacy_ms";
+    ensure_wallet_loaded_simple_with_descriptors(&rpc, wallet_name, false)?;
+    let wallet = rpc.for_wallet(wallet_name);
 
     let mine_addr = wallet.call("getnewaddress", json!(["jb_fd_mining", "bech32"]))?;
     let mine_addr = mine_addr
@@ -759,8 +783,9 @@ fn mint_sighash_single_seam(out_path: &Path) -> Result<()> {
     }
 
     let rpc = SimpleRpc::from_env()?;
-    ensure_wallet_loaded_simple(&rpc, "jb_harness")?;
-    let wallet = rpc.for_wallet("jb_harness");
+    let wallet_name = "jb_legacy_ms";
+    ensure_wallet_loaded_simple_with_descriptors(&rpc, wallet_name, false)?;
+    let wallet = rpc.for_wallet(wallet_name);
 
     let mine_addr = wallet.call("getnewaddress", json!(["jb_sighash_mining", "bech32"]))?;
     let mine_addr = mine_addr
@@ -887,6 +912,152 @@ fn mint_sighash_single_seam(out_path: &Path) -> Result<()> {
     );
     println!(
         "minted sighash single seam manifest -> {}",
+        manifest_path.display()
+    );
+    Ok(())
+}
+
+fn mint_dummygrind_seam(out_path: &Path) -> Result<()> {
+    let report = doctor_report().map_err(|e| {
+        anyhow!(
+            "doctor failed: {e:#}\nSet BITCOIND_RPC_URL/USER/PASS and start regtest bitcoind first."
+        )
+    })?;
+    if report.chain != "regtest" {
+        return Err(anyhow!(
+            "mint-dummygrind-seam requires regtest, got {}",
+            report.chain
+        ));
+    }
+
+    let rpc = SimpleRpc::from_env()?;
+    let wallet_name = "jb_harness";
+    ensure_wallet_loaded_simple_with_descriptors(&rpc, wallet_name, true)?;
+    let wallet = rpc.for_wallet(wallet_name);
+
+    let mine_addr = wallet.call("getnewaddress", json!(["jb_dummygrind_mining", "bech32"]))?;
+    let mine_addr = mine_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing mining addr"))?
+        .to_string();
+    let block_count = rpc.call("getblockcount", json!([]))?.as_u64().unwrap_or(0);
+    if block_count < 101 {
+        wallet.call("generatetoaddress", json!([101 - block_count, mine_addr]))?;
+    }
+
+    let secp = Secp256k1::new();
+    let secret_key = SecretKey::from_slice(&[0x11u8; 32]).context("dummygrind secret key")?;
+    let pubkey = PublicKey::from_secret_key(&secp, &secret_key).serialize();
+    let pubkey_hex = hex::encode(pubkey);
+    let redeem_script_hex = format!("5121{}51ae", pubkey_hex);
+    let decoded = rpc.call("decodescript", json!([redeem_script_hex.clone()]))?;
+    let p2sh_addr = decoded["p2sh"]
+        .as_str()
+        .ok_or_else(|| anyhow!("decodescript missing p2sh address"))?
+        .to_string();
+    let p2sh_spk = format!(
+        "a914{}87",
+        hex::encode(hash160_cli(&hex::decode(&redeem_script_hex)?))
+    );
+
+    let funding_txid = wallet.call("sendtoaddress", json!([p2sh_addr, 1.0]))?;
+    let funding_txid = funding_txid
+        .as_str()
+        .ok_or_else(|| anyhow!("sendtoaddress missing txid"))?
+        .to_string();
+    let confirm_addr = wallet.call("getnewaddress", json!(["jb_dummygrind_confirm", "bech32"]))?;
+    let confirm_addr = confirm_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing confirm addr"))?
+        .to_string();
+    wallet.call("generatetoaddress", json!([1, confirm_addr]))?;
+    let (funding_vout, funding_sats) =
+        locate_output_by_script(&rpc, &wallet, &funding_txid, &p2sh_spk)?;
+    if funding_sats <= 1_000 {
+        return Err(anyhow!("funding output too small"));
+    }
+
+    let sink_addr = wallet.call("getnewaddress", json!(["jb_dummygrind_sink", "bech32"]))?;
+    let sink_addr = sink_addr
+        .as_str()
+        .ok_or_else(|| anyhow!("getnewaddress missing sink addr"))?
+        .to_string();
+    let sink_info = wallet.call("getaddressinfo", json!([sink_addr]))?;
+    let sink_spk = sink_info["scriptPubKey"]
+        .as_str()
+        .ok_or_else(|| anyhow!("getaddressinfo missing sink scriptPubKey"))?;
+    let sink_spk = hex::decode(sink_spk).context("decode sink scriptPubKey")?;
+    let spend_sats = funding_sats - 1_000;
+    let sighash_type = 0x01u32;
+    let digest = legacy_sighash_one_input_one_output(
+        &funding_txid,
+        funding_vout,
+        &hex::decode(&redeem_script_hex).context("decode redeem script")?,
+        spend_sats,
+        &sink_spk,
+        sighash_type,
+    );
+    let msg = Message::from_digest_slice(&digest).context("dummygrind message")?;
+    let sig = secp.sign_ecdsa(&msg, &secret_key);
+    let mut sig_bytes = sig.serialize_der().to_vec();
+    sig_bytes.push(sighash_type as u8);
+    let redeem_script = hex::decode(&redeem_script_hex).context("decode redeem script")?;
+
+    let dummy_empty_sig = build_push_only_scriptsig(&[&[], &sig_bytes], &redeem_script)?;
+    let dummy_zero_sig = build_push_only_scriptsig(&[&[0x00], &sig_bytes], &redeem_script)?;
+    let dummy_32 = vec![0x42; 32];
+    let dummy_32_sig = build_push_only_scriptsig(&[&dummy_32, &sig_bytes], &redeem_script)?;
+
+    let dummy_empty_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &dummy_empty_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+    let dummy_zero_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &dummy_zero_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+    let dummy_32_tx_hex = build_legacy_tx(
+        &funding_txid,
+        funding_vout,
+        &dummy_32_sig,
+        spend_sats,
+        &sink_spk,
+    )?;
+
+    let dummy_empty_core = testmempoolaccept_once(&rpc, &dummy_empty_tx_hex)?;
+    let dummy_zero_core = testmempoolaccept_once(&rpc, &dummy_zero_tx_hex)?;
+    let dummy_32_core = testmempoolaccept_once(&rpc, &dummy_32_tx_hex)?;
+
+    let fixture = DummygrindSeamFixture {
+        name: "p2sh_dummygrind_core_seam".to_string(),
+        network: "regtest".to_string(),
+        redeem_script_hex,
+        funding_outpoint: format!("{}:{}", funding_txid, funding_vout),
+        script_pubkey_hex: p2sh_spk.clone(),
+        context_heights: vec![170_000, 300_000],
+        dummy_empty_tx_hex,
+        dummy_zero_tx_hex,
+        dummy_32_tx_hex,
+        dummy_empty_core,
+        dummy_zero_core,
+        dummy_32_core,
+    };
+    if let Some(parent) = out_path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(out_path, serde_json::to_vec_pretty(&fixture)?)
+        .with_context(|| format!("writing {}", out_path.display()))?;
+    let manifest_path = PathBuf::from("fixtures/manifests/p2sh_dummygrind_core_seam_poc.json");
+    write_dummygrind_manifest(&manifest_path, &p2sh_spk)?;
+    println!("minted dummygrind seam fixture -> {}", out_path.display());
+    println!(
+        "minted dummygrind seam manifest -> {}",
         manifest_path.display()
     );
     Ok(())
@@ -1258,6 +1429,91 @@ fn write_sighash_single_manifest(path: &Path, script_code_hex: &str) -> Result<(
             "input_index": "1",
             "sighash_type": "0x83",
             "script_code_hex": script_code_hex
+          }
+        }
+      ]
+    });
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    fs::write(path, serde_json::to_vec_pretty(&manifest)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(())
+}
+
+fn write_dummygrind_manifest(path: &Path, script_pubkey_hex: &str) -> Result<()> {
+    let manifest = json!({
+      "name": "p2sh_dummygrind_core_seam_poc",
+      "windows": [
+        {
+          "name": "dummygrind-empty-h170000",
+          "start_height": 170000,
+          "end_height": 170000,
+          "representative_heights": [170000],
+          "epoch": "pre-bip16"
+        },
+        {
+          "name": "dummygrind-zero-h300000",
+          "start_height": 300000,
+          "end_height": 300000,
+          "representative_heights": [300000],
+          "epoch": "post-bip34"
+        },
+        {
+          "name": "dummygrind-32-h300000",
+          "start_height": 300000,
+          "end_height": 300000,
+          "representative_heights": [300000],
+          "epoch": "post-bip34"
+        }
+      ],
+      "fixtures": [
+        {
+          "id": "dummygrind_empty",
+          "description": "Funded multisig control with empty dummy",
+          "window": "dummygrind-empty-h170000",
+          "tx_hex_blob": "../blobs/p2sh-dummygrind-core-seam.json",
+          "tx_hex_field": "dummy_empty_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "dummygrind-txid-axis",
+            "dummygrind_hook": "true",
+            "checksighook": "true",
+            "input_index": "0",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "dummygrind_zero",
+          "description": "Funded multisig variant with one-byte zero dummy",
+          "window": "dummygrind-zero-h300000",
+          "tx_hex_blob": "../blobs/p2sh-dummygrind-core-seam.json",
+          "tx_hex_field": "dummy_zero_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "dummygrind-txid-axis",
+            "dummygrind_hook": "true",
+            "checksighook": "true",
+            "input_index": "0",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
+          }
+        },
+        {
+          "id": "dummygrind_32",
+          "description": "Funded multisig variant with 32-byte dummy",
+          "window": "dummygrind-32-h300000",
+          "tx_hex_blob": "../blobs/p2sh-dummygrind-core-seam.json",
+          "tx_hex_field": "dummy_32_tx_hex",
+          "spend_type": "p2sh",
+          "metadata": {
+            "quirk_target": "dummygrind-txid-axis",
+            "dummygrind_hook": "true",
+            "checksighook": "true",
+            "input_index": "0",
+            "sighash_type": "0x01",
+            "script_pubkey_hex": script_pubkey_hex
           }
         }
       ]
@@ -1761,7 +2017,11 @@ impl SimpleRpc {
     }
 }
 
-fn ensure_wallet_loaded_simple(rpc: &SimpleRpc, wallet: &str) -> Result<()> {
+fn ensure_wallet_loaded_simple_with_descriptors(
+    rpc: &SimpleRpc,
+    wallet: &str,
+    descriptors: bool,
+) -> Result<()> {
     let wallets = rpc.call("listwallets", json!([]))?;
     let loaded = wallets
         .as_array()
@@ -1772,12 +2032,20 @@ fn ensure_wallet_loaded_simple(rpc: &SimpleRpc, wallet: &str) -> Result<()> {
     }
     match rpc.call("loadwallet", json!([wallet])) {
         Ok(_) => Ok(()),
-        Err(_) => {
-            rpc.call(
+        Err(load_err) => {
+            match rpc.call(
                 "createwallet",
-                json!([wallet, false, false, "", false, false, true]),
-            )?;
-            Ok(())
+                json!([wallet, false, false, "", false, false, descriptors]),
+            ) {
+                Ok(_) => Ok(()),
+                Err(create_err) => rpc.call("loadwallet", json!([wallet])).map(|_| ()).map_err(
+                    |_| {
+                        anyhow!(
+                            "loadwallet failed: {load_err:#}; createwallet failed: {create_err:#}"
+                        )
+                    },
+                ),
+            }
         }
     }
 }
@@ -1892,6 +2160,37 @@ fn locate_output_by_script(
         }
     }
     Err(anyhow!("could not locate funding output for script"))
+}
+
+fn legacy_sighash_one_input_one_output(
+    prev_txid_hex: &str,
+    prev_vout: u32,
+    script_code: &[u8],
+    output_sats: u64,
+    output_spk: &[u8],
+    sighash_type: u32,
+) -> [u8; 32] {
+    let mut ser = Vec::new();
+    ser.extend_from_slice(&1u32.to_le_bytes());
+    ser.extend_from_slice(&encode_varint(1));
+    let mut txid = hex::decode(prev_txid_hex).unwrap_or_default();
+    txid.reverse();
+    ser.extend_from_slice(&txid);
+    ser.extend_from_slice(&prev_vout.to_le_bytes());
+    ser.extend_from_slice(&encode_varint(script_code.len() as u64));
+    ser.extend_from_slice(script_code);
+    ser.extend_from_slice(&0xffff_ffffu32.to_le_bytes());
+    ser.extend_from_slice(&encode_varint(1));
+    ser.extend_from_slice(&output_sats.to_le_bytes());
+    ser.extend_from_slice(&encode_varint(output_spk.len() as u64));
+    ser.extend_from_slice(output_spk);
+    ser.extend_from_slice(&0u32.to_le_bytes());
+    ser.extend_from_slice(&sighash_type.to_le_bytes());
+    let first = Sha256::digest(&ser);
+    let second = Sha256::digest(first);
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&second);
+    out
 }
 
 fn build_push_only_scriptsig(pushes: &[&[u8]], redeem_script: &[u8]) -> Result<Vec<u8>> {
@@ -2649,6 +2948,9 @@ struct MuseumSpecimen {
     core_mode: Option<String>,
     rust_reason: Option<String>,
     script_trace: Option<String>,
+    txid_hex: Option<String>,
+    dummy_len: Option<String>,
+    dummy_affects_sighash: Option<String>,
     sighash_context_tag: Option<String>,
     sighash_digest_hex: Option<String>,
     sighash_type: Option<String>,
@@ -2833,14 +3135,18 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             .or_insert(0) += 1;
 
         let script_trace = event.rust.details.get("script_trace").cloned();
+        let txid_hex = event.rust.details.get("txid_hex").cloned();
+        let dummy_len = event.rust.details.get("dummy_len").cloned();
+        let dummy_affects_sighash = event.rust.details.get("dummy_affects_sighash").cloned();
         let sighash_context_tag = event.rust.details.get("sighash_context_tag").cloned();
         let sighash_digest_hex = event.rust.details.get("sighash_digest_hex").cloned();
-        let sighash_type = event
-            .rust
-            .details
-            .get("sighash_type")
-            .cloned()
-            .or_else(|| event.rust.details.get("findanddelete_sighash_type").cloned());
+        let sighash_type = event.rust.details.get("sighash_type").cloned().or_else(|| {
+            event
+                .rust
+                .details
+                .get("findanddelete_sighash_type")
+                .cloned()
+        });
         let sighash_single_bug = event.rust.details.get("sighash_single_bug").cloned();
         specimens.push(MuseumSpecimen {
             specimen_id: specimen_id.clone(),
@@ -2857,6 +3163,9 @@ fn build_museum_data(in_dir: &Path, labels: &BTreeMap<String, String>) -> Result
             core_mode: event.core.details.get("mode").cloned(),
             rust_reason: event.rust_reason.clone(),
             script_trace,
+            txid_hex,
+            dummy_len,
+            dummy_affects_sighash,
             sighash_context_tag,
             sighash_digest_hex,
             sighash_type,
@@ -3052,6 +3361,13 @@ fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggesti
             "specimen records the legacy SIGHASH_SINGLE bug path",
         ));
     }
+    if specimen.dummy_len.is_some() {
+        return Some(choose(
+            "DUMMYGRIND_TXID_AXIS",
+            "high",
+            "dummy element changes txid while the recorded sighash digest remains stable",
+        ));
+    }
     if specimen
         .sighash_type
         .as_deref()
@@ -3073,6 +3389,13 @@ fn suggest_label_for_specimen(specimen: &MuseumSpecimen) -> Option<LabelSuggesti
             "CHECKMULTISIG_FINDANDDELETE",
             "high",
             "reason/trace contains findanddelete hook marker",
+        ));
+    }
+    if reason_joined.contains("dummy checkmultisig argument must be zero") {
+        return Some(choose(
+            "NULLDUMMY_POLICY_ONLY",
+            "high",
+            "core reject reason shows NULLDUMMY-style policy enforcement",
         ));
     }
     if specimen.sighash_context_tag.is_some() {
