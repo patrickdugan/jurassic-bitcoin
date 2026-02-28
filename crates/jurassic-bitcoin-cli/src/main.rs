@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, anyhow};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use jb_consensus_profile::{
     ContextView as ProfileContextView, epoch_for_height, flags_for_context,
 };
@@ -30,6 +30,12 @@ use std::path::{Path, PathBuf};
 struct Cli {
     #[command(subcommand)]
     cmd: Command,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ReportFormat {
+    Md,
+    Latex,
 }
 
 #[derive(Subcommand)]
@@ -158,6 +164,14 @@ enum Command {
         #[arg(long, default_value = "fixtures/blobs/p2sh-dummygrind-core-seam.json")]
         out: PathBuf,
     },
+    Report {
+        #[arg(long)]
+        dir: PathBuf,
+        #[arg(long, value_enum, default_value_t = ReportFormat::Md)]
+        format: ReportFormat,
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -222,6 +236,7 @@ fn main() -> Result<()> {
         Command::MintFindanddeleteSeam { out } => mint_findanddelete_seam(&out),
         Command::MintSighashSingleSeam { out } => mint_sighash_single_seam(&out),
         Command::MintDummygrindSeam { out } => mint_dummygrind_seam(&out),
+        Command::Report { dir, format, out } => report(&dir, format, out.as_deref()),
     }
 }
 
@@ -2976,6 +2991,24 @@ struct LabelSuggestion {
     rationale: String,
 }
 
+#[derive(Debug, Clone)]
+struct ReportRow {
+    fixture_id: String,
+    epoch: String,
+    shadow_ok: bool,
+    shadow_reason: String,
+    core_allowed: bool,
+    core_reject_reason: String,
+    txid_hex: String,
+    sighash_digest_hex: String,
+    dummy_len: String,
+    findanddelete_removed_total: String,
+    findanddelete_codeseparator_pos: String,
+    sighash_type: String,
+    sighash_single_bug: String,
+    family_label: String,
+}
+
 fn museum(in_dir: &Path, out_dir: &Path) -> Result<()> {
     fs::create_dir_all(out_dir).with_context(|| format!("creating {}", out_dir.display()))?;
     let labels_path = out_dir.join("labels.json");
@@ -3019,6 +3052,245 @@ fn apply_label(specimen: &str, label: &str, labels_path: &Path) -> Result<()> {
     println!("label_applied specimen={} label={}", specimen, label);
     println!("labels_file={}", labels_path.display());
     Ok(())
+}
+
+fn report(dir: &Path, format: ReportFormat, out: Option<&Path>) -> Result<()> {
+    let dataset = build_museum_data(dir, &BTreeMap::new())?;
+    let mut rows = build_report_rows(dir, &dataset)?;
+    rows.sort_by(|a, b| a.fixture_id.cmp(&b.fixture_id).then_with(|| a.epoch.cmp(&b.epoch)));
+
+    let label_suggestions = rows
+        .iter()
+        .filter_map(|r| {
+            let specimen = dataset
+                .specimens
+                .iter()
+                .find(|s| strip_height_suffix(&s.testcase_id) == r.fixture_id && s.epoch == r.epoch)?;
+            suggest_label_for_specimen(specimen).map(|s| s.suggested_label)
+        })
+        .collect::<Vec<_>>();
+    let mut label_counts = BTreeMap::<String, usize>::new();
+    for label in label_suggestions {
+        *label_counts.entry(label).or_insert(0) += 1;
+    }
+
+    let rendered = match format {
+        ReportFormat::Md => render_report_md(dir, &rows, &label_counts),
+        ReportFormat::Latex => render_report_latex(dir, &rows, &label_counts),
+    };
+    if let Some(path) = out {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+        }
+        fs::write(path, rendered.as_bytes()).with_context(|| format!("writing {}", path.display()))?;
+        println!("report_out={}", path.display());
+    } else {
+        print!("{rendered}");
+    }
+    Ok(())
+}
+
+fn build_report_rows(dir: &Path, dataset: &MuseumData) -> Result<Vec<ReportRow>> {
+    let mut event_files = Vec::new();
+    collect_event_json_files_anywhere(dir, &mut event_files)?;
+    event_files.sort();
+    let mut rows = Vec::new();
+    for event_path in event_files {
+        let bytes = match fs::read(&event_path) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        let event: DivergenceEvent = match serde_json::from_slice(&bytes) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        let epoch = find_epoch_from_event_path(&event_path).unwrap_or_else(|| "unknown".to_string());
+        let fixture_id = strip_height_suffix(&event.testcase_id);
+        let family_label = dataset
+            .specimens
+            .iter()
+            .find(|s| s.testcase_id == event.testcase_id)
+            .and_then(suggest_label_for_specimen)
+            .map(|s| s.suggested_label)
+            .unwrap_or_default();
+        rows.push(ReportRow {
+            fixture_id,
+            epoch,
+            shadow_ok: event.rust_ok,
+            shadow_reason: shorten_reason(event.rust_reason.as_deref().unwrap_or("<none>")),
+            core_allowed: event.core_allowed,
+            core_reject_reason: shorten_reason(event.core_reason.as_deref().unwrap_or("<none>")),
+            txid_hex: shorten_hex(
+                event
+                    .rust
+                    .details
+                    .get("txid_hex")
+                    .map(String::as_str)
+                    .unwrap_or(""),
+            ),
+            sighash_digest_hex: shorten_hex(
+                event
+                    .rust
+                    .details
+                    .get("sighash_digest_hex")
+                    .map(String::as_str)
+                    .unwrap_or(""),
+            ),
+            dummy_len: event
+                .rust
+                .details
+                .get("dummy_len")
+                .cloned()
+                .unwrap_or_default(),
+            findanddelete_removed_total: event
+                .rust
+                .details
+                .get("findanddelete_removed_total")
+                .cloned()
+                .unwrap_or_default(),
+            findanddelete_codeseparator_pos: event
+                .rust
+                .details
+                .get("findanddelete_codeseparator_pos")
+                .cloned()
+                .unwrap_or_default(),
+            sighash_type: event
+                .rust
+                .details
+                .get("sighash_type")
+                .cloned()
+                .or_else(|| event.rust.details.get("findanddelete_sighash_type").cloned())
+                .unwrap_or_default(),
+            sighash_single_bug: event
+                .rust
+                .details
+                .get("sighash_single_bug")
+                .cloned()
+                .unwrap_or_default(),
+            family_label,
+        });
+    }
+    Ok(rows)
+}
+
+fn render_report_md(dir: &Path, rows: &[ReportRow], label_counts: &BTreeMap<String, usize>) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("# Report: {}\n\n", dir.display()));
+    out.push_str("Labels:\n");
+    if label_counts.is_empty() {
+        out.push_str("- <none>\n\n");
+    } else {
+        for (label, count) in label_counts {
+            out.push_str(&format!("- {} ({})\n", label, count));
+        }
+        out.push('\n');
+    }
+    out.push_str("| fixture_id | epoch | label | shadow_ok | shadow_reason | core_allowed | core_reject_reason | txid_hex | sighash_digest_hex | dummy_len | fd_removed | codeseparator_pos | sighash_type | sighash_single_bug |\n");
+    out.push_str("|---|---|---|---:|---|---:|---|---|---|---:|---:|---:|---|---|\n");
+    for row in rows {
+        out.push_str(&format!(
+            "| {} | {} | {} | {} | {} | {} | {} | `{}` | `{}` | {} | {} | {} | {} | {} |\n",
+            row.fixture_id,
+            row.epoch,
+            if row.family_label.is_empty() { "<none>" } else { &row.family_label },
+            row.shadow_ok,
+            row.shadow_reason,
+            row.core_allowed,
+            row.core_reject_reason,
+            row.txid_hex,
+            row.sighash_digest_hex,
+            blank_dash(&row.dummy_len),
+            blank_dash(&row.findanddelete_removed_total),
+            blank_dash(&row.findanddelete_codeseparator_pos),
+            blank_dash(&row.sighash_type),
+            blank_dash(&row.sighash_single_bug),
+        ));
+    }
+    out
+}
+
+fn render_report_latex(
+    dir: &Path,
+    rows: &[ReportRow],
+    label_counts: &BTreeMap<String, usize>,
+) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("% Report: {}\n", latex_escape(&dir.display().to_string())));
+    if label_counts.is_empty() {
+        out.push_str("% Labels: <none>\n");
+    } else {
+        out.push_str("% Labels: ");
+        let labels = label_counts
+            .iter()
+            .map(|(label, count)| format!("{} ({})", latex_escape(label), count))
+            .collect::<Vec<_>>()
+            .join(", ");
+        out.push_str(&labels);
+        out.push('\n');
+    }
+    out.push_str("\\begin{tabular}{lllllllrrrrll}\n\\toprule\n");
+    out.push_str("fixture\\_id & epoch & label & shadow\\_ok & shadow\\_reason & core\\_allowed & core\\_reject\\_reason & txid & sighash & dummy & fd & csep & shtype & single\\\\\n\\midrule\n");
+    for row in rows {
+        out.push_str(&format!(
+            "{} & {} & {} & {} & {} & {} & {} & \\texttt{{{}}} & \\texttt{{{}}} & {} & {} & {} & {} & {}\\\\\n",
+            latex_escape(&row.fixture_id),
+            latex_escape(&row.epoch),
+            latex_escape(if row.family_label.is_empty() { "<none>" } else { &row.family_label }),
+            row.shadow_ok,
+            latex_escape(&row.shadow_reason),
+            row.core_allowed,
+            latex_escape(&row.core_reject_reason),
+            latex_escape(&row.txid_hex),
+            latex_escape(&row.sighash_digest_hex),
+            latex_escape(blank_dash(&row.dummy_len)),
+            latex_escape(blank_dash(&row.findanddelete_removed_total)),
+            latex_escape(blank_dash(&row.findanddelete_codeseparator_pos)),
+            latex_escape(blank_dash(&row.sighash_type)),
+            latex_escape(blank_dash(&row.sighash_single_bug)),
+        ));
+    }
+    out.push_str("\\bottomrule\n\\end{tabular}\n");
+    out
+}
+
+fn strip_height_suffix(testcase_id: &str) -> String {
+    if let Some((head, tail)) = testcase_id.rsplit_once("-h") {
+        if !head.is_empty() && tail.chars().all(|c| c.is_ascii_digit()) {
+            return head.to_string();
+        }
+    }
+    testcase_id.to_string()
+}
+
+fn shorten_hex(raw: &str) -> String {
+    if raw.len() <= 16 {
+        raw.to_string()
+    } else {
+        format!("{}...", &raw[..16])
+    }
+}
+
+fn shorten_reason(raw: &str) -> String {
+    const MAX: usize = 48;
+    if raw.len() <= MAX {
+        raw.to_string()
+    } else {
+        format!("{}...", &raw[..MAX])
+    }
+}
+
+fn blank_dash(raw: &str) -> &str {
+    if raw.is_empty() { "-" } else { raw }
+}
+
+fn latex_escape(raw: &str) -> String {
+    raw.replace('\\', "\\textbackslash{}")
+        .replace('_', "\\_")
+        .replace('&', "\\&")
+        .replace('%', "\\%")
+        .replace('#', "\\#")
+        .replace('{', "\\{")
+        .replace('}', "\\}")
 }
 
 fn load_labels_map(path: &Path) -> Result<BTreeMap<String, String>> {
@@ -3574,8 +3846,8 @@ function renderEpochSummary(){
 #[cfg(test)]
 mod tests {
     use super::{
-        Cli, Command, prepare_out_dir, specimen_id_for_value, summarize_compare_offline,
-        summarize_dir_offline,
+        Cli, Command, ReportRow, latex_escape, prepare_out_dir, render_report_latex,
+        shorten_hex, specimen_id_for_value, summarize_compare_offline, summarize_dir_offline,
     };
     use clap::Parser;
     use jb_model::{DivergenceEvent, ExecResult};
@@ -3688,6 +3960,30 @@ mod tests {
                 assert!(json);
             }
             _ => panic!("expected summarize"),
+        }
+
+        let report = Cli::try_parse_from([
+            "jurassic-bitcoin",
+            "report",
+            "--dir",
+            "artifacts/p2sh-dummygrind-core-seam",
+            "--format",
+            "latex",
+            "--out",
+            "artifacts/p2sh-dummygrind-core-seam/report.tex",
+        ])
+        .expect("parse report");
+        match report.cmd {
+            Command::Report {
+                dir,
+                format,
+                out,
+            } => {
+                assert!(dir.ends_with("p2sh-dummygrind-core-seam"));
+                assert!(matches!(format, super::ReportFormat::Latex));
+                assert!(out.expect("out").ends_with("report.tex"));
+            }
+            _ => panic!("expected report"),
         }
     }
 
@@ -4005,5 +4301,42 @@ mod tests {
         assert!(cmp.class_table.contains_key("SCRIPT_FAIL"));
 
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn report_latex_escapes_and_shortens_hex() {
+        assert_eq!(shorten_hex("1234567890abcdef1234567890abcdef"), "1234567890abcdef...");
+        assert_eq!(latex_escape("a_b%c&d"), "a\\_b\\%c\\&d");
+
+        let rows = vec![ReportRow {
+            fixture_id: "dummy_zero".to_string(),
+            epoch: "post_bip16_h173805".to_string(),
+            family_label: "DUMMYGRIND_TXID_AXIS".to_string(),
+            shadow_ok: true,
+            shadow_reason: "ok_under_shadow".to_string(),
+            core_allowed: false,
+            core_reject_reason:
+                "mempool-script-verify-flag-failed (Dummy CHECKMULTISIG argument must be zero)"
+                    .to_string(),
+            txid_hex: shorten_hex(
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            ),
+            sighash_digest_hex: shorten_hex(
+                "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+            ),
+            dummy_len: "32".to_string(),
+            findanddelete_removed_total: String::new(),
+            findanddelete_codeseparator_pos: "-1".to_string(),
+            sighash_type: "0x01".to_string(),
+            sighash_single_bug: "false".to_string(),
+        }];
+        let mut labels = BTreeMap::new();
+        labels.insert("DUMMYGRIND_TXID_AXIS".to_string(), 1usize);
+
+        let latex = render_report_latex(PathBuf::from("artifacts/p2sh_dummygrind_core_seam").as_path(), &rows, &labels);
+        assert!(latex.contains("\\texttt{0123456789abcdef...}"));
+        assert!(latex.contains("DUMMYGRIND\\_TXID\\_AXIS"));
+        assert!(latex.contains("post\\_bip16\\_h173805"));
+        assert!(latex.contains("Dummy CHECKMULTISIG argument must be zero"));
     }
 }

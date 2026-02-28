@@ -342,6 +342,8 @@ $env:BITCOIND_RPC_USER = "user"
 $env:BITCOIND_RPC_PASS = "pass"
 cargo run -p jurassic-bitcoin-cli -- mint-dummygrind-seam --out fixtures/blobs/p2sh-dummygrind-core-seam.json
 cargo run -p jurassic-bitcoin-cli -- replay-era --manifest fixtures/manifests/p2sh_dummygrind_core_seam_poc.json --out-dir artifacts/p2sh-dummygrind-core-seam --limit-per-epoch 50 --force
+cargo run -p jurassic-bitcoin-cli -- report --dir artifacts/p2sh-dummygrind-core-seam --format md
+cargo run -p jurassic-bitcoin-cli -- report --dir artifacts/p2sh-dummygrind-core-seam --format latex --out artifacts/p2sh-dummygrind-core-seam/report.tex
 ```
 
 ## Grant Package
