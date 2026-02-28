@@ -66,3 +66,17 @@ Expected high-level output:
 - top core reject reasons
 - mutation histogram
 - `artifacts/demo/summary.json` written
+
+## 6) Show one paper-grade seam artifact
+
+Generate a compact LaTeX table from an already minted seam family:
+
+```powershell
+cargo run -p jurassic-bitcoin-cli -- report --dir artifacts/p2sh-dummygrind-core-seam --format latex --out artifacts/p2sh-dummygrind-core-seam/report.tex
+```
+
+Expected high-level outcome:
+
+- `report.tex` written
+- rows show txid changes under fixed legacy sighash digest
+- Core policy reason visible next to the shadow-side result

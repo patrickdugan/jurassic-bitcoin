@@ -1,0 +1,71 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{Jurassic Surfaces: Three Reproducible Legacy Sighash Search Manifolds}
+\author{Bitcoin Consensus Observatory (Jurassic Bitcoin)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Bitcoin consensus contains historically ossified behaviors that remain consensus-relevant, policy-constrained, or both. This note presents a reproducible instrumentation workflow for turning such fossils into measured experimental surfaces. Using a deterministic harness with a Bitcoin Core policy oracle, a narrow consensus-style Rust shadow model, stable specimen labeling, and auto-generated figure tables, we demonstrate three legacy search manifolds: FindAndDelete subset variation for \texttt{OP\_CHECKMULTISIG}, \texttt{SIGHASH\_SINGLE} degeneracy, and a txid-grinding axis induced by the \texttt{CHECKMULTISIG} dummy element. The result is a practical workflow for studying ``Bitcoin quirks as feature hooks'' without claiming a replacement implementation or changing consensus.
+\end{abstract}
+
+\section{Method}
+
+The harness executes curated fixtures across explicit historical or semantic strata and records both a Core-facing policy result and a Rust shadow execution result on the same testcase. Each specimen carries stable metadata including reasons, normalized class, policy outcome, txid, derived legacy sighash digest, and quirk-family fields such as FindAndDelete removal counts or dummy-element size. A \texttt{report} command renders artifact directories directly as Markdown or LaTeX tables, so each seam family can be dropped into a research note without manual transcription.
+
+\section{Surface I: FindAndDelete Context Splits}
+
+FindAndDelete in legacy \texttt{OP\_CHECKMULTISIG} mutates the effective scriptCode used for signature hashing. The harness varies supplied signature subsets while holding the broad spend structure constant, then records both the removal count and the derived legacy sighash digest. The key experimental point is that subset composition can alter the digest surface without changing the overall policy envelope currently reported by Core.
+
+\begin{center}
+\input{../../artifacts/p2sh-findanddelete-core-seam/report.tex}
+\end{center}
+
+In the current funded seam, the \texttt{aa} and \texttt{aaaa} variants share one digest, while \texttt{aabb} produces a distinct digest under the same policy rejection reason. This is direct mechanism evidence for the kind of context multiplicity exploited by Binohash-style constructions.
+
+\section{Surface II: SIGHASH\_SINGLE Degeneracy}
+
+The classic \texttt{SIGHASH\_SINGLE} edge case yields a degenerate constant-one digest under specific transaction layouts. The harness captures that path as a labeled specimen family and compares it against non-degenerate controls, including an \texttt{ANYONECANPAY} axis. This shows that the system can measure digest collapses and digest splits on the same reporting surface.
+
+\begin{center}
+\input{../../artifacts/sighash-single-core-seam/report.tex}
+\end{center}
+
+The two bug specimens collapse to the constant-one digest, while the control rows diverge as expected. This provides a second, independent legacy digest manifold beyond FindAndDelete.
+
+\section{Surface III: DUMMYGRIND}
+
+Legacy \texttt{OP\_CHECKMULTISIG} consumes an extra dummy stack element. Under legacy sighash rules, changing that unlocking-data element alters the serialized transaction and therefore the txid, while leaving the redeemScript-based signature hash invariant. This yields a txid search surface without re-signing. The harness records both txid and legacy sighash digest, making the primitive directly measurable.
+
+\begin{center}
+\input{../../artifacts/p2sh-dummygrind-core-seam/report.tex}
+\end{center}
+
+We intentionally distinguish the empty-vector dummy from a one-byte zero push. In this seam, the non-empty dummy variants change the txid while preserving the same sighash digest, and Core rejects them under a NULLDUMMY-style policy reason. That produces a controlled consensus-model versus policy split on a cryptographically meaningful axis.
+
+\section{Discussion}
+
+These three surfaces show that the project is more than a conventional fuzzer. It is a reproducible bench for parameterizing ossified consensus behaviors into search manifolds, replaying them across eras, measuring both digest-level and policy-level outcomes, and preserving them as stable specimens with paper-ready outputs. That is the relevant workflow for evaluating constructions in the style of Binohash and for testing future ``quirk isomorphism'' ideas against the actual historical and operational envelope of Bitcoin.
+
+\section*{Reproduction}
+
+Representative commands:
+
+\begin{verbatim}
+cargo run -p jurassic-bitcoin-cli -- report --dir artifacts/p2sh-findanddelete-core-seam --format latex --out artifacts/p2sh-findanddelete-core-seam/report.tex
+cargo run -p jurassic-bitcoin-cli -- report --dir artifacts/sighash-single-core-seam --format latex --out artifacts/sighash-single-core-seam/report.tex
+cargo run -p jurassic-bitcoin-cli -- report --dir artifacts/p2sh-dummygrind-core-seam --format latex --out artifacts/p2sh-dummygrind-core-seam/report.tex
+\end{verbatim}
+
+More detailed replay and minting commands live in \texttt{README.md} and \texttt{docs/era-2009-2013.md}.
+
+\end{document}

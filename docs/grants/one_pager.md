@@ -12,6 +12,13 @@ Bitcoin consensus behavior is effectively defined by one canonical implementatio
 - Divergence reducer for smaller repro cases
 - Offline summarizer for artifact analysis (`summarize`) with class/reason/mutation aggregation
 - Scientific artifact fields (`normalized_class`, reasons, mutation traces) for clustering and auditability
+- Static museum/dashboard output plus curation loop (`museum`, `suggest-labels`, `apply-label`)
+- Paper-ready seam table generation (`report --format md|latex`)
+- Regtest-funded legacy seam families for:
+  - FindAndDelete / `OP_CHECKMULTISIG` scriptCode mutation
+  - `SIGHASH_SINGLE` degeneracy
+  - `DUMMYGRIND` txid-axis malleability via the multisig dummy element
+- Policy-vs-consensus-style stratification on the same specimen set (`policy_allowed`, `policy_reason`, shadow reason/digest fields)
 - Windows-focused pruned regtest setup docs/config for quick reproducible execution
 
 ## Proposed 6-8 Week Micro-Grant Scope
@@ -22,17 +29,17 @@ Bitcoin consensus behavior is effectively defined by one canonical implementatio
 - Expand structure-aware mutators around sequence/locktime/witness-length domains
 - Improve mutation trace metadata for better post-run analysis
 
-### M2: Behavior-Driven Rust Shadow Semantics
+### M2: Legacy Quirk Surface Expansion
 
-- Implement a narrow P2WPKH path in `rust_shadow` with BIP143 sighash and CHECKSIG verification
-- Keep scope strict (no P2P, no wallet, no node behavior) to ensure reviewability
-- Align error surfaces with Core where feasible for high-signal differential output
+- Generalize the current legacy seam work into a reusable search bench for additional pre-2018 quirk families
+- Add more historical axes where the harness can compute real digest surfaces rather than proxy tags
+- Expand curated fixture families and labels so new constructions are measurable, replayable, and reviewable
 
 ### M3: CI-Friendly and Publishable Outputs
 
-- Add deterministic CI mode for replay/fuzz smoke checks
-- Publish seed corpus + reduced divergences in a reviewable format
-- Improve operator docs for Core contributors and reviewers
+- Add deterministic CI mode for replay/fuzz/seam smoke checks
+- Publish a curated corpus of labeled specimens and seam manifests
+- Improve report-generation and operator docs for Core contributors and reviewers
 
 ## Risks and Mitigations
 
@@ -52,3 +59,13 @@ Bitcoin consensus behavior is effectively defined by one canonical implementatio
 - Review, issue triage, packaging, and maintainer communication: $500
 
 Total: $4,000
+
+## Current Wedge
+
+In under a week, the project has already converted historically ossified Bitcoin behaviors into reproducible experimental surfaces with:
+
+- deterministic cryptographic measurements (`txid_hex`, `sighash_digest_hex`, context tags)
+- explicit policy-vs-consensus-style stratification on identical specimens
+- stable specimen IDs, labels, museum views, and auto-generated LaTeX tables
+
+That is the core value proposition: not another fuzzer, but a compact observability bench for testing ideas against Bitcoin's inherited consensus envelope.
