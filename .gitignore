@@ -11,6 +11,16 @@
 /codex-chat-sessions/
 /corpus/era-mainnet/
 /corpus/era-mainnet-2013-trial/
+/corpus/era-mainnet-2013-deep-279150-279320/
+/corpus/era-mainnet-bip16-173780-173830/
+/corpus/era-mainnet-bip34-227900-227960/
+/corpus/era-mainnet-bip66-363700-363760/
+/corpus/litecoin-testnet-early-0-120/
+/corpus/litecoin-testnet-mweb-2215520-2215650/
+/corpus/litecoin-testnet-recent-vbit2-4683920-4684007/
+/corpus/litecoin-testnet-segwit-6000-6100/
+/corpus/litecoin-testnet-taproot-2241720-2241850/
+/scripts/__pycache__/
 /fixtures/blobs/p2sh-core-seam.json
 /fixtures/blobs/p2wpkh-core-seam.json
 /fixtures/blobs/p2sh-findanddelete-core-seam.json

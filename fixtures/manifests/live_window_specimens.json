@@ -1,0 +1,179 @@
+{
+  "name": "live_window_specimens",
+  "windows": [
+    {
+      "name": "bip16-boundary",
+      "start_height": 173780,
+      "end_height": 173830,
+      "representative_heights": [173782, 173798, 173813],
+      "epoch": "post-bip16-pre-bip34"
+    },
+    {
+      "name": "bip34-boundary",
+      "start_height": 227900,
+      "end_height": 227960,
+      "representative_heights": [227903, 227932, 227960],
+      "epoch": "post-bip34"
+    },
+    {
+      "name": "payout-2013-burst",
+      "start_height": 279150,
+      "end_height": 279320,
+      "representative_heights": [279209, 279228, 279287],
+      "epoch": "post-bip34"
+    },
+    {
+      "name": "bip66-boundary",
+      "start_height": 363700,
+      "end_height": 363760,
+      "representative_heights": [363703, 363731, 363743],
+      "epoch": "post-bip66"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "bip16-spray-134",
+      "description": "Single-input early payout spray with 134 outputs near the BIP16 boundary",
+      "window": "bip16-boundary",
+      "txid": "b6b7fb696ce7737f6dd24b6543591b91b8a60d4dd580f2b030ced60b221f29e8",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "single_input_payout_spray",
+        "outputs": "134",
+        "source_window": "bip16"
+      }
+    },
+    {
+      "id": "bip16-aggregator-285in",
+      "description": "Large-input consolidation with 285 inputs and two outputs near BIP16",
+      "window": "bip16-boundary",
+      "txid": "901b08cc96121d0d55d98e9e0bb7df45b5c67e73f882eed153710af85d79fc41",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "large_input_aggregator",
+        "inputs": "285",
+        "source_window": "bip16"
+      }
+    },
+    {
+      "id": "bip16-p2pk-carryover-500btc",
+      "description": "Mixed p2pk/p2pkh two-output carryover specimen at 500 BTC scale",
+      "window": "bip16-boundary",
+      "txid": "fba750274ec69cd16633f18d2b1dbb44b354fa8effe886fc3c025c848df2922d",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "mixed_p2pk_p2pkh",
+        "outputs": "2",
+        "source_window": "bip16"
+      }
+    },
+    {
+      "id": "bip34-spray-2604",
+      "description": "Extreme single-input payout spray with 2604 outputs at the BIP34 boundary",
+      "window": "bip34-boundary",
+      "txid": "e73a92e460a70b98183bc0dfe179dcc98f9e2df55be90b9abc78405dd1af06df",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "single_input_payout_spray",
+        "outputs": "2604",
+        "source_window": "bip34"
+      }
+    },
+    {
+      "id": "bip34-aggregator-169in",
+      "description": "Large-input 169-input aggregator specimen at the BIP34 boundary",
+      "window": "bip34-boundary",
+      "txid": "10dbe0d7719bc947767eb0f18635ec5d9fef41aad54f3aaded9db5306e660fee",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "large_input_aggregator",
+        "inputs": "169",
+        "source_window": "bip34"
+      }
+    },
+    {
+      "id": "bip34-p2pk-carryover-473btc",
+      "description": "Mixed p2pk/p2pkh carryover specimen with large legacy value",
+      "window": "bip34-boundary",
+      "txid": "b249cd9e4393ed13c505a8056235deae1ec33a71cc6498de143114031d04714b",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "mixed_p2pk_p2pkh",
+        "outputs": "2",
+        "source_window": "bip34"
+      }
+    },
+    {
+      "id": "payout2013-spray-202",
+      "description": "Single-input 202-output payout spray in the 2013 burst window",
+      "window": "payout-2013-burst",
+      "txid": "a321554f598850ca60baa815359abb69e1be34e845616b359e693e829270682f",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "single_input_payout_spray",
+        "outputs": "202",
+        "source_window": "payout2013"
+      }
+    },
+    {
+      "id": "payout2013-aggregator-27in",
+      "description": "Twenty-seven input redistribution cluster from the 2013 burst window",
+      "window": "payout-2013-burst",
+      "txid": "ac91df691c3f8341360107d911534043ca32c04c3e9542f87574b357750e089f",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "large_input_aggregator",
+        "inputs": "27",
+        "source_window": "payout2013"
+      }
+    },
+    {
+      "id": "payout2013-early-p2sh-mix",
+      "description": "Early sampled non-coinbase p2sh mixed-output specimen in the 2013 burst window",
+      "window": "payout-2013-burst",
+      "txid": "b205429801b9ac02f60a3fa2e459a3d78df41078ee676b222048caf3bd4dc636",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "non_coinbase_p2sh",
+        "outputs": "3",
+        "source_window": "payout2013"
+      }
+    },
+    {
+      "id": "bip66-spray-3756-p2sh",
+      "description": "Late-era 3756-output payout spray with visible p2sh penetration",
+      "window": "bip66-boundary",
+      "txid": "a94fe7f7b8a89c2970d0b853e41c180147b125ffce34f35e70e42ba922294b3e",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "single_input_payout_spray",
+        "outputs": "3756",
+        "source_window": "bip66"
+      }
+    },
+    {
+      "id": "bip66-aggregator-672in",
+      "description": "Six-hundred-seventy-two input consolidation specimen near BIP66",
+      "window": "bip66-boundary",
+      "txid": "9bd6b7b73da3e99e896680a9a35a68d05e456a5e7718760a62bde0ebe17e7ff6",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "large_input_aggregator",
+        "inputs": "672",
+        "source_window": "bip66"
+      }
+    },
+    {
+      "id": "bip66-p2sh-aggregator",
+      "description": "Mixed p2pkh/p2sh multi-input aggregator specimen near BIP66",
+      "window": "bip66-boundary",
+      "txid": "3f637aff97a70c89dd279fe14dbd45fda00fe22027f7937d43737464baa247a7",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "non_coinbase_p2sh",
+        "inputs": "28",
+        "source_window": "bip66"
+      }
+    }
+  ]
+}

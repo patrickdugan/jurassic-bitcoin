@@ -1,0 +1,208 @@
+{
+  "flows": [
+    {
+      "id": "receipt_rollover_redeem",
+      "entrypoint": "tests/litecoin-bitvm/procedural_receipt_contract_live.js",
+      "external_test": "C:\\projects\\tradelayer.js\\tests\\utxoBitvmReceiptContractLive.js",
+      "procedural_token_role": "receipt",
+      "proposal_refs": [
+        3
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "settlement_graph_live",
+      "dlc_path": [
+        "FUNDED",
+        "ROLLED",
+        "CLOSED"
+      ],
+      "settlement_modes": [
+        "rollover",
+        "redeem"
+      ],
+      "notes": "Procedural issuance and redemption are gated by DLC template and contract state."
+    },
+    {
+      "id": "short_epoch_router",
+      "entrypoint": "tests/litecoin-bitvm/procedural_short_epoch_router_live.js",
+      "external_test": "C:\\projects\\tradelayer.js\\tests\\utxoBitvmShortEpochRouterLive.js",
+      "procedural_token_role": "short_router",
+      "proposal_refs": [
+        3
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "settlement_graph_live",
+      "dlc_path": [
+        "FUNDED",
+        "SETTLED"
+      ],
+      "settlement_modes": [
+        "pnl_sweep",
+        "bitvm_cache",
+        "bitvm_payout"
+      ],
+      "notes": "Procedural balances are routed through bucket sweeps plus BitVM escrow branches."
+    },
+    {
+      "id": "short_epoch_router_dispute",
+      "entrypoint": "tests/litecoin-bitvm/procedural_router_dispute_live.js",
+      "procedural_token_role": "short_router_dispute",
+      "proposal_refs": [
+        1,
+        2,
+        3
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "settlement_and_dispute_graph_live",
+      "dlc_path": [
+        "FUNDED",
+        "SETTLED",
+        "DISPUTED",
+        "SETTLED"
+      ],
+      "settlement_modes": [
+        "pnl_sweep",
+        "bitvm_cache",
+        "bitvm_challenge",
+        "bitvm_resolve",
+        "bitvm_payout"
+      ],
+      "relay_preludes": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "notes": "One contract ref first accepts transcript-alias and namespace-bifurcation relay preludes, then sends one excess branch through reject-release while a second resolves uphold and leaves payout blocked."
+    },
+    {
+      "id": "transcript_alias_relay",
+      "entrypoint": "tests/litecoin-bitvm/procedural_transcript_alias_live.js",
+      "procedural_token_role": "transcript_alias",
+      "proposal_refs": [
+        1
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "relay_surface_live",
+      "dlc_path": [
+        "OPEN"
+      ],
+      "settlement_modes": [],
+      "notes": "Two distinct signed relay transcripts attest the same payloadHash/stateHash for one procedural-token contract."
+    },
+    {
+      "id": "identifier_namespace_bifurcation",
+      "entrypoint": "tests/litecoin-bitvm/procedural_identifier_bifurcation_live.js",
+      "procedural_token_role": "identifier_bifurcation",
+      "proposal_refs": [
+        2
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "relay_surface_live",
+      "dlc_path": [
+        "OPEN"
+      ],
+      "settlement_modes": [],
+      "notes": "One signed relay bundle is reused under two distinct blobRef namespace labels while payloadHash/stateHash stay fixed."
+    },
+    {
+      "id": "oracle_sidecar_mesh",
+      "entrypoint": "tests/litecoin-bitvm/procedural_oracle_sidecar_mesh_live.js",
+      "procedural_token_role": "dlc_oracle_sidecar",
+      "proposal_refs": [
+        1,
+        2,
+        3
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "application_mesh_live",
+      "application_domain": "oracle_sidecars",
+      "dlc_path": [
+        "OPEN"
+      ],
+      "settlement_modes": [],
+      "relay_preludes": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "carrier_profiles": [
+        "spray202_oracle_cover",
+        "exact100_oracle_cover"
+      ],
+      "notes": "Prototypes a DLC/oracle publication surface where one semantic oracle sidecar state is re-expressed through transcript aliases, namespace rotation, and ordinary payout-shaped carrier hints."
+    },
+    {
+      "id": "watchtower_beacon_mesh",
+      "entrypoint": "tests/litecoin-bitvm/procedural_watchtower_beacon_mesh_live.js",
+      "procedural_token_role": "watchtower_beacon",
+      "proposal_refs": [
+        1,
+        2,
+        3
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "application_mesh_live",
+      "application_domain": "watchtowers",
+      "dlc_path": [
+        "OPEN"
+      ],
+      "settlement_modes": [],
+      "relay_preludes": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "carrier_profiles": [
+        "rebalance_cover",
+        "sweep_cover"
+      ],
+      "notes": "Prototypes a watchtower or fraud-monitor beacon surface where alert proofs admit compact and full transcripts, public alert handles rotate, and publication aims to inhabit ordinary wallet traffic."
+    },
+    {
+      "id": "statechain_handoff_mesh",
+      "entrypoint": "tests/litecoin-bitvm/procedural_statechain_handoff_mesh_live.js",
+      "procedural_token_role": "statechain_handoff",
+      "proposal_refs": [
+        1,
+        2,
+        3
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "application_mesh_live",
+      "application_domain": "statechains",
+      "dlc_path": [
+        "OPEN"
+      ],
+      "settlement_modes": [],
+      "relay_preludes": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "carrier_profiles": [
+        "checkpoint_consolidation",
+        "checkpoint_payout"
+      ],
+      "notes": "Prototypes a statechain-style handoff checkpoint where the same ownership transition can use alternate handoff transcripts, rotated checkpoint handles, and ordinary-topology checkpoint publication hints."
+    }
+  ],
+  "adjacent_dispute_flow": {
+    "id": "plan_a_guardrail",
+    "entrypoint": "tests/litecoin-bitvm/tx30_plan_a_live.js",
+    "proposal_refs": [
+      3
+    ],
+    "policy_envelope_class": "clean_modern_isomorphism",
+    "relay_compatibility": "relay_compatible_live",
+    "execution_role": "dispute_graph_live",
+    "settlement_modes": [
+      "bitvm_cache",
+      "bitvm_challenge",
+      "bitvm_resolve"
+    ],
+    "notes": "This remains the stripped-down dispute control. The fused procedural-token version now exists in short_epoch_router_dispute."
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "overlay_mixed_script_transition_2013_poc",
+  "windows": [
+    {
+      "name": "mixed-script-transition-2013-burst",
+      "start_height": 279150,
+      "end_height": 279320,
+      "representative_heights": [279228],
+      "epoch": "post-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "mixed_script_transition_p2sh_mix",
+      "description": "Early sampled p2pkh/p2sh mixed-output specimen for staged overlay migration tests",
+      "window": "mixed-script-transition-2013-burst",
+      "txid": "b205429801b9ac02f60a3fa2e459a3d78df41078ee676b222048caf3bd4dc636",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "mixed_script_transition_2013",
+        "carrier_role": "mixed_script_bridge",
+        "carrier_height": "279228",
+        "overlay_hypothesis": "staged_p2sh_oracle_dlc_migration"
+      }
+    },
+    {
+      "id": "mixed_script_transition_control_spray",
+      "description": "Pure p2pkh spray control for comparing mixed-script detectability against batch cover",
+      "window": "mixed-script-transition-2013-burst",
+      "txid": "a321554f598850ca60baa815359abb69e1be34e845616b359e693e829270682f",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "mixed_script_transition_2013",
+        "carrier_role": "pure_batch_control",
+        "carrier_height": "279209",
+        "overlay_hypothesis": "contrast_mixed_script_vs_pure_payout_cover"
+      }
+    }
+  ]
+}

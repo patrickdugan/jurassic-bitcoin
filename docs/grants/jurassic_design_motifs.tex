@@ -1,0 +1,456 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{Jurassic Design Motifs:\\
+Reframing Ossified Bitcoin Quirks as Overlay Search Surfaces}
+\author{Bitcoin Consensus Observatory (Jurassic Bitcoin)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Bitcoin's historical consensus envelope contains behaviors that are no longer
+desirable as deployable transaction patterns but remain informative as design
+motifs. This paper argues that three such motifs are especially reusable:
+transcript multiplicity, identifier bifurcation, and carrier camouflage. We
+present a toolchain for extracting, replaying, labeling, and classifying these
+surfaces across historical Bitcoin windows, then show how the same abstractions
+can be lifted into live TradeLayer Litecoin prototypes with BitVM-style dispute
+flows. The contribution is not a proposal to revive old bugs. It is a
+translation layer from fossilized Bitcoin behavior to modern overlay-relevant
+search surfaces, together with a policy-envelope method for distinguishing
+replay-only fossils from clean contemporary isomorphisms.
+\end{abstract}
+
+\section{Introduction}
+
+Bitcoin's consensus behavior is full of inherited irregularities that were once
+ordinary, later became policy-constrained, or were eventually superseded by
+cleaner transaction forms. These historical quirks are often discussed as
+curiosities, hazards, or museum pieces. We take a different view: some of them
+encode durable protocol ideas that can inspire modern overlay design even when
+the original transaction forms are no longer directly usable.
+
+We use the term \emph{Jurassic Bitcoin} for the historical period that ends, in
+practical terms, before SegWit-era modularity takes over the protocol surface.
+It refers to an older Bitcoin in which transaction behavior still carried many
+laissez-faire, lightly curated technical fingerprints of an earlier
+libertarian engineering culture: behaviors that were tolerated, under-specified,
+or simply left in place long enough to ossify. That period is over as a live
+design regime, but its fossils remain informative. The claim of this paper is
+that some of those neglected fingerprints are still isomorphically usable as
+protocol mechanics once they are abstracted away from their original,
+historically contingent transaction forms.
+If Jurassic Bitcoin supplies the fossils, the observer pipeline is the mosquito
+in amber: it preserves small but information-rich traces of a vanished protocol
+ecology, then lets us recover isomorphic mechanics without reviving the
+original environment itself.
+
+The central claim of this paper is that three motifs recur across both
+historical Bitcoin and modern overlay design:
+
+\begin{enumerate}
+\item \textbf{Transcript multiplicity}: one broad spend family can admit
+multiple effective signing transcripts.
+\item \textbf{Identifier bifurcation}: externally visible identifiers can move
+while the committed core digest stays fixed.
+\item \textbf{Carrier camouflage}: overlay commitments can hide inside ordinary
+transaction topology rather than obvious exotic carriers.
+\end{enumerate}
+
+We study those motifs with a deterministic observability toolchain and then lift
+them into live Litecoin-based prototypes where BitVM-style routes, challenges,
+and resolutions can be exercised without claiming that the original legacy
+Bitcoin seams are themselves production-ready protocol constructions. The
+resulting perspective sits downstream of BitVM's dispute-oriented execution
+model and of more recent Binohash-style transaction introspection work, while
+remaining methodologically closer to differential blockchain testing than to new
+consensus design \cite{linus2023bitvm,linus2026binohash,yang2021fluffy,kim2025fork}.
+
+\section{Contributions}
+
+This work makes four contributions.
+
+\begin{enumerate}
+\item It defines a reproducible \emph{historical-to-modern} workflow for turning
+Bitcoin fossils into measured experimental surfaces.
+\item It organizes the current evidence into three reusable overlay-relevant
+motifs rather than a loose list of quirks.
+\item It demonstrates live prototype grafts on Litecoin/TradeLayer that show
+how these motifs can interact with BitVM-style flow graphs and dispute edges.
+\item It introduces a policy-envelope mapping method for separating replay-only
+Bitcoin fossils from clean modern isomorphisms.
+\end{enumerate}
+
+\section{Observability Toolchain}
+
+The repository contributes a practical research tool rather than an alternative
+node implementation. The toolchain has four layers.
+
+\paragraph{Historical extraction.}
+Mainnet windows are selected around activation boundaries and structurally
+interesting transaction families, then extracted into reproducible corpora. The
+current project already covers BIP16, BIP34, a 2013 payout burst, and BIP66
+windows, with the pre-SegWit ``Jurassic'' tour intended to end at CSV rather
+than witness-era modular Bitcoin.
+
+\paragraph{Seam-family fixtures and replay.}
+Curated fixture families capture legacy behaviors such as FindAndDelete context
+splits, \texttt{SIGHASH\_SINGLE} degeneracy, and \texttt{CHECKMULTISIG}
+dummy-element txid variation. These fixtures can be replayed, classified, and
+reported with stable identifiers and digest-level metadata.
+
+\paragraph{Historical carrier and sidecar benches.}
+The toolchain also supports ordinary-looking 2013 mainnet carrier families,
+especially payout-shaped topologies in the \texttt{279150..279320} window. That
+allows overlay publication ideas to be discussed in terms of historical cover
+rather than only abstract commitment formats.
+
+\paragraph{Modern live graft harnesses.}
+TradeLayer Litecoin is used as a controllable live environment for prototyping
+procedural-token flows, oracle relays, BitVM-style caches, challenges,
+resolutions, and payout edges. This gives a live isomorphism layer without
+claiming that the exact historical Bitcoin transaction forms survive unchanged.
+In that sense, the observer process is closer to consensus-differential systems
+that use executable artifacts and cross-checking harnesses as research
+instruments than to a paper-only catalogue of quirks \cite{yang2021fluffy,kim2025fork}.
+
+\begin{figure}[t]
+\centering
+\fbox{\parbox[c][1.7in][c]{0.9\linewidth}{\centering
+Figure placeholder.\\[0.5em]
+Historical observer workflow from mainnet window extraction to fixture replay,
+policy-envelope labeling, and live Litecoin graft execution.}}
+\caption{Observer pipeline for the current repository. Replace this placeholder
+with a workflow diagram showing extraction, replay, classification, and live
+prototype grafting.}
+\label{fig:observer-pipeline}
+\end{figure}
+
+\section{Three Design Motifs}
+
+\subsection{Motif I: Transcript Multiplicity}
+
+The first motif is that one broad spend family can admit multiple effective
+signing transcripts. In the legacy seam bench, FindAndDelete subset variation
+and \texttt{SIGHASH\_SINGLE} degeneracy both show that small structural changes
+can alter the effective digest or collapse it without changing the broader
+transaction family. The important abstraction is not the historical script quirk
+itself; it is the existence of a transcript-selection manifold. Recent
+introspection work such as Binohash is especially relevant here because it
+re-opens the design space for deliberately engineered
+transaction-observable transcript surfaces without requiring a soft fork
+\cite{linus2026binohash}.
+
+That abstraction is useful for modern overlays because many BitVM- and
+DLC-adjacent systems depend on alternative off-chain transcripts, branch
+packages, reveal paths, or dispute narratives. A protocol designer may want the
+same higher-level state machine while preserving some freedom over transcript
+selection, packaging, or attestation form.
+
+The current repository lifts this motif into a live Litecoin relay surface where
+two distinct transcript aliases are accepted against the same committed state,
+and then further grafts those transcript preludes onto a challengeable
+procedural-token route.
+
+\subsection{Motif II: Identifier Bifurcation}
+
+The second motif is that a public identifier can vary while the committed core
+stays fixed. The historical dummy-element seam is the canonical example in the
+current project: txids move while the legacy sighash digest remains stable. The
+legacy path is policy-rejected today, but it exposes a clean separation between
+\emph{semantic commitment} and \emph{public handle}.
+
+This matters to modern overlays because practical systems often need visible
+session identifiers, anchor labels, namespace handles, rendezvous tags, or
+publication references even when the semantic core is fixed elsewhere. The live
+Litecoin graft demonstrates the same shape with namespace-labeled relays: one
+committed state, multiple public labels, and a further graft onto a live
+challengeable route. Classical Bitcoin work mostly encountered this family as a
+malleability problem, not as a design affordance, which makes the historical
+contrast useful \cite{andrychowicz2013malleability,decker2014malleability}.
+
+\subsection{Motif III: Carrier Camouflage}
+
+The third motif is that overlay commitments should hide inside ordinary-looking
+transaction topology rather than obviously exotic publication surfaces. The
+historical 2013 carrier bench shows that strong candidate covers already existed
+in ordinary payout and redistribution topologies, including high-fanout sprays,
+exact-value batch redistributions, and large aggregator families.
+
+This motif is especially relevant for oracle publication, watcher cadence, DLC
+settlement sidecars, and related overlay systems. The point is not simply that
+``big transactions existed.'' The point is that ordinary historical cover can
+provide a model for how modern overlays think about publication shape, ambient
+noise, and carrier selection. This is adjacent in spirit to transaction-shape
+privacy work such as PayJoin, where the operational question is how to inhabit
+ordinary-looking transaction space without leaking a distinctive surface
+\cite{ghesmati2022payjoin}.
+
+The current Bitcoin-side replay bench for synthetic oracle sidecars still needs
+funded prevouts before it can be fully materialized on a live Bitcoin node.
+However, the companion Litecoin prototypes already show the settlement and
+dispute structure that such sidecars would want to influence.
+
+\section{Policy-Envelope Mapping as Method}
+
+The paper's methodological lens is a policy-envelope map rather than a fourth
+coequal protocol claim. Each measured surface falls into one of three buckets:
+
+\begin{enumerate}
+\item \textbf{Replay-only fossils}: historically informative, but no longer
+clean live surfaces on Bitcoin today.
+\item \textbf{Ordinary historical cover}: surfaces that were already ordinary in
+their native Bitcoin era.
+\item \textbf{Clean modern isomorphisms}: live contemporary grafts that preserve
+the same abstract motif without relying on the old transaction form.
+\end{enumerate}
+
+This classification prevents a common failure mode in ``quirk mining'' papers:
+confusing a historical mechanism with a deployable modern protocol. Our
+framework is explicit that many legacy Bitcoin mechanisms should remain museum
+specimens, while their \emph{abstract shape} can still inform current overlay
+design.
+
+\begin{center}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.21\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth} >{\raggedright\arraybackslash}p{0.24\linewidth}}
+\toprule
+Motif & Historical surface & Modern live isomorphism & Present status \\
+\midrule
+Transcript multiplicity & FindAndDelete context splits; \texttt{SIGHASH\_SINGLE} degeneracy & Litecoin relay aliases and fused router-dispute graft & Live as a relay and dispute prelude motif \\
+Identifier bifurcation & Dummy-element txid variation & Litecoin namespace-labeled relays and fused router-dispute graft & Live as a namespace/search-surface motif \\
+Carrier camouflage & 2013 payout and redistribution topologies & Litecoin procedural-token settlement/dispute graphs; Bitcoin replay bench pending funded prevouts & Historically grounded; Bitcoin live materialization still incomplete \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{BitVM Prototype Applications}
+
+The current live prototype layer is deliberately framed as \emph{BitVM-style}
+application work, not as a claim that the legacy Bitcoin quirks directly
+implement BitVM \cite{linus2023bitvm}. The relevant applications are as follows.
+
+\subsection{Transcript Selector and Branch Packaging}
+
+Transcript multiplicity suggests a search bench for alternative dispute
+transcripts, branch packaging, and attestation forms. In the live Litecoin
+grafts, transcript aliases can be attached to the same contract reference before
+the route moves into challengeable branches. Binohash is an especially relevant
+comparison point because it makes transaction introspection itself into a
+programmable input to BitVM-adjacent designs \cite{linus2026binohash}.
+
+\subsection{Anchor and Session-ID Search}
+
+Identifier bifurcation suggests search surfaces for public handles: session ids,
+anchor names, rendezvous labels, or publication namespaces. The live namespace
+grafts demonstrate that these handles can move while the committed state stays
+fixed.
+
+\subsection{Challengeable Carrier-Style Routing}
+
+Carrier camouflage suggests that publication and settlement need not be thought
+of as isolated \texttt{OP\_RETURN}-style acts. Instead, they can be embedded in
+ordinary-looking payout and redistribution shapes. The live Litecoin prototypes
+show the operational side of that claim: one route can proceed to release while
+another is challenged and blocked.
+
+\subsection{Procedural-Token Flow Graphs}
+
+The most concrete prototype result is that the motifs can be integrated into
+procedural-token flow graphs. The current fused Litecoin experiment already
+supports:
+
+\begin{itemize}
+\item transcript and namespace preludes on the same contract reference,
+\item a short-epoch routing phase,
+\item BitVM-style cache opening,
+\item challenge and resolution phases,
+\item both released and blocked terminal outcomes.
+\end{itemize}
+
+This is the strongest evidence in the project that the motifs are not merely
+descriptive labels but operational design patterns.
+
+\begin{figure}[t]
+\centering
+\fbox{\parbox[c][1.7in][c]{0.9\linewidth}{\centering
+Figure placeholder.\\[0.5em]
+Fused procedural-token route with transcript and namespace preludes feeding a
+BitVM-style cache, challenge, resolve, and payout split.}}
+\caption{Live Litecoin flow-graph scaffold. Replace this placeholder with the
+hybrid router-dispute graph used in the fused procedural-token run.}
+\label{fig:fused-route}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.27\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth} >{\raggedright\arraybackslash}p{0.15\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth}}
+\toprule
+Prototype surface & Motif emphasis & Live status & Notes \\
+\midrule
+Transcript alias relay & Transcript multiplicity & Passed & Two accepted relay transcripts over one committed state \\
+Identifier namespace relay & Identifier bifurcation & Passed & Stable semantic state with rotated public labels \\
+Hybrid router-dispute flow & Carrier camouflage + dispute routing & Passed & Released and blocked terminal branches in one run \\
+Oracle sidecar mesh & All three motifs & Passed & Alias, namespace, and payout-shaped carrier hints on one sidecar state \\
+Watchtower beacon mesh & All three motifs & Passed & Compact/full alert proofs with rotating public handles \\
+Statechain handoff mesh & All three motifs & Passed & Alternate handoff transcripts plus rotated checkpoint handles \\
+Bitcoin oracle-sidecar replay & Carrier camouflage & Pending & Needs funded prevouts before live Bitcoin materialization \\
+\bottomrule
+\end{tabular}
+\caption{Representative prototype outcomes. This table can be tightened into a
+camera-ready results summary once final figure numbers and artifact references
+are fixed.}
+\label{tab:prototype-results}
+\end{table}
+
+\section{Applications Beyond BitVM}
+
+The project began with BitVM-style dispute flows because they provide a clean
+modern setting in which branch selection, relay freedom, and publication
+topology can all be made visible at once. However, the same three motifs also
+admit non-BitVM application meshes, and the repository now includes live
+Litecoin proofs for three such cases.
+
+\subsection{Oracle Sidecars}
+
+The first non-BitVM application is a DLC or oracle-sidecar publication surface.
+The live \emph{oracle sidecar mesh} binds one semantic sidecar state to two
+distinct transcript aliases, two public namespace handles, and two
+payout-shaped carrier hints. Concretely, the current LTCTEST prototype accepts
+``fast'' and ``full'' attestations, rotates the public handle of the same state
+between versioned sidecar labels, and associates the publication with carrier
+profiles modeled on ordinary 2013 payout families. This is a direct example of
+how transcript multiplicity, identifier bifurcation, and carrier camouflage can
+co-exist without the application itself being framed as a BitVM dispute graph.
+
+\subsection{Watchtower Beacons}
+
+The second non-BitVM application is a watchtower or fraud-monitor beacon
+surface. The live \emph{watchtower beacon mesh} shows that one alert state can
+be expressed through compact and full proof transcripts, while the public alert
+handle rotates independently of the semantic core. The same prototype also tags
+the alert publication with ordinary wallet-traffic carrier hints such as
+rebalance and sweep patterns. That gives a live proof that watcher systems can
+use the three motifs as engineering knobs for proof packaging, search-surface
+design, and publication cover.
+
+\subsection{Statechain Handoffs}
+
+The third non-BitVM application is a statechain-style handoff checkpoint. The
+live \emph{statechain handoff mesh} treats the ownership transition as a fixed
+semantic core while permitting two handoff transcripts (acknowledgement and
+finalization), two rotated checkpoint handles, and two ordinary checkpoint
+publication shapes. This is especially useful for the paper because it shows
+that the same motifs are not confined to oracle publication or challenge
+systems; they also apply to off-chain transfer and checkpoint protocols that
+need observable but non-rigid coordination surfaces.
+
+Taken together, these three meshes strengthen the paper's central claim. The
+repository is no longer merely showing that old Bitcoin seams can be lifted into
+BitVM-flavored demos. It now shows that the same historical abstractions can be
+ported into oracle publication, watcher beacons, and statechain-style handoff
+surfaces while remaining measurable, executable, and policy-envelope aware.
+
+\section{Discussion}
+
+The useful interpretation of these results is not that old Bitcoin bugs should
+be revived. It is that historical Bitcoin reveals protocol degrees of freedom
+that can be abstracted and measured. Some of those degrees of freedom are
+cryptographic, such as digest aliasing or txid movement. Others are topological,
+such as publication inside ordinary payout structure. The project's value lies
+in making those degrees of freedom reproducible, classifiable, and portable into
+modern experimental grafts.
+
+This also clarifies the role of Litecoin in the project. Litecoin is not
+presented as a substitute claim about Bitcoin consensus. It is used as a live
+engineering environment where the motifs can be integrated with TradeLayer and
+BitVM-style flows, demonstrating that the abstractions are fertile enough to
+support working prototypes. That combination of historical corpus extraction,
+replay, and live cross-environment grafting is methodologically closest to the
+``observe, replay, differential-check, then generalize'' pattern seen in
+consensus bug-finding work \cite{yang2021fluffy,kim2025fork}.
+
+\section{Future Work}
+
+The next steps fall into three categories.
+
+\subsection{Bitcoin-side materialization}
+
+The main remaining Bitcoin-side blocker is funded-prevout materialization for
+the oracle-sidecar replay benches. Once the replay fixtures spend real inputs,
+the carrier-camouflage thesis can be evaluated against live Bitcoin behavior
+rather than only against historical extraction and synthetic replay structure.
+
+\subsection{Reusable overlay templates}
+
+The current Litecoin prototypes are already live, but they still exist as
+scenario-specific harnesses. A natural next step is to encode them as reusable
+flow-graph templates where relay preludes, routing buckets, and dispute edges
+are declared parametrically rather than by one-off scripts.
+
+\subsection{Binohash-style adaptation by other developers}
+
+The broader research agenda is to encourage other Bitcoin developers to mine
+these motifs in new ways. ``Binohash-style'' is the right shorthand here because
+it captures the larger move of treating old script and transaction boundary
+conditions as raw material for new introspection-capable constructions rather
+than as dead historical accidents \cite{linus2026binohash}:
+
+\begin{itemize}
+\item alternative transcript alias surfaces for challenge systems,
+\item new namespace or anchor search constructions,
+\item novel uses of ordinary transaction topology as commitment cover,
+\item covenant-like or contract-layer analogues of the same manifold shapes,
+\item DLC and BitVM systems that make deliberate use of relay and identifier
+freedom without depending on legacy policy-rejected transaction forms.
+\end{itemize}
+
+Instructionally, the message to the broader Bitcoin development community is
+simple and intentionally modest. The ecosystem now includes individual
+maintainers, new contributors, nonprofits, research groups, wallet teams,
+infrastructure companies, and protocol startups with very different goals and
+risk tolerances. This paper is not asking that community to standardize around
+the specific Litecoin grafts or to rehabilitate Jurassic-era transaction forms.
+It is offering a small toolkit of strange but measured abstractions, together
+with application examples, and suggesting a directionally correct next step:
+take these motifs, test them inside your own covenant, DLC, watchtower,
+wallet-coordination, or BitVM-adjacent setting, and see whether they open new
+design space without inheriting the old pathologies.
+
+In that sense, the project's goal is not to close the book on Jurassic Bitcoin.
+It is to make the fossils legible enough that other protocol engineers can adapt
+their abstract affordances elsewhere.
+
+\section*{Artifacts}
+
+Representative repository artifacts include:
+
+\begin{itemize}
+\item \texttt{artifacts/grants/overlay\_hook\_summary.md}
+\item \texttt{artifacts/grants/overlay\_carrier\_bench\_2013.md}
+\item \texttt{artifacts/grants/policy\_envelope\_mapping.md}
+\item \texttt{docs/grants/four\_ossification\_proposals.md}
+\item \texttt{docs/litecoin-bitvm/procedural\_tokens.md}
+\end{itemize}
+
+\section*{Conclusion}
+
+Bitcoin's old quirks are not just anecdotes. When measured carefully, they
+define reproducible search surfaces. Transcript multiplicity, identifier
+bifurcation, and carrier camouflage together form a compact vocabulary for
+reasoning about how ossified historical behavior can inspire modern overlay
+systems. The toolchain and prototypes in this repository show that such motifs
+can be extracted, classified, and experimentally lifted into live BitVM-style
+applications without confusing historical fossils for deployable mechanisms.
+
+\bibliographystyle{plain}
+\bibliography{jurassic_design_motifs}
+
+\end{document}

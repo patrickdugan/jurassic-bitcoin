@@ -1,0 +1,85 @@
+{
+  "name": "oracle_sidecar_2013_mocks",
+  "network": "regtest",
+  "source_bench_path": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\artifacts\\grants\\overlay_carrier_bench_2013.json",
+  "source_manifests": [
+    "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\manifests\\p2sh_findanddelete_core_seam_poc.json",
+    "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\manifests\\sighash_single_core_seam_poc.json"
+  ],
+  "publications": [
+    {
+      "publication_id": "oracle_attest_alias_aa",
+      "mock_tx_field": "oracle_attest_alias_aa_tx_hex",
+      "source_fixture_id": "findanddelete_core_aa",
+      "carrier_label": "payout2013-spray-202",
+      "carrier_height": 279209,
+      "status": "accepted",
+      "placement_mode": "same_height_adjacent_after",
+      "payload_commitment_hex": "d22425223a3223b2e9472d9c963533eb91e8039a87eb8812d0f4b440556763a6"
+    },
+    {
+      "publication_id": "oracle_attest_alias_aaaa",
+      "mock_tx_field": "oracle_attest_alias_aaaa_tx_hex",
+      "source_fixture_id": "findanddelete_core_aaaa",
+      "carrier_label": "payout2013-spray-202",
+      "carrier_height": 279209,
+      "status": "accepted",
+      "placement_mode": "same_height_adjacent_after",
+      "payload_commitment_hex": "a9d3314d79fab1505e4b0bbcc444e0dab1126a955dccaa9d0c60be8814f06b38"
+    },
+    {
+      "publication_id": "oracle_settle_control_path",
+      "mock_tx_field": "oracle_settle_control_path_tx_hex",
+      "source_fixture_id": "findanddelete_core_aa",
+      "carrier_label": "payout2013-exact100-101out",
+      "carrier_height": 279234,
+      "status": "accepted",
+      "placement_mode": "same_height_before_carrier",
+      "payload_commitment_hex": "41df0ec0b3b1de542365bf3f74169abb2014b41a2b673b42891d9cb387763ad4"
+    },
+    {
+      "publication_id": "oracle_settle_branch_path",
+      "mock_tx_field": "oracle_settle_branch_path_tx_hex",
+      "source_fixture_id": "findanddelete_core_aabb",
+      "carrier_label": "payout2013-exact100-101out",
+      "carrier_height": 279234,
+      "status": "accepted",
+      "placement_mode": "same_height_after_carrier",
+      "payload_commitment_hex": "ffe1ec57ea07ca445eb1ef9d3ba435e96c84202e1843d6fd9ec5c444ca7a21f0"
+    },
+    {
+      "publication_id": "oracle_bug_single",
+      "mock_tx_field": "oracle_bug_single_tx_hex",
+      "source_fixture_id": "sighash_single_bug",
+      "carrier_label": "payout2013-spray-202",
+      "carrier_height": 279209,
+      "status": "rejected",
+      "placement_mode": "rejected_before_planning",
+      "payload_commitment_hex": "88b158e9934b8579ab6ca40d1550c33d7d3de6b6ea0886efbc5201c6f51cc42b"
+    },
+    {
+      "publication_id": "oracle_bug_single_anyonecanpay",
+      "mock_tx_field": "oracle_bug_single_anyonecanpay_tx_hex",
+      "source_fixture_id": "sighash_single_bug_anyonecanpay",
+      "carrier_label": "payout2013-spray-202",
+      "carrier_height": 279209,
+      "status": "rejected",
+      "placement_mode": "rejected_before_planning",
+      "payload_commitment_hex": "80154d64860a3e2efe9061916a3676da6eaf46e0ac6f15fe498f7bda468ca46b"
+    }
+  ],
+  "source_blobs": {
+    "oracle_attest_alias_aa": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\blobs\\p2sh-findanddelete-core-seam.json",
+    "oracle_attest_alias_aaaa": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\blobs\\p2sh-findanddelete-core-seam.json",
+    "oracle_settle_control_path": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\blobs\\p2sh-findanddelete-core-seam.json",
+    "oracle_settle_branch_path": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\blobs\\p2sh-findanddelete-core-seam.json",
+    "oracle_bug_single": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\blobs\\sighash-single-core-seam.json",
+    "oracle_bug_single_anyonecanpay": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\blobs\\sighash-single-core-seam.json"
+  },
+  "oracle_attest_alias_aa_tx_hex": "0100000001b71522016e249324225084cd65268feb258d734403b6def6208125effa1dce0b010000000b01aa0801aa01aa01bb52aeffffffff0118ddf50500000000160014abcabf64d0d52afd1d74fc65ba67385e63c3055700000000",
+  "oracle_attest_alias_aaaa_tx_hex": "0100000001b71522016e249324225084cd65268feb258d734403b6def6208125effa1dce0b010000000d01aa01aa0801aa01aa01bb52aeffffffff0118ddf50500000000160014abcabf64d0d52afd1d74fc65ba67385e63c3055700000000",
+  "oracle_settle_control_path_tx_hex": "0100000001b71522016e249324225084cd65268feb258d734403b6def6208125effa1dce0b010000000b01aa0801aa01aa01bb52aeffffffff0118ddf50500000000160014abcabf64d0d52afd1d74fc65ba67385e63c3055700000000",
+  "oracle_settle_branch_path_tx_hex": "0100000001b71522016e249324225084cd65268feb258d734403b6def6208125effa1dce0b010000000d01aa01bb0801aa01aa01bb52aeffffffff0118ddf50500000000160014abcabf64d0d52afd1d74fc65ba67385e63c3055700000000",
+  "oracle_bug_single_tx_hex": "01000000023039f72fcd19bb4705295c8d02484ccf595fa155a1cecdd4b5ebc57c4c117a800000000000ffffffff8c630bb8987c1b99280837869831ae77338d1e4ac50329245ebed7a80a34f9c70100000000ffffffff0124bceb0b0000000016001415d6a25eb3c6773f8690b488be49b0cb371b4f1c00000000",
+  "oracle_bug_single_anyonecanpay_tx_hex": "01000000023039f72fcd19bb4705295c8d02484ccf595fa155a1cecdd4b5ebc57c4c117a800000000000ffffffff8c630bb8987c1b99280837869831ae77338d1e4ac50329245ebed7a80a34f9c70100000000ffffffff0124bceb0b0000000016001415d6a25eb3c6773f8690b488be49b0cb371b4f1c00000000"
+}

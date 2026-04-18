@@ -1,0 +1,66 @@
+{
+  "name": "payout_2013_carrier_camouflage",
+  "windows": [
+    {
+      "name": "payout-2013-burst",
+      "start_height": 279150,
+      "end_height": 279320,
+      "representative_heights": [279192, 279209, 279217, 279228, 279234, 279287, 279289],
+      "epoch": "post-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "payout2013-spray-202",
+      "description": "Single-input 202-output payout spray in the 2013 burst window",
+      "window": "payout-2013-burst",
+      "txid": "a321554f598850ca60baa815359abb69e1be34e845616b359e693e829270682f",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "single_input_payout_spray",
+        "height": "279209",
+        "overlay_lane": "carrier_camouflage",
+        "source_window": "payout2013"
+      }
+    },
+    {
+      "id": "payout2013-exact100-101out",
+      "description": "Single-input 101-output exact-100 BTC redistribution specimen in the 2013 burst window",
+      "window": "payout-2013-burst",
+      "txid": "a9ead3b6e355156d145d07d804ec52260cb9ee6da62cfbef175f4ce8b742a893",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "single_input_exact_value_distribution",
+        "height": "279234",
+        "overlay_lane": "carrier_camouflage",
+        "source_window": "payout2013"
+      }
+    },
+    {
+      "id": "payout2013-aggregator-27in",
+      "description": "Twenty-seven input redistribution cluster from the 2013 burst window",
+      "window": "payout-2013-burst",
+      "txid": "ac91df691c3f8341360107d911534043ca32c04c3e9542f87574b357750e089f",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "large_input_aggregator",
+        "height": "279213",
+        "overlay_lane": "carrier_camouflage",
+        "source_window": "payout2013"
+      }
+    },
+    {
+      "id": "payout2013-early-p2sh-mix",
+      "description": "Early sampled non-coinbase p2sh mixed-output specimen in the 2013 burst window",
+      "window": "payout-2013-burst",
+      "txid": "b205429801b9ac02f60a3fa2e459a3d78df41078ee676b222048caf3bd4dc636",
+      "spend_type": "rawtx",
+      "metadata": {
+        "family": "non_coinbase_p2sh",
+        "height": "279228",
+        "overlay_lane": "carrier_camouflage",
+        "source_window": "payout2013"
+      }
+    }
+  ]
+}

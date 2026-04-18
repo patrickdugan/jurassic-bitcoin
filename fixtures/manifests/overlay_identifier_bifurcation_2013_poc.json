@@ -1,0 +1,27 @@
+{
+  "name": "overlay_identifier_bifurcation_2013_poc",
+  "windows": [
+    {
+      "name": "identifier-bifurcation-2013-burst",
+      "start_height": 279150,
+      "end_height": 279320,
+      "representative_heights": [279213],
+      "epoch": "post-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "identifier_bifurcation_aggregator_27in",
+      "description": "Twenty-seven input redistribution cluster for txid-like anchor namespace experiments",
+      "window": "identifier-bifurcation-2013-burst",
+      "txid": "ac91df691c3f8341360107d911534043ca32c04c3e9542f87574b357750e089f",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "identifier_bifurcation_2013",
+        "carrier_role": "aggregation_cover",
+        "carrier_height": "279213",
+        "overlay_hypothesis": "anchor_rotation_inside_redistribution_cluster"
+      }
+    }
+  ]
+}

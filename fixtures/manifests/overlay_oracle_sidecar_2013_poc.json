@@ -1,0 +1,82 @@
+{
+  "name": "overlay_oracle_sidecar_2013_poc",
+  "windows": [
+    {
+      "name": "oracle-sidecar-2013-burst",
+      "start_height": 279150,
+      "end_height": 279320,
+      "representative_heights": [279192, 279209, 279217, 279234, 279289],
+      "epoch": "post-bip34"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "oracle_sidecar_cover_spray_202",
+      "description": "High-fanout 202-output payout spray as ordinary-looking sidecar carrier",
+      "window": "oracle-sidecar-2013-burst",
+      "txid": "a321554f598850ca60baa815359abb69e1be34e845616b359e693e829270682f",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "oracle_sidecar_2013",
+        "carrier_role": "primary_batch_cover",
+        "carrier_height": "279209",
+        "overlay_hypothesis": "opreturn_or_dlc_sidecar_near_payout_batch"
+      }
+    },
+    {
+      "id": "oracle_sidecar_cover_exact100",
+      "description": "Exact-denomination 101-output payout spray for regimented sidecar cadence tests",
+      "window": "oracle-sidecar-2013-burst",
+      "txid": "a9ead3b6e355156d145d07d804ec52260cb9ee6da62cfbef175f4ce8b742a893",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "oracle_sidecar_2013",
+        "carrier_role": "exact_value_batch_cover",
+        "carrier_height": "279234",
+        "overlay_hypothesis": "oracle_settlement_batch_with_repeated_denominations"
+      }
+    },
+    {
+      "id": "oracle_sidecar_topology_coinbase_279192",
+      "description": "Coinbase payout fanout reference for baseline topology and detection thresholds",
+      "window": "oracle-sidecar-2013-burst",
+      "tx_hex_blob": "../../corpus/era-mainnet-2013-deep-279150-279320/mainnet-h279192-tx0000.json",
+      "tx_hex_field": "tx_hex",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "oracle_sidecar_2013",
+        "carrier_role": "topology_reference",
+        "carrier_height": "279192",
+        "overlay_hypothesis": "miner_payout_reference_only"
+      }
+    },
+    {
+      "id": "oracle_sidecar_topology_coinbase_279217",
+      "description": "Second coinbase payout fanout reference for miner-side rhythm baseline",
+      "window": "oracle-sidecar-2013-burst",
+      "tx_hex_blob": "../../corpus/era-mainnet-2013-deep-279150-279320/mainnet-h279217-tx0000.json",
+      "tx_hex_field": "tx_hex",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "oracle_sidecar_2013",
+        "carrier_role": "topology_reference",
+        "carrier_height": "279217",
+        "overlay_hypothesis": "miner_payout_reference_only"
+      }
+    },
+    {
+      "id": "oracle_sidecar_topology_coinbase_279289",
+      "description": "Third coinbase payout fanout reference for opreturn-bearing miner baseline",
+      "window": "oracle-sidecar-2013-burst",
+      "tx_hex_blob": "../../corpus/era-mainnet-2013-deep-279150-279320/mainnet-h279289-tx0000.json",
+      "tx_hex_field": "tx_hex",
+      "spend_type": "rawtx",
+      "metadata": {
+        "benchmark_id": "oracle_sidecar_2013",
+        "carrier_role": "topology_reference",
+        "carrier_height": "279289",
+        "overlay_hypothesis": "miner_payout_reference_only"
+      }
+    }
+  ]
+}
