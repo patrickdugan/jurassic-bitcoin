@@ -7,47 +7,45 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 
-\title{Jurassic Design Motifs:\\
-Reframing Ossified Bitcoin Quirks as Overlay Search Surfaces}
-\author{Bitcoin Consensus Observatory (Jurassic Bitcoin)}
-\date{\today}
+
+\title{Jurassic Bitcoin: Ossified Tech Debt as an Isomorphic Mosquito for New Features\\}
+\author{Patrick Dugan}
+\date{April 17, 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Bitcoin's historical consensus envelope contains behaviors that are no longer
-desirable as deployable transaction patterns but remain informative as design
-motifs. This paper argues that three such motifs are especially reusable:
-transcript multiplicity, identifier bifurcation, and carrier camouflage. We
-present a toolchain for extracting, replaying, labeling, and classifying these
-surfaces across historical Bitcoin windows, then show how the same abstractions
-can be lifted into live TradeLayer Litecoin prototypes with BitVM-style dispute
-flows. The contribution is not a proposal to revive old bugs. It is a
-translation layer from fossilized Bitcoin behavior to modern overlay-relevant
-search surfaces, together with a policy-envelope method for distinguishing
-replay-only fossils from clean contemporary isomorphisms.
+Bitcoin's pre-SegWit consensus history contains behaviors that are no longer
+desirable transaction forms but remain informative as design motifs. We focus
+on three reusable motifs: transcript multiplicity, identifier bifurcation, and
+carrier camouflage. Our contribution is an observer pipeline that extracts
+historical Bitcoin windows, materializes seam-family fixtures, classifies them
+with a policy-envelope map, and then lifts the resulting abstractions into live
+TradeLayer prototypes with BitVM-style dispute flows
+\cite{linus2023bitvm,linus2026binohash,yang2021fluffy,kim2025fork}. The point
+is not to revive old bugs. It is to translate fossilized Bitcoin behavior into
+new usable mechanics, inspired by Robin Linus' work with BinoHash.
 \end{abstract}
 
-\section{Introduction}
+\section*{Motifs and Method}
 
-Bitcoin's consensus behavior is full of inherited irregularities that were once
-ordinary, later became policy-constrained, or were eventually superseded by
-cleaner transaction forms. These historical quirks are often discussed as
-curiosities, hazards, or museum pieces. We take a different view: some of them
-encode durable protocol ideas that can inspire modern overlay design even when
-the original transaction forms are no longer directly usable.
+We use \emph{Jurassic Bitcoin} as shorthand for the pre-SegWit historical era
+in which Bitcoin still exposed many laissez-faire technical fingerprints of its
+early libertarian design culture. That era is over, but some of those old
+fingerprints survive as reusable protocol shapes once they are abstracted away
+from the original transaction forms that carried them. In that sense, the
+observer pipeline is the mosquito in amber: it preserves small but
+information-rich traces of a vanished protocol ecology, then lets us recover
+isomorphic mechanics without reviving the original environment itself. We can then take this DNA and produce monstrous or delightful feature modification.
 
 We use the term \emph{Jurassic Bitcoin} for the historical period that ends, in
 practical terms, before SegWit-era modularity takes over the protocol surface.
 It refers to an older Bitcoin in which transaction behavior still carried many
 laissez-faire, lightly curated technical fingerprints of an earlier
-libertarian engineering culture: behaviors that were tolerated, under-specified,
-or simply left in place long enough to ossify. That period is over as a live
-design regime, but its fossils remain informative. The claim of this paper is
-that some of those neglected fingerprints are still isomorphically usable as
-protocol mechanics once they are abstracted away from their original,
-historically contingent transaction forms.
+libertarian engineering culture: behaviors that were tolerated, under-specified, or simply left in place long enough to ossify. That period is over as a live design regime, but its fossils remain informative. The claim of this paper is that some of those neglected fingerprints are still isomorphically usable as protocol mechanics once they are abstracted away from their original,
+historically contingent transaction forms. SegWit itself had its Witness Data component used in unexpected ways with Ordinals, what some would consider a predatory raptor and others would compare to a herbivorous brontosaurus, but either way the foot print has become a part of Bitcoin history: isomorphic utility is real.
+
 If Jurassic Bitcoin supplies the fossils, the observer pipeline is the mosquito
 in amber: it preserves small but information-rich traces of a vanished protocol
 ecology, then lets us recover isomorphic mechanics without reviving the
@@ -65,26 +63,22 @@ while the committed core digest stays fixed.
 transaction topology rather than obvious exotic carriers.
 \end{enumerate}
 
-We study those motifs with a deterministic observability toolchain and then lift
-them into live Litecoin-based prototypes where BitVM-style routes, challenges,
+We study those motifs with a deterministic observability toolchain and then lift them into live prototypes where BitVM-style routes, challenges,
 and resolutions can be exercised without claiming that the original legacy
 Bitcoin seams are themselves production-ready protocol constructions. The
 resulting perspective sits downstream of BitVM's dispute-oriented execution
 model and of more recent Binohash-style transaction introspection work, while
-remaining methodologically closer to differential blockchain testing than to new
-consensus design \cite{linus2023bitvm,linus2026binohash,yang2021fluffy,kim2025fork}.
+remaining methodologically closer to differential blockchain testing than to new consensus design \cite{linus2023bitvm,linus2026binohash,yang2021fluffy,kim2025fork}.
 
 \section{Contributions}
 
 This work makes four contributions.
 
 \begin{enumerate}
-\item It defines a reproducible \emph{historical-to-modern} workflow for turning
-Bitcoin fossils into measured experimental surfaces.
+\item It defines a reproducible \emph{historical-to-modern} workflow for turning Bitcoin fossils into measured experimental surfaces.
 \item It organizes the current evidence into three reusable overlay-relevant
 motifs rather than a loose list of quirks.
-\item It demonstrates live prototype grafts on Litecoin/TradeLayer that show
-how these motifs can interact with BitVM-style flow graphs and dispute edges.
+\item It demonstrates live prototype grafts on testnet with TradeLayer that show how these motifs can interact with BitVM-style flow graphs and dispute edges.
 \item It introduces a policy-envelope mapping method for separating replay-only
 Bitcoin fossils from clean modern isomorphisms.
 \end{enumerate}
@@ -114,7 +108,7 @@ allows overlay publication ideas to be discussed in terms of historical cover
 rather than only abstract commitment formats.
 
 \paragraph{Modern live graft harnesses.}
-TradeLayer Litecoin is used as a controllable live environment for prototyping
+TradeLayer testnet is used as a controllable live environment for prototyping
 procedural-token flows, oracle relays, BitVM-style caches, challenges,
 resolutions, and payout edges. This gives a live isomorphism layer without
 claiming that the exact historical Bitcoin transaction forms survive unchanged.
