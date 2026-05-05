@@ -1,0 +1,1042 @@
+{
+  "kind": "bitcoin_defi_graft_map",
+  "scope": "three_jurassic_motifs_to_bitcoin_defi_architectures",
+  "generated_from": {
+    "flow_graph": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\fixtures\\litecoin-bitvm\\procedural_flow_graphs.json",
+    "motif_csv": "C:\\projects\\BitcoinConsensusObservatory\\jurassic-bitcoin\\artifacts\\grants\\bitcoin_defi_motif_table.csv",
+    "programmable_lightning_zk": "C:\\projects\\UTXORef\\UTXO-Ref\\bitvm3\\utxo_referee\\artifacts\\lightning_zk_programs\\programmable_lightning_zk_latest.json"
+  },
+  "motifs": {
+    "1": {
+      "name": "Transcript Multiplicity",
+      "bitcoin_core_link_ids": [
+        "find_and_delete_v30",
+        "checksig_finddelete_v30",
+        "checkmultisig_finddelete_v30",
+        "sighash_single_v30",
+        "finddelete_v012_checksig",
+        "finddelete_v012_multisig",
+        "sighash_single_v012"
+      ],
+      "bitcoin_code_handles": [
+        "legacy scriptCode and signature-removal fixtures",
+        "FindAndDelete context tags",
+        "SIGHASH_SINGLE control and hazard-filter digests",
+        "modern relay signed bundle fields"
+      ],
+      "mutable_fields": [
+        "aliasTag",
+        "eventId",
+        "signatureHex",
+        "payloadHash",
+        "stateHash",
+        "statementTag"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "find_and_delete_v30",
+          "label": "v30.0 FindAndDelete",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L228-L236",
+          "why": "Pre-segwit signatures are stripped from scriptCode, giving the fossil source for transcript aliases."
+        },
+        {
+          "id": "checksig_finddelete_v30",
+          "label": "v30.0 CHECKSIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L325-L331",
+          "why": "BASE sigversion removes the checked signature before hashing the script transcript."
+        },
+        {
+          "id": "checkmultisig_finddelete_v30",
+          "label": "v30.0 CHECKMULTISIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1142-L1148",
+          "why": "Multisig signatures are individually stripped from the legacy script transcript."
+        },
+        {
+          "id": "sighash_single_v30",
+          "label": "v30.0 SIGHASH_SINGLE out-of-range digest",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1599-L1605",
+          "why": "The consensus-preserved uint256::ONE return is the fossil source for hazard-filter transcript branches."
+        },
+        {
+          "id": "finddelete_v012_checksig",
+          "label": "v0.12.0 CHECKSIG scriptCode mutation",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v0.12.0/src/script/interpreter.cpp#L831-L835",
+          "why": "Legacy scriptCode mutation shows the historical form of self-reference removal."
+        },
+        {
+          "id": "finddelete_v012_multisig",
+          "label": "v0.12.0 CHECKMULTISIG scriptCode mutation",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v0.12.0/src/script/interpreter.cpp#L887-L891",
+          "why": "Legacy multisig transcript mutation is the historical source for grouped alias traces."
+        },
+        {
+          "id": "sighash_single_v012",
+          "label": "v0.12.0 SIGHASH_SINGLE out-of-range digest",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v0.12.0/src/script/interpreter.cpp#L1080-L1085",
+          "why": "The legacy one-digest path shows the long-lived form of the preserved SIGHASH_SINGLE quirk."
+        }
+      ]
+    },
+    "2": {
+      "name": "Identifier Bifurcation",
+      "bitcoin_core_link_ids": [
+        "nulldummy_v30",
+        "nulldummy_v012",
+        "checkmultisig_finddelete_v30",
+        "finddelete_v012_multisig"
+      ],
+      "bitcoin_code_handles": [
+        "CHECKMULTISIG dummy-element txid-axis fixtures",
+        "public namespace labels",
+        "contract and DLC references",
+        "proof-anchor or rendezvous handles"
+      ],
+      "mutable_fields": [
+        "blobRef",
+        "namespaceTag",
+        "dlcRef",
+        "contractRef",
+        "sessionId",
+        "proofAnchor"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "nulldummy_v30",
+          "label": "v30.0 NULLDUMMY check",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1197-L1202",
+          "why": "The extra CHECKMULTISIG stack element is constrained by policy/flags, but remains a useful identifier-axis fossil."
+        },
+        {
+          "id": "nulldummy_v012",
+          "label": "v0.12.0 NULLDUMMY check",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v0.12.0/src/script/interpreter.cpp#L932-L939",
+          "why": "The older dummy-element handling shows the identifier-bifurcation surface before modern cleanup."
+        },
+        {
+          "id": "checkmultisig_finddelete_v30",
+          "label": "v30.0 CHECKMULTISIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1142-L1148",
+          "why": "Multisig signatures are individually stripped from the legacy script transcript."
+        },
+        {
+          "id": "finddelete_v012_multisig",
+          "label": "v0.12.0 CHECKMULTISIG scriptCode mutation",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v0.12.0/src/script/interpreter.cpp#L887-L891",
+          "why": "Legacy multisig transcript mutation is the historical source for grouped alias traces."
+        }
+      ]
+    },
+    "3": {
+      "name": "Carrier Camouflage",
+      "bitcoin_core_link_ids": [
+        "op_return_v30",
+        "op_return_v012",
+        "datacarrier_policy_v30",
+        "standard_tx_policy_v30"
+      ],
+      "bitcoin_code_handles": [
+        "OP_RETURN or nulldata sidecar payloads",
+        "P2PKH payout fanout and exact-value batches",
+        "input-consolidation clusters",
+        "wallet-batch and sweep carrier hints"
+      ],
+      "mutable_fields": [
+        "relayBlob",
+        "carrierHint",
+        "placementMode",
+        "outputCount",
+        "changeDecoy",
+        "addData payload"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "op_return_v30",
+          "label": "v30.0 OP_RETURN script failure",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L666-L668",
+          "why": "OP_RETURN is an intentional script stop; the demos use this as the fossil source for sidecar separation."
+        },
+        {
+          "id": "op_return_v012",
+          "label": "v0.12.0 OP_RETURN script failure",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v0.12.0/src/script/interpreter.cpp#L433-L435",
+          "why": "The older OP_RETURN behavior anchors the historical carrier-camouflage motif."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        },
+        {
+          "id": "standard_tx_policy_v30",
+          "label": "v30.0 standard transaction policy entry",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L99-L105",
+          "why": "Standardness is the relay envelope around the carrier-camouflage demos."
+        }
+      ]
+    }
+  },
+  "motif_table_rows": [
+    {
+      "motif_id": "1",
+      "motif": "Transcript Multiplicity",
+      "bitcoin_code_surface": "Legacy script/signature digest surfaces: FindAndDelete context split and SIGHASH_SINGLE; modern analogue is a relay transcript package over one committed state",
+      "manipulation_knobs": "aliasTag; eventId; signed relay bundle; payloadHash; stateHash; branch transcript label",
+      "repo_artifacts": "fixtures/manifests/p2sh_findanddelete_core_seam_poc.json; fixtures/manifests/sighash_single_core_seam_poc.json; artifacts/grants/overlay_hook_summary.md; tests/litecoin-bitvm/procedural_transcript_alias_live.js; tests/litecoin-bitvm/procedural_router_dispute_live.js",
+      "demo_bitcoin_defi_architectures": "BitVM branch selector; DLC/oracle outcome package; Lightning PTLC/adaptor transcript package; challengeable TradeLayer procedural-token prelude",
+      "current_status": "Bitcoin fossil is replay-only; LTCTEST TradeLayer relay and fused router-dispute graft are live"
+    },
+    {
+      "motif_id": "2",
+      "motif": "Identifier Bifurcation",
+      "bitcoin_code_surface": "Legacy txid-like public identifier movement with stable sighash core via CHECKMULTISIG dummy variation; modern analogue is namespace movement over one committed state",
+      "manipulation_knobs": "blobRef; namespaceTag; dlcRef; contractRef; session id; proof-anchor label; rendezvous handle",
+      "repo_artifacts": "fixtures/manifests/p2sh_dummygrind_core_seam_poc.json; artifacts/p2sh-dummygrind-core-seam; artifacts/grants/overlay_hook_summary.md; tests/litecoin-bitvm/procedural_identifier_bifurcation_live.js; tests/litecoin-bitvm/procedural_router_dispute_live.js",
+      "demo_bitcoin_defi_architectures": "Lightning rendezvous or channel-factory handle; Taproot Assets proof-anchor or universe handle; Ark round or VTXO claim handle; BitVM session-id search",
+      "current_status": "Bitcoin fossil is replay-only; LTCTEST namespace relay and fused router-dispute graft are live"
+    },
+    {
+      "motif_id": "3",
+      "motif": "Carrier Camouflage",
+      "bitcoin_code_surface": "Transaction topology and publication placement: OP_RETURN sidecars, payout fanout, exact-value batches, consolidation clusters, change decoys",
+      "manipulation_knobs": "OP_RETURN payload shape; addData payload; carrierHint; placementMode; output count; repeated denominations; adjacent sidecar cadence",
+      "repo_artifacts": "scripts/build_overlay_carrier_bench.py; scripts/build_oracle_sidecar_assets.py; fixtures/manifests/payout_2013_carrier_camouflage.json; artifacts/history/payout_2013_carrier_camouflage.md; artifacts/grants/overlay_carrier_bench_2013.md; tests/litecoin-bitvm/procedural_application_mesh_common.js",
+      "demo_bitcoin_defi_architectures": "Oracle sidecars; watchtower beacons; statechain handoff checkpoints; Taproot Assets distribution shadows; BitVM watcher publication cadence; Ark batch cover",
+      "current_status": "Historical Bitcoin carrier cover is real; synthetic Bitcoin sidecar replay still needs funded prevouts; LTCTEST application meshes are live"
+    }
+  ],
+  "targets": [
+    {
+      "target_id": "bitvm_router_dispute",
+      "protocol_family": "BitVM / TradeLayer procedural token",
+      "motif_ids": [
+        1,
+        2,
+        3
+      ],
+      "primary_flow_ids": [
+        "short_epoch_router_dispute"
+      ],
+      "supporting_flow_ids": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation",
+        "plan_a_guardrail"
+      ],
+      "diagram_steps": [
+        "TradeLayer procedural-token commit",
+        "compact/full transcript aliases",
+        "router namespace handle",
+        "BitVM cache/challenge/resolve edges",
+        "ordinary payout-shaped carrier"
+      ],
+      "motif_mechanics": [
+        {
+          "motif": "Transcript Multiplicity",
+          "mechanic": "FindAndDelete and SIGHASH_SINGLE fossils become alternate transcript aliases and hazard-filter branches."
+        },
+        {
+          "motif": "Identifier Bifurcation",
+          "mechanic": "Router branch ids are separated from proof and transcript ids, echoing the CHECKMULTISIG dummy axis."
+        },
+        {
+          "motif": "Carrier Camouflage",
+          "mechanic": "Published state is shaped as payout or sidecar traffic instead of a bespoke dispute announcement."
+        }
+      ],
+      "bitcoin_core_link_ids": [
+        "find_and_delete_v30",
+        "checksig_finddelete_v30",
+        "checkmultisig_finddelete_v30",
+        "sighash_single_v30",
+        "nulldummy_v30",
+        "datacarrier_policy_v30"
+      ],
+      "bitcoin_manipulation": "Use transcript aliases and namespace handles as relay preludes, then route value through BitVM cache, challenge, resolve, and payout edges.",
+      "demo_architecture": "challengeable short-epoch router with one released branch and one blocked branch",
+      "build_status": "live_ltc_testnet_mesh",
+      "motifs": [
+        "Transcript Multiplicity",
+        "Identifier Bifurcation",
+        "Carrier Camouflage"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "find_and_delete_v30",
+          "label": "v30.0 FindAndDelete",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L228-L236",
+          "why": "Pre-segwit signatures are stripped from scriptCode, giving the fossil source for transcript aliases."
+        },
+        {
+          "id": "checksig_finddelete_v30",
+          "label": "v30.0 CHECKSIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L325-L331",
+          "why": "BASE sigversion removes the checked signature before hashing the script transcript."
+        },
+        {
+          "id": "checkmultisig_finddelete_v30",
+          "label": "v30.0 CHECKMULTISIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1142-L1148",
+          "why": "Multisig signatures are individually stripped from the legacy script transcript."
+        },
+        {
+          "id": "sighash_single_v30",
+          "label": "v30.0 SIGHASH_SINGLE out-of-range digest",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1599-L1605",
+          "why": "The consensus-preserved uint256::ONE return is the fossil source for hazard-filter transcript branches."
+        },
+        {
+          "id": "nulldummy_v30",
+          "label": "v30.0 NULLDUMMY check",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1197-L1202",
+          "why": "The extra CHECKMULTISIG stack element is constrained by policy/flags, but remains a useful identifier-axis fossil."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        }
+      ],
+      "primary_entrypoints": [
+        "tests/litecoin-bitvm/procedural_router_dispute_live.js"
+      ],
+      "supporting_entrypoints": [
+        "tests/litecoin-bitvm/procedural_transcript_alias_live.js",
+        "tests/litecoin-bitvm/procedural_identifier_bifurcation_live.js",
+        "tests/litecoin-bitvm/tx30_plan_a_live.js"
+      ],
+      "policy_envelope_classes": [
+        "clean_modern_isomorphism"
+      ],
+      "relay_statuses": [
+        "relay_compatible_live"
+      ]
+    },
+    {
+      "target_id": "dlc_oracle_sidecar",
+      "protocol_family": "DLC / oracle publication",
+      "motif_ids": [
+        1,
+        2,
+        3
+      ],
+      "primary_flow_ids": [
+        "oracle_sidecar_mesh"
+      ],
+      "supporting_flow_ids": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "diagram_steps": [
+        "oracle fact",
+        "compact/full attestations",
+        "sidecar handle namespace",
+        "DLC payout selection",
+        "payout-spray or exact-batch carrier"
+      ],
+      "motif_mechanics": [
+        {
+          "motif": "Transcript Multiplicity",
+          "mechanic": "One oracle fact is packaged as compact and full transcripts over the same state."
+        },
+        {
+          "motif": "Identifier Bifurcation",
+          "mechanic": "Oracle event id, sidecar blob reference, and DLC reference remain distinct handles."
+        },
+        {
+          "motif": "Carrier Camouflage",
+          "mechanic": "Oracle publication is placed inside payout-like or exact-batch traffic."
+        }
+      ],
+      "bitcoin_core_link_ids": [
+        "find_and_delete_v30",
+        "checksig_finddelete_v30",
+        "sighash_single_v30",
+        "op_return_v30",
+        "datacarrier_policy_v30"
+      ],
+      "bitcoin_manipulation": "Bind one oracle sidecar state to compact/full transcript variants, rotate public sidecar handles, and select payout-shaped carrier hints.",
+      "demo_architecture": "oracle sidecar mesh with payout-spray and exact-batch cover hints",
+      "build_status": "live_ltc_testnet_mesh; bitcoin_replay_needs_funded_prevouts",
+      "motifs": [
+        "Transcript Multiplicity",
+        "Identifier Bifurcation",
+        "Carrier Camouflage"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "find_and_delete_v30",
+          "label": "v30.0 FindAndDelete",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L228-L236",
+          "why": "Pre-segwit signatures are stripped from scriptCode, giving the fossil source for transcript aliases."
+        },
+        {
+          "id": "checksig_finddelete_v30",
+          "label": "v30.0 CHECKSIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L325-L331",
+          "why": "BASE sigversion removes the checked signature before hashing the script transcript."
+        },
+        {
+          "id": "sighash_single_v30",
+          "label": "v30.0 SIGHASH_SINGLE out-of-range digest",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1599-L1605",
+          "why": "The consensus-preserved uint256::ONE return is the fossil source for hazard-filter transcript branches."
+        },
+        {
+          "id": "op_return_v30",
+          "label": "v30.0 OP_RETURN script failure",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L666-L668",
+          "why": "OP_RETURN is an intentional script stop; the demos use this as the fossil source for sidecar separation."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        }
+      ],
+      "primary_entrypoints": [
+        "tests/litecoin-bitvm/procedural_oracle_sidecar_mesh_live.js"
+      ],
+      "supporting_entrypoints": [
+        "tests/litecoin-bitvm/procedural_transcript_alias_live.js",
+        "tests/litecoin-bitvm/procedural_identifier_bifurcation_live.js"
+      ],
+      "policy_envelope_classes": [
+        "clean_modern_isomorphism"
+      ],
+      "relay_statuses": [
+        "relay_compatible_live"
+      ]
+    },
+    {
+      "target_id": "lightning_watchtower_beacon",
+      "protocol_family": "Lightning / watchtower",
+      "motif_ids": [
+        1,
+        2,
+        3
+      ],
+      "primary_flow_ids": [
+        "watchtower_beacon_mesh"
+      ],
+      "supporting_flow_ids": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "diagram_steps": [
+        "channel or route state",
+        "LN payment condition proof",
+        "Ark UTXORef challenge ZK receipt",
+        "compact/full fraud proofs",
+        "rotating alert handle",
+        "rebalance or sweep-like carrier",
+        "programmable watchtower response package"
+      ],
+      "motif_mechanics": [
+        {
+          "motif": "Transcript Multiplicity",
+          "mechanic": "Watcher alerts have compact and full proof encodings over one monitored state plus a payment-conditioned ZK receipt bundle."
+        },
+        {
+          "motif": "Identifier Bifurcation",
+          "mechanic": "Alert handles, payment proof ids, and Ark receipt ids rotate separately from channel state and proof payloads."
+        },
+        {
+          "motif": "Carrier Camouflage",
+          "mechanic": "Publication cadence is shaped to resemble rebalances, sweeps, or maintenance batches."
+        }
+      ],
+      "bitcoin_core_link_ids": [
+        "find_and_delete_v30",
+        "checksig_finddelete_v30",
+        "nulldummy_v30",
+        "datacarrier_policy_v30"
+      ],
+      "bitcoin_manipulation": "Bind an opaque Lightning payment proof to an Ark UTXORef challenge receipt, package compact and full fraud-monitor proofs over one state, rotate alert handles, and hide watcher publication cadence inside rebalance or sweep-like traffic.",
+      "demo_architecture": "watchtower beacon mesh plus UTXORef programmable ZK watchtower receipt bundle",
+      "build_status": "live_ltc_testnet_mesh; utxoref_programmable_zk_watchtower_bundle_verified",
+      "program_outputs": [
+        {
+          "label": "Watchtower action",
+          "value": "accept_and_monitor"
+        },
+        {
+          "label": "Challengeable",
+          "value": "false"
+        },
+        {
+          "label": "Ark receipt role",
+          "value": "utxoref_challenge_publication"
+        },
+        {
+          "label": "Ark receipt id",
+          "value": "9e8cf05d6d7d58b10265ff065de8b1339415c7cfaf482e597cfe3e657e4e1f39"
+        }
+      ],
+      "artifact_refs": [
+        {
+          "label": "Programmable Lightning ZK bundle",
+          "path": "C:\\projects\\UTXORef\\UTXO-Ref\\bitvm3\\utxo_referee\\artifacts\\lightning_zk_programs\\programmable_lightning_zk_latest.json",
+          "id": "92ecd80d8f10764833d16df5c0eee90fe381214bd96c9fe2f9d241f90f0f6f6f"
+        }
+      ],
+      "motifs": [
+        "Transcript Multiplicity",
+        "Identifier Bifurcation",
+        "Carrier Camouflage"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "find_and_delete_v30",
+          "label": "v30.0 FindAndDelete",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L228-L236",
+          "why": "Pre-segwit signatures are stripped from scriptCode, giving the fossil source for transcript aliases."
+        },
+        {
+          "id": "checksig_finddelete_v30",
+          "label": "v30.0 CHECKSIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L325-L331",
+          "why": "BASE sigversion removes the checked signature before hashing the script transcript."
+        },
+        {
+          "id": "nulldummy_v30",
+          "label": "v30.0 NULLDUMMY check",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1197-L1202",
+          "why": "The extra CHECKMULTISIG stack element is constrained by policy/flags, but remains a useful identifier-axis fossil."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        }
+      ],
+      "primary_entrypoints": [
+        "tests/litecoin-bitvm/procedural_watchtower_beacon_mesh_live.js"
+      ],
+      "supporting_entrypoints": [
+        "tests/litecoin-bitvm/procedural_transcript_alias_live.js",
+        "tests/litecoin-bitvm/procedural_identifier_bifurcation_live.js"
+      ],
+      "policy_envelope_classes": [
+        "clean_modern_isomorphism"
+      ],
+      "relay_statuses": [
+        "relay_compatible_live"
+      ]
+    },
+    {
+      "target_id": "taproot_assets_anchor",
+      "protocol_family": "Taproot Assets",
+      "motif_ids": [
+        1,
+        2,
+        3
+      ],
+      "primary_flow_ids": [
+        "taproot_assets_anchor_mesh"
+      ],
+      "supporting_flow_ids": [
+        "identifier_namespace_bifurcation",
+        "oracle_sidecar_mesh"
+      ],
+      "diagram_steps": [
+        "asset transition",
+        "compact/full transfer proof",
+        "asset-id or universe-anchor handle",
+        "wallet batch or distribution shadow",
+        "proof-anchor mesh"
+      ],
+      "motif_mechanics": [
+        {
+          "motif": "Transcript Multiplicity",
+          "mechanic": "Asset transfer proof material is split into compact and full transcript packages."
+        },
+        {
+          "motif": "Identifier Bifurcation",
+          "mechanic": "Asset id, universe anchor, and local proof anchor are separate names for one transition."
+        },
+        {
+          "motif": "Carrier Camouflage",
+          "mechanic": "Anchors are published under wallet-batch or distribution-shadow hints."
+        }
+      ],
+      "bitcoin_core_link_ids": [
+        "find_and_delete_v30",
+        "nulldummy_v30",
+        "op_return_v30",
+        "datacarrier_policy_v30"
+      ],
+      "bitcoin_manipulation": "Represent one asset transition through compact/full proof packages, rotate asset-id or universe-anchor handles, and publish under wallet-batch distribution-shadow hints.",
+      "demo_architecture": "proof-anchor mesh for asset ids, universe anchors, and transfer-proof packaging",
+      "build_status": "repo_local_mesh_registered; live_run_ready",
+      "motifs": [
+        "Transcript Multiplicity",
+        "Identifier Bifurcation",
+        "Carrier Camouflage"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "find_and_delete_v30",
+          "label": "v30.0 FindAndDelete",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L228-L236",
+          "why": "Pre-segwit signatures are stripped from scriptCode, giving the fossil source for transcript aliases."
+        },
+        {
+          "id": "nulldummy_v30",
+          "label": "v30.0 NULLDUMMY check",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1197-L1202",
+          "why": "The extra CHECKMULTISIG stack element is constrained by policy/flags, but remains a useful identifier-axis fossil."
+        },
+        {
+          "id": "op_return_v30",
+          "label": "v30.0 OP_RETURN script failure",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L666-L668",
+          "why": "OP_RETURN is an intentional script stop; the demos use this as the fossil source for sidecar separation."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        }
+      ],
+      "primary_entrypoints": [
+        "tests/litecoin-bitvm/procedural_taproot_assets_anchor_mesh_live.js"
+      ],
+      "supporting_entrypoints": [
+        "tests/litecoin-bitvm/procedural_identifier_bifurcation_live.js",
+        "tests/litecoin-bitvm/procedural_oracle_sidecar_mesh_live.js"
+      ],
+      "policy_envelope_classes": [
+        "clean_modern_isomorphism"
+      ],
+      "relay_statuses": [
+        "relay_compatible_live"
+      ]
+    },
+    {
+      "target_id": "ark_batch_liquidity",
+      "protocol_family": "Ark",
+      "motif_ids": [
+        1,
+        2,
+        3
+      ],
+      "primary_flow_ids": [
+        "short_epoch_router",
+        "statechain_handoff_mesh"
+      ],
+      "supporting_flow_ids": [
+        "short_epoch_router_dispute"
+      ],
+      "diagram_steps": [
+        "Ark round proposal",
+        "cooperative/refresh/exit transcripts",
+        "VTXO or claim namespace",
+        "round-batch carrier",
+        "path-witness ZK receipt",
+        "refresh or offboard package"
+      ],
+      "motif_mechanics": [
+        {
+          "motif": "Transcript Multiplicity",
+          "mechanic": "Cooperative round, refresh, and exit paths become alternate transcripts over related liquidity state."
+        },
+        {
+          "motif": "Identifier Bifurcation",
+          "mechanic": "VTXO, claim, round, and proof receipt ids are explicit namespaces rather than one overloaded identifier."
+        },
+        {
+          "motif": "Carrier Camouflage",
+          "mechanic": "Round batches provide natural cover for proof and liquidity metadata."
+        }
+      ],
+      "bitcoin_core_link_ids": [
+        "checkmultisig_finddelete_v30",
+        "nulldummy_v30",
+        "standard_tx_policy_v30",
+        "datacarrier_policy_v30"
+      ],
+      "bitcoin_manipulation": "Map cooperative round, refresh, exit, and offboard packages to alternate transcripts; treat VTXO, claim, ASP obligation, and proof receipt ids as namespace handles; use round batches as carrier cover.",
+      "demo_architecture": "short-epoch router plus statechain-style handoff checkpoint analogue, UTXORef Ark ZK miniscript receipt path, and programmable ASP policy sidecar",
+      "build_status": "live_ltc_testnet_mesh_components; utxoref_ark_zk_miniscript_receipts_verified_5_of_5; programmable_asp_policy_verified",
+      "program_outputs": [
+        {
+          "label": "ASP action",
+          "value": "settle_and_release_asp_fee"
+        },
+        {
+          "label": "Slashable",
+          "value": "false"
+        },
+        {
+          "label": "Settlement role",
+          "value": "cooperative_round"
+        },
+        {
+          "label": "Forfeit role",
+          "value": "asp_forfeit_guard"
+        }
+      ],
+      "artifact_refs": [
+        {
+          "label": "Programmable Lightning ZK bundle",
+          "path": "C:\\projects\\UTXORef\\UTXO-Ref\\bitvm3\\utxo_referee\\artifacts\\lightning_zk_programs\\programmable_lightning_zk_latest.json",
+          "id": "92ecd80d8f10764833d16df5c0eee90fe381214bd96c9fe2f9d241f90f0f6f6f"
+        }
+      ],
+      "motifs": [
+        "Transcript Multiplicity",
+        "Identifier Bifurcation",
+        "Carrier Camouflage"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "checkmultisig_finddelete_v30",
+          "label": "v30.0 CHECKMULTISIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1142-L1148",
+          "why": "Multisig signatures are individually stripped from the legacy script transcript."
+        },
+        {
+          "id": "nulldummy_v30",
+          "label": "v30.0 NULLDUMMY check",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1197-L1202",
+          "why": "The extra CHECKMULTISIG stack element is constrained by policy/flags, but remains a useful identifier-axis fossil."
+        },
+        {
+          "id": "standard_tx_policy_v30",
+          "label": "v30.0 standard transaction policy entry",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L99-L105",
+          "why": "Standardness is the relay envelope around the carrier-camouflage demos."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        }
+      ],
+      "primary_entrypoints": [
+        "tests/litecoin-bitvm/procedural_short_epoch_router_live.js",
+        "tests/litecoin-bitvm/procedural_statechain_handoff_mesh_live.js"
+      ],
+      "supporting_entrypoints": [
+        "tests/litecoin-bitvm/procedural_router_dispute_live.js"
+      ],
+      "policy_envelope_classes": [
+        "clean_modern_isomorphism"
+      ],
+      "relay_statuses": [
+        "relay_compatible_live"
+      ]
+    },
+    {
+      "target_id": "programmable_ark_asp_policy",
+      "protocol_family": "Ark / Lightning ASP",
+      "motif_ids": [
+        1,
+        2,
+        3
+      ],
+      "primary_flow_ids": [
+        "short_epoch_router",
+        "watchtower_beacon_mesh"
+      ],
+      "supporting_flow_ids": [
+        "statechain_handoff_mesh",
+        "short_epoch_router_dispute"
+      ],
+      "diagram_steps": [
+        "LN payment condition proof",
+        "cooperative Ark round ZK receipt",
+        "ASP forfeit-guard ZK receipt",
+        "inbound liquidity, fee, and CLTV checks",
+        "settle fee or slash/force-exit action"
+      ],
+      "motif_mechanics": [
+        {
+          "motif": "Transcript Multiplicity",
+          "mechanic": "The ASP sees a payment-conditioned public receipt while cooperative and forfeit Ark paths remain separate proof transcripts."
+        },
+        {
+          "motif": "Identifier Bifurcation",
+          "mechanic": "Payment proof id, settlement receipt id, forfeit receipt id, route id, and ASP id are distinct handles."
+        },
+        {
+          "motif": "Carrier Camouflage",
+          "mechanic": "ASP obligations are carried as round or maintenance sidecar receipts instead of bespoke LN route disclosures."
+        }
+      ],
+      "bitcoin_core_link_ids": [
+        "checkmultisig_finddelete_v30",
+        "nulldummy_v30",
+        "standard_tx_policy_v30",
+        "datacarrier_policy_v30"
+      ],
+      "bitcoin_manipulation": "Use the Lightning payment receipt as a private trigger, then bind Ark cooperative-round and forfeit-guard ZK receipts to ASP settlement or slash decisions without exposing the route.",
+      "demo_architecture": "programmable Ark ASP policy sidecar for payment-conditioned settle, slash, or force-exit decisions",
+      "build_status": "utxoref_programmable_asp_zk_receipt_bundle_verified",
+      "program_outputs": [
+        {
+          "label": "ASP action",
+          "value": "settle_and_release_asp_fee"
+        },
+        {
+          "label": "Slashable",
+          "value": "false"
+        },
+        {
+          "label": "Settlement role",
+          "value": "cooperative_round"
+        },
+        {
+          "label": "Forfeit role",
+          "value": "asp_forfeit_guard"
+        }
+      ],
+      "artifact_refs": [
+        {
+          "label": "Programmable Lightning ZK bundle",
+          "path": "C:\\projects\\UTXORef\\UTXO-Ref\\bitvm3\\utxo_referee\\artifacts\\lightning_zk_programs\\programmable_lightning_zk_latest.json",
+          "id": "92ecd80d8f10764833d16df5c0eee90fe381214bd96c9fe2f9d241f90f0f6f6f"
+        }
+      ],
+      "motifs": [
+        "Transcript Multiplicity",
+        "Identifier Bifurcation",
+        "Carrier Camouflage"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "checkmultisig_finddelete_v30",
+          "label": "v30.0 CHECKMULTISIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1142-L1148",
+          "why": "Multisig signatures are individually stripped from the legacy script transcript."
+        },
+        {
+          "id": "nulldummy_v30",
+          "label": "v30.0 NULLDUMMY check",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1197-L1202",
+          "why": "The extra CHECKMULTISIG stack element is constrained by policy/flags, but remains a useful identifier-axis fossil."
+        },
+        {
+          "id": "standard_tx_policy_v30",
+          "label": "v30.0 standard transaction policy entry",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L99-L105",
+          "why": "Standardness is the relay envelope around the carrier-camouflage demos."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        }
+      ],
+      "primary_entrypoints": [
+        "tests/litecoin-bitvm/procedural_short_epoch_router_live.js",
+        "tests/litecoin-bitvm/procedural_watchtower_beacon_mesh_live.js"
+      ],
+      "supporting_entrypoints": [
+        "tests/litecoin-bitvm/procedural_statechain_handoff_mesh_live.js",
+        "tests/litecoin-bitvm/procedural_router_dispute_live.js"
+      ],
+      "policy_envelope_classes": [
+        "clean_modern_isomorphism"
+      ],
+      "relay_statuses": [
+        "relay_compatible_live"
+      ]
+    },
+    {
+      "target_id": "shinigami_proof_execution",
+      "protocol_family": "Shinigami-style proof-carrying execution",
+      "motif_ids": [
+        1,
+        2,
+        3
+      ],
+      "primary_flow_ids": [
+        "oracle_sidecar_mesh",
+        "short_epoch_router_dispute"
+      ],
+      "supporting_flow_ids": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "diagram_steps": [
+        "proof-carrying execution",
+        "compact/full verifier transcripts",
+        "public proof handle",
+        "Ark selected-path witness",
+        "ordinary settlement carrier",
+        "BitVM-style challenge or acceptance path"
+      ],
+      "motif_mechanics": [
+        {
+          "motif": "Transcript Multiplicity",
+          "mechanic": "Proof execution has compact and full verification transcripts plus selected Taproot path-witness branches."
+        },
+        {
+          "motif": "Identifier Bifurcation",
+          "mechanic": "Public proof handle, local proof package, and settlement reference remain distinct."
+        },
+        {
+          "motif": "Carrier Camouflage",
+          "mechanic": "Proof material is committed through ordinary settlement or nulldata-shaped envelopes."
+        }
+      ],
+      "bitcoin_core_link_ids": [
+        "find_and_delete_v30",
+        "checksig_finddelete_v30",
+        "sighash_single_v30",
+        "op_return_v30",
+        "datacarrier_policy_v30"
+      ],
+      "bitcoin_manipulation": "Model proof publication as alternate execution transcripts, verifier-visible proof handles, selected-path witness receipts, and ordinary settlement-batch carrier placement.",
+      "demo_architecture": "proof publication scaffold using oracle-sidecar, router-dispute, and UTXORef Ark ZK miniscript receipt meshes",
+      "build_status": "utxoref_ark_shinigami_path_witness_receipts_verified_on_snacksack",
+      "motifs": [
+        "Transcript Multiplicity",
+        "Identifier Bifurcation",
+        "Carrier Camouflage"
+      ],
+      "bitcoin_core_links": [
+        {
+          "id": "find_and_delete_v30",
+          "label": "v30.0 FindAndDelete",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L228-L236",
+          "why": "Pre-segwit signatures are stripped from scriptCode, giving the fossil source for transcript aliases."
+        },
+        {
+          "id": "checksig_finddelete_v30",
+          "label": "v30.0 CHECKSIG FindAndDelete call",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L325-L331",
+          "why": "BASE sigversion removes the checked signature before hashing the script transcript."
+        },
+        {
+          "id": "sighash_single_v30",
+          "label": "v30.0 SIGHASH_SINGLE out-of-range digest",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L1599-L1605",
+          "why": "The consensus-preserved uint256::ONE return is the fossil source for hazard-filter transcript branches."
+        },
+        {
+          "id": "op_return_v30",
+          "label": "v30.0 OP_RETURN script failure",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/script/interpreter.cpp#L666-L668",
+          "why": "OP_RETURN is an intentional script stop; the demos use this as the fossil source for sidecar separation."
+        },
+        {
+          "id": "datacarrier_policy_v30",
+          "label": "v30.0 nulldata datacarrier standardness",
+          "url": "https://github.com/bitcoin/bitcoin/blob/v30.0/src/policy/policy.cpp#L136-L150",
+          "why": "Modern relay policy meters nulldata bytes, so demos keep payloads as policy-shaped sidecars or hashes."
+        }
+      ],
+      "primary_entrypoints": [
+        "tests/litecoin-bitvm/procedural_oracle_sidecar_mesh_live.js",
+        "tests/litecoin-bitvm/procedural_router_dispute_live.js"
+      ],
+      "supporting_entrypoints": [
+        "tests/litecoin-bitvm/procedural_transcript_alias_live.js",
+        "tests/litecoin-bitvm/procedural_identifier_bifurcation_live.js"
+      ],
+      "policy_envelope_classes": [
+        "clean_modern_isomorphism"
+      ],
+      "relay_statuses": [
+        "relay_compatible_live"
+      ]
+    }
+  ],
+  "utxoref_programmable_lightning_zk": {
+    "kind": "programmable_lightning_zk_watchtower_asp_bundle",
+    "source_path": "C:\\projects\\UTXORef\\UTXO-Ref\\bitvm3\\utxo_referee\\artifacts\\lightning_zk_programs\\programmable_lightning_zk_latest.json",
+    "bundle_id": "92ecd80d8f10764833d16df5c0eee90fe381214bd96c9fe2f9d241f90f0f6f6f",
+    "payment_proof_id": "ebb9fc532cd6e5417f272c3e720ba75d94eec9c7864afa8796da170f2e214395",
+    "verified": true,
+    "watchtower": {
+      "program_id": "3dc215f204a23b740383e8de7d172001a6eefa1a03d0107323485d6a1bf196d1",
+      "action": "accept_and_monitor",
+      "receipt_role": "utxoref_challenge_publication",
+      "receipt_id": "9e8cf05d6d7d58b10265ff065de8b1339415c7cfaf482e597cfe3e657e4e1f39",
+      "challengeable": false
+    },
+    "asp": {
+      "policy_id": "2fa422f798da3e6aa60b77040625f684c2cd9a2bcb64fdb501cc41d88d645c0a",
+      "action": "settle_and_release_asp_fee",
+      "settlement_receipt_role": "cooperative_round",
+      "settlement_receipt_id": "9b8f3a7342bf1815c2951aa62b6dc5b03f006160db2c7c8a29d6ca8ddede6eec",
+      "forfeit_receipt_role": "asp_forfeit_guard",
+      "forfeit_receipt_id": "45cf25cad368ae31ce24a9368723a790509b416f0aebe195d8be7afff0477817",
+      "slashable": false
+    },
+    "bitvm_receipt_challenge_walkthrough": {
+      "title": "What BitVM Is Contesting",
+      "plain_english": "The happy-path receipt says an opaque Lightning payment can release an Ark-backed ASP settlement. The challenged branch asks whether that same receipt set proves the ASP actually delivered the signed inbound-liquidity minimum.",
+      "contested_violation": "deliveredInboundMet",
+      "asp_counterclaim": "deliveredInboundSats >= promisedInboundSats; settle and release ASP fee",
+      "challenger_claim": "deliveredInboundSats < promisedInboundSats; slash or force exit",
+      "happy_path_values": {
+        "promisedInboundSats": "75000",
+        "deliveredInboundSats": "75000",
+        "script_check": "75000 75000 OP_GREATERTHANOREQUAL",
+        "result": "true"
+      },
+      "negative_branch_example": {
+        "promisedInboundSats": "75000",
+        "deliveredInboundSats": "10000",
+        "script_check": "10000 75000 OP_GREATERTHANOREQUAL",
+        "result": "false",
+        "slash_or_exit": "slash ASP bond, force exit, or reroute liquidity demand"
+      },
+      "bitvm_verifier_model": [
+        "Commit the ZK verifier program id and public inputs: payment proof id, Ark receipt ids, promised sats, delivered sats, fee ceiling, CLTV ceiling.",
+        "If the ASP disputes the result, bisect the committed verifier trace until one step is opened.",
+        "The opened step is the delivery comparator, not the Lightning route: deliveredInboundSats >= promisedInboundSats.",
+        "If that step evaluates false, the challenge path authorizes slash or force-exit handling."
+      ],
+      "receipts": [
+        {
+          "stage": "payment-condition-receipt",
+          "label": "Opaque LN payment fact",
+          "receipt_id": "ebb9fc532cd6e5417f272c3e720ba75d94eec9c7864afa8796da170f2e214395",
+          "proves": "Payment hash, amount, invoice hash, and preimage-witness commitment are bound without exposing the route."
+        },
+        {
+          "stage": "watchtower-utxoref-receipt",
+          "label": "Watchtower Ark/UTXORef receipt",
+          "receipt_id": "9e8cf05d6d7d58b10265ff065de8b1339415c7cfaf482e597cfe3e657e4e1f39",
+          "proves": "The watched UTXORef transition is tied to the payment-conditioned program state."
+        },
+        {
+          "stage": "asp-settlement-receipt",
+          "label": "Cooperative Ark round receipt",
+          "receipt_id": "9b8f3a7342bf1815c2951aa62b6dc5b03f006160db2c7c8a29d6ca8ddede6eec",
+          "proves": "The ASP has a normal settlement path if delivery, fee, CLTV, and exit checks all pass."
+        },
+        {
+          "stage": "asp-forfeit-receipt",
+          "label": "ASP forfeit guard receipt",
+          "receipt_id": "45cf25cad368ae31ce24a9368723a790509b416f0aebe195d8be7afff0477817",
+          "proves": "A slash or force-exit path exists if the ASP cannot satisfy the opened verifier step."
+        },
+        {
+          "stage": "watchtower-challenge-id",
+          "label": "Watchtower challenge artifact",
+          "receipt_id": "d9961287679a890db8fdac7340b7350c1886f4fdbbc1f8b90c610863c1deb701",
+          "proves": "Mismatched payment-conditioned UTXORef transitions become challengeable evidence."
+        },
+        {
+          "stage": "asp-challenge-id",
+          "label": "ASP policy challenge artifact",
+          "receipt_id": "0ffbf2d26384c99eecee140e1729de4d312dd10b8237a04ea8566f6fdc3c66dc",
+          "proves": "Failed ASP policy checks become slashable or force-exit evidence."
+        }
+      ],
+      "caveat": "Bitcoin Script does not natively verify a full modern ZK proof here. The BitVM shape is an optimistic verifier-trace dispute: receipts commit to the proof result, and fraud opens the contested verifier step."
+    }
+  },
+  "code_surface_rule": "Bitcoin fossils are used as motif sources. Live demos manipulate modern relay blobs, namespace handles, procedural-token state, and carrier hints rather than attempting to rebroadcast policy-rejected legacy forms."
+}
