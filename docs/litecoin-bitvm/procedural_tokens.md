@@ -109,6 +109,25 @@ same ideas back onto Jurassic Bitcoin-era artifacts.
   - prototypes how proposal `1`, `2`, and `3` can be used by DLC/oracle publication
     systems without assuming those systems are BitVM-first
 
+`taproot_assets_anchor_mesh`
+
+- Live entrypoint: `tests/litecoin-bitvm/procedural_taproot_assets_anchor_mesh_live.js`
+- Token behavior:
+  - issue a procedural token and bind it to a Taproot Assets proof-anchor style
+    contract ref
+  - publish compact and full proof transcripts for the same semantic asset
+    transition
+  - rotate public asset-id and universe-anchor handles while the committed
+    proof state stays fixed
+  - attach ordinary wallet-batch carrier hints such as `distribution_shadow`
+    and `wallet_batch_anchor`
+- Settlement modes exercised:
+  - none directly; this is an application-mesh proof
+- Why it matters:
+  - prototypes proof-anchor search, universe-handle rotation, and distribution
+    shadowing for Taproot Assets-style systems without requiring the repo to
+    implement Taproot Assets itself
+
 `watchtower_beacon_mesh`
 
 - Live entrypoint: `tests/litecoin-bitvm/procedural_watchtower_beacon_mesh_live.js`
@@ -144,6 +163,8 @@ BitVM-exclusive.
 
 - `oracle_sidecar_mesh` shows how the same motifs can describe DLC/oracle
   publication.
+- `taproot_assets_anchor_mesh` shows how the same motifs can describe Taproot
+  Assets proof anchors, universe handles, and distribution shadows.
 - `watchtower_beacon_mesh` shows how the same motifs can describe watcher and
   fraud-monitor alert systems.
 - `statechain_handoff_mesh` shows how the same motifs can describe checkpoint
@@ -175,6 +196,15 @@ The repo-level crosswalk for which surfaces are relay-only, settlement-live,
 dispute-live, or still replay-only fossils is now in
 `artifacts/grants/policy_envelope_mapping.md`.
 
+The Bitcoin DeFi architecture map is generated with:
+
+```powershell
+python .\scripts\build_bitcoin_defi_graft_map.py
+```
+
+It writes `artifacts/grants/bitcoin_defi_graft_map.{json,md}` and consumes the
+clean CSV motif table at `artifacts/grants/bitcoin_defi_motif_table.csv`.
+
 ## Run
 
 If LTCTEST RPC is not already up:
@@ -202,6 +232,7 @@ powershell -File .\scripts\litecoin-bitvm\run_procedural_suite.ps1 -Scenario tra
 powershell -File .\scripts\litecoin-bitvm\run_procedural_suite.ps1 -Scenario identifier
 powershell -File .\scripts\litecoin-bitvm\run_procedural_suite.ps1 -Scenario hybrid
 powershell -File .\scripts\litecoin-bitvm\run_procedural_suite.ps1 -Scenario oracle
+powershell -File .\scripts\litecoin-bitvm\run_procedural_suite.ps1 -Scenario taprootassets
 powershell -File .\scripts\litecoin-bitvm\run_procedural_suite.ps1 -Scenario watchtower
 powershell -File .\scripts\litecoin-bitvm\run_procedural_suite.ps1 -Scenario statechain
 ```

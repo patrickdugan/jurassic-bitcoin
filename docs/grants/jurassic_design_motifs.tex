@@ -231,6 +231,39 @@ The current live prototype layer is deliberately framed as \emph{BitVM-style}
 application work, not as a claim that the legacy Bitcoin quirks directly
 implement BitVM \cite{linus2023bitvm}. The relevant applications are as follows.
 
+\subsection{Motif Wrapper Versus Vanilla BitVM}
+
+Vanilla BitVM is best understood here as a dispute-oriented execution pattern:
+participants commit to a computation or state transition, and if one party
+publishes an incorrect claim, the protocol exposes that claim through a
+challenge path. The Jurassic Bitcoin grafts do not change that security model
+and do not require changing Bitcoin Core. Instead, they add a deterministic
+application wrapper around BitVM-style flows.
+
+The wrapper has three jobs. First, transcript multiplicity lets one committed
+state carry compact and full transcript packages, so a dispute graph can choose
+between short relay forms, full evidence forms, or challenge-specific witness
+narratives. Second, identifier bifurcation separates public handles from the
+semantic core: an oracle event, Taproot Assets proof anchor, watchtower alert,
+router branch, or proof package may all point back to the same committed state
+without overloading one identifier. Third, carrier camouflage treats publication
+as a placement problem. Instead of making every proof or sidecar look like a
+special protocol announcement, the prototype attaches carrier hints such as
+payout batches, rebalances, sweeps, wallet batches, or distribution shadows.
+
+The resulting architecture is therefore not ``better BitVM consensus.'' It is a
+product-facing packaging layer for BitVM-adjacent systems. A vanilla BitVM flow
+provides the cache, challenge, resolution, and payout edges. The Jurassic wrapper
+adds transcript aliases, namespace handles, carrier hints, procedural-token
+state, and observer artifacts that make those edges easier to route, index,
+audit, and integrate with TradeLayer, DLC sidecars, Lightning watchtowers,
+Taproot Assets anchors, Ark-style batches, or proof-carrying execution systems.
+The tradeoff is that the application layer now has more explicit watcher,
+indexing, naming, and artifact-management requirements. Those requirements are
+acceptable for the prototypes because they are deterministic and visible in the
+flow graph, but they should not be confused with a simplification of BitVM's
+underlying dispute assumptions.
+
 \subsection{Transcript Selector and Branch Packaging}
 
 Transcript multiplicity suggests a search bench for alternative dispute

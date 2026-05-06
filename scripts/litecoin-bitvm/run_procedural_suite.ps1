@@ -3,7 +3,7 @@ param(
     [string]$ArtifactDate = (Get-Date -Format "yyyy-MM-dd"),
     [string]$RpcWallet = "wallet.dat",
     [string]$AdminAddress = "",
-    [ValidateSet("all", "receipt", "router", "transcript", "identifier", "hybrid", "oracle", "watchtower", "statechain")]
+    [ValidateSet("all", "receipt", "router", "transcript", "identifier", "hybrid", "oracle", "taprootassets", "watchtower", "statechain")]
     [string]$Scenario = "all"
 )
 
@@ -104,6 +104,7 @@ function Get-FundingTargets {
         "identifier" { return @{ admin = 4; oracle = 6 } }
         "hybrid" { return @{ admin = 4; oracle = 10 } }
         "oracle" { return @{ admin = 4; oracle = 6 } }
+        "taprootassets" { return @{ admin = 4; oracle = 6 } }
         "watchtower" { return @{ admin = 4; oracle = 6 } }
         "statechain" { return @{ admin = 4; oracle = 6 } }
         default { return @{ admin = 10; oracle = 20 } }
@@ -491,9 +492,10 @@ function Write-RunSummary {
             )
         }
 
-        if ($run.scenario -eq "oracle" -or $run.scenario -eq "watchtower" -or $run.scenario -eq "statechain") {
+        if ($run.scenario -eq "oracle" -or $run.scenario -eq "taprootassets" -or $run.scenario -eq "watchtower" -or $run.scenario -eq "statechain") {
             $title = switch ($run.scenario) {
                 "oracle" { "Oracle Sidecar Mesh" }
+                "taprootassets" { "Taproot Assets Anchor Mesh" }
                 "watchtower" { "Watchtower Beacon Mesh" }
                 default { "Statechain Handoff Mesh" }
             }
@@ -606,6 +608,15 @@ if ($Scenario -eq "all" -or $Scenario -eq "oracle") {
     }
     $oraclePayload = Get-JsonTailObject -LogPath $oracleLog
     $runs += Get-ApplicationMeshSummary -ScenarioName "oracle" -LogPath $oracleLog -Payload $oraclePayload
+}
+
+if ($Scenario -eq "all" -or $Scenario -eq "taprootassets") {
+    $taprootAssetsLog = Invoke-LoggedNodeRun -Name "procedural-taproot-assets-anchor-mesh" -WorkingDir $repoRoot -Arguments @(".\tests\litecoin-bitvm\procedural_taproot_assets_anchor_mesh_live.js") -ExtraEnv @{
+        TL_ALICE_ADDRESS = $participants.alice
+        TL_BOB_ADDRESS = $participants.bob
+    }
+    $taprootAssetsPayload = Get-JsonTailObject -LogPath $taprootAssetsLog
+    $runs += Get-ApplicationMeshSummary -ScenarioName "taprootassets" -LogPath $taprootAssetsLog -Payload $taprootAssetsPayload
 }
 
 if ($Scenario -eq "all" -or $Scenario -eq "watchtower") {

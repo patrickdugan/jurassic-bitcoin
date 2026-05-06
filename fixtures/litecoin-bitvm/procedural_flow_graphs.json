@@ -135,6 +135,33 @@
       "notes": "Prototypes a DLC/oracle publication surface where one semantic oracle sidecar state is re-expressed through transcript aliases, namespace rotation, and ordinary payout-shaped carrier hints."
     },
     {
+      "id": "taproot_assets_anchor_mesh",
+      "entrypoint": "tests/litecoin-bitvm/procedural_taproot_assets_anchor_mesh_live.js",
+      "procedural_token_role": "taproot_assets_proof_anchor",
+      "proposal_refs": [
+        1,
+        2,
+        3
+      ],
+      "policy_envelope_class": "clean_modern_isomorphism",
+      "relay_compatibility": "relay_compatible_live",
+      "execution_role": "application_mesh_live",
+      "application_domain": "taproot_assets",
+      "dlc_path": [
+        "OPEN"
+      ],
+      "settlement_modes": [],
+      "relay_preludes": [
+        "transcript_alias_relay",
+        "identifier_namespace_bifurcation"
+      ],
+      "carrier_profiles": [
+        "distribution_shadow",
+        "wallet_batch_anchor"
+      ],
+      "notes": "Prototypes a Taproot Assets proof-anchor surface where one semantic asset transition can use compact/full proof transcripts, rotated asset or universe handles, and ordinary wallet-batch carrier hints."
+    },
+    {
       "id": "watchtower_beacon_mesh",
       "entrypoint": "tests/litecoin-bitvm/procedural_watchtower_beacon_mesh_live.js",
       "procedural_token_role": "watchtower_beacon",

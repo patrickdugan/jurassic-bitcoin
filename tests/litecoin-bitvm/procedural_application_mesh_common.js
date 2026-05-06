@@ -58,6 +58,47 @@ const APPLICATIONS = {
       };
     }
   },
+  taproot_assets_anchor: {
+    appId: "taproot_assets_anchor_mesh",
+    mode: "taproot_assets_anchor_mesh",
+    role: "taproot_assets_proof_anchor",
+    propertyPrefix: "TAM",
+    oraclePrefix: "TAO",
+    templatePrefix: "tpl-taproot-assets",
+    contractPrefix: "ct-taproot-assets",
+    requiresBob: true,
+    aliasTags: ["proof_compact", "proof_full"],
+    namespaceRefs: ["asset-id-handle", "universe-anchor-handle"],
+    carrierHints: [
+      { carrierLabel: "distribution_shadow", placementMode: "ordinary_asset_distribution", ordinaryCover: "batch distribution shadow" },
+      { carrierLabel: "wallet_batch_anchor", placementMode: "ordinary_wallet_batch", ordinaryCover: "wallet batch anchor" }
+    ],
+    payloadDoc({ propertyId, holderAddress, secondaryAddress, amount, templateId, contractRef }) {
+      return {
+        stateRoot: sha256Hex(
+          JSON.stringify({
+            mode: "taproot_assets_anchor_mesh",
+            propertyId,
+            assetIssuer: holderAddress,
+            proofRecipient: secondaryAddress,
+            amount,
+            templateId,
+            contractRef
+          })
+        ),
+        transitions: [],
+        propertyId,
+        holderAddress,
+        secondaryAddress,
+        amount,
+        templateId,
+        contractRef,
+        role: "taproot_assets_proof_anchor",
+        proofSurfaces: ["asset_id", "universe_anchor", "transfer_proof"],
+        carrierProfiles: ["distribution_shadow", "wallet_batch_anchor"]
+      };
+    }
+  },
   watchtower_beacon: {
     appId: "watchtower_beacon_mesh",
     mode: "watchtower_beacon_mesh",
