@@ -16,7 +16,7 @@ What is concrete in the local tree:
 - The repo has a small Vite dashboard at `tools/quirk-museum-vite` that renders the Bitcoin DeFi graft map from `artifacts/grants/bitcoin_defi_graft_map.json`. This is a working local/static dashboard surface, not a full product.
 - The repo has Litecoin/TradeLayer procedural-token live test harnesses under `tests/litecoin-bitvm` and PowerShell runners under `scripts/litecoin-bitvm`. Artifacts under `artifacts/litecoin-bitvm` record txids and outcomes for cache/challenge/resolve/payout flows and watchtower-style challenge submissions.
 - The grant/paper material in `docs/grants` and `docs/bitcoin_defi_graft_diagrams.md` is substantial. It frames three recurring motifs: transcript multiplicity, identifier bifurcation, and carrier camouflage. Some of that is design language; the report below separates it from runnable code.
-- `C:\projects\TLZK` is a standalone local TradeLayer ZK proof-kernel prototype. It has scripts, tests, artifacts, docs, web-worker templates, checkpoint bundles, and a Raito-shaped OP_RETURN inclusion path. I configured `origin` as `https://github.com/patrickdugan/TLZK.git`, but GitHub currently returns `Repository not found`; the repo still needs to be created on GitHub before the local `master` head `c3e7ce0451fae860e6601a3c3b61c88af196de74` can be pushed.
+- `C:\projects\TLZK\zkTL` is the canonical TradeLayer ZK proof-kernel repository now. It has scripts, tests, artifacts, docs, web-worker templates, checkpoint bundles, and a Raito-shaped OP_RETURN inclusion path. The public repo is `https://github.com/patrickdugan/zkTL.git`, with local `main` at `46a166d5e751ea95fbca91883549439181adaa76`.
 - `C:\projects\UTXORef\UTXO-Ref` contains a broad prototype tree: BitVM3 referee code, deterministic tests/demos, Lightning liquidity sidecar, wallet demo dashboard, stress dashboard, UTXORef/Ark/BitVM mechanism notes, and Lightning/TradeLayer integration sketches. Several surfaces are explicitly fixture/mock/reviewer demos, not live production systems.
 - `C:\projects\TLWallet\tradelayer-wallet` contains browser wallet P2P/WebRTC code, including `WebRTCTransport`, signaling, data-channel muxing, tape replay, and tape verification. This supports the high-level WebRTC access-layer claim, but I am treating it as an integration track rather than a completed decentralized RPC network.
 - `C:\projects\tradelayer.js` contains tx34 ZK batch movement docs and scripts, plus TradeLayer protocol files and tests. This supports the TradeLayer integration track and ZK envelope direction.
@@ -30,7 +30,7 @@ Live public GitHub check:
 - TL-Web: `https://github.com/patrickdugan/TL-Web`, public heads include `main` at `1b0169a6f65af29b3a6cacaf749302549124ca71`, `testnetwallet` at `c4cc48f6604e001d89d84363c3e88a7cdaf02afb`, and `recover-friday-wallet-main` at `72c92ded41e19486264dfbb4d0af5c79dab0df73`.
 - tl-relayer: `https://github.com/tradelayer-wallet/tl-relayer`, `main`, public head `4af6cf4c3de82d44fda078c4bfa19a79deb878ec`.
 - tl-collator: `https://github.com/tradelayer-wallet/tl-collator`, `master`, public head `60d3d2aa6bfbd765ea7abe13199f07714697caa4`.
-- TLZK / zkTL: local remote is configured as `https://github.com/patrickdugan/TLZK.git`, but GitHub returns `Repository not found`; publish is blocked on creating that public repo.
+- TLZK / zkTL: public repo exists at `https://github.com/patrickdugan/zkTL.git`; the canonical checkout is the nested `C:\projects\TLZK\zkTL` repository.
 
 What I did not verify:
 
@@ -86,8 +86,8 @@ OP_RETURN-style commitments are useful because they make this pattern concrete. 
   - `tools/quirk-museum-vite` renders the Bitcoin DeFi graft map and Core source anchors.
   - It consumes `artifacts/grants/bitcoin_defi_graft_map.json` and has a built-in fallback.
 - TLZK proof-kernel prototype:
-  - `C:\projects\TLZK` has scripts/tests for TradeLayer state kernels, Raito-shaped OP_RETURN inclusion, checkpoint bundles, web wallet sync bundles, and ZK consensus envelopes.
-  - This is local-only in the current audit; the intended public remote is configured, but the GitHub repo does not exist yet.
+- `C:\projects\TLZK\zkTL` has scripts/tests for TradeLayer state kernels, Raito-shaped OP_RETURN inclusion, checkpoint bundles, web wallet sync bundles, and ZK consensus envelopes.
+  - This is the publishable repository; `C:\projects\TLZK` is now just a wrapper with a pointer README.
   - It includes browser worker templates and WASM verifier scaffolding.
 - TradeLayer tx34 ZK batch movement path:
   - `C:\projects\tradelayer.js\docs\TX34_ZK_BATCH_MOVEMENT_DRAFT.md`;
@@ -201,8 +201,8 @@ I built and connected pieces of a zk/verifier observability pipeline, plus dashb
 
 What exists:
 
-- `C:\projects\TLZK` has a standalone TradeLayer proof-kernel prototype.
-- The TLZK/zkTL checkout is local-only in this audit; it has an intended remote, but it should not be described as a live public repo until `patrickdugan/TLZK` is created and reachable.
+- `C:\projects\TLZK\zkTL` has a standalone TradeLayer proof-kernel prototype.
+- The TLZK/zkTL checkout is now the live public repo.
 - It models Raito-shaped Bitcoin OP_RETURN inclusion receipts.
 - It computes canonical TradeLayer state roots and typed transition kernels for many TradeLayer tx types.
 - It has tests, scripts, artifacts, checkpoint announcements, web wallet sync bundles, and browser worker templates.
@@ -277,7 +277,7 @@ Public repo anchors:
 - TL-Web: `https://github.com/patrickdugan/TL-Web` (`main`, `1b0169a6f65af29b3a6cacaf749302549124ca71`; `testnetwallet`, `c4cc48f6604e001d89d84363c3e88a7cdaf02afb`).
 - tl-relayer: `https://github.com/tradelayer-wallet/tl-relayer` (`main`, `4af6cf4c3de82d44fda078c4bfa19a79deb878ec`).
 - tl-collator: `https://github.com/tradelayer-wallet/tl-collator` (`master`, `60d3d2aa6bfbd765ea7abe13199f07714697caa4`).
-- TLZK / zkTL: intended remote is `https://github.com/patrickdugan/TLZK.git`, but GitHub returns `Repository not found`; cite local files only until the repo is created and pushed.
+- TLZK / zkTL: public repo is `https://github.com/patrickdugan/zkTL.git` (`main`, `46a166d5e751ea95fbca91883549439181adaa76`).
 
 High-signal files and artifacts to cite or attach:
 
@@ -292,13 +292,12 @@ High-signal files and artifacts to cite or attach:
   - `artifacts/litecoin-bitvm/2026-04-17/run-summary.md`
   - `tools/quirk-museum-vite/README.md`
 - TLZK:
-  - Local-only evidence in this audit; create `patrickdugan/TLZK` on GitHub and push before citing as a public repo.
-  - `C:\projects\TLZK\README.md`
-  - `C:\projects\TLZK\package.json`
-  - `C:\projects\TLZK\docs\ZK_CONSENSUS_ENVELOPE.md`
-  - `C:\projects\TLZK\docs\WEB_WALLET_SYNC.md`
-  - `C:\projects\TLZK\artifacts\zk_consensus\zk_batch_movement_latest.json`
-  - `C:\projects\TLZK\artifacts\web_wallet_sync\web_wallet_sync_bundle_latest.json`
+  - `C:\projects\TLZK\zkTL\README.md`
+  - `C:\projects\TLZK\zkTL\package.json`
+  - `C:\projects\TLZK\zkTL\docs\ZK_CONSENSUS_ENVELOPE.md`
+  - `C:\projects\TLZK\zkTL\docs\WEB_WALLET_SYNC.md`
+  - `C:\projects\TLZK\zkTL\artifacts\zk_consensus\zk_batch_movement_latest.json`
+  - `C:\projects\TLZK\zkTL\artifacts\web_wallet_sync\web_wallet_sync_bundle_latest.json`
 - UTXORef:
   - `C:\projects\UTXORef\UTXO-Ref\SPIRAL_GRANT_README.md`
   - `C:\projects\UTXORef\UTXO-Ref\DEMO_PACKAGE.md`
@@ -401,7 +400,7 @@ That is the stack I want to keep building: Bitcoin as durable reference layer; e
 
 ## Remaining evidence to add before sending
 
-- Create the missing public GitHub repo `patrickdugan/TLZK` and push local `master` (`c3e7ce0451fae860e6601a3c3b61c88af196de74`).
+- Document the new `zkTL` repo location in any external materials that still point at the old `C:\projects\TLZK` root.
 - Exact Q2 commit ranges by repo, if Conor wants milestone-style attribution rather than current public heads.
 - Fresh screenshots:
   - Jurassic/Vite graft dashboard;
