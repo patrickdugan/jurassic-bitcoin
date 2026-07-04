@@ -16,7 +16,7 @@ What is concrete in the local tree:
 - The repo has a small Vite dashboard at `tools/quirk-museum-vite` that renders the Bitcoin DeFi graft map from `artifacts/grants/bitcoin_defi_graft_map.json`. This is a working local/static dashboard surface, not a full product.
 - The repo has Litecoin/TradeLayer procedural-token live test harnesses under `tests/litecoin-bitvm` and PowerShell runners under `scripts/litecoin-bitvm`. Artifacts under `artifacts/litecoin-bitvm` record txids and outcomes for cache/challenge/resolve/payout flows and watchtower-style challenge submissions.
 - The grant/paper material in `docs/grants` and `docs/bitcoin_defi_graft_diagrams.md` is substantial. It frames three recurring motifs: transcript multiplicity, identifier bifurcation, and carrier camouflage. Some of that is design language; the report below separates it from runnable code.
-- `C:\projects\TLZK` is a standalone local TradeLayer ZK proof-kernel prototype. It has scripts, tests, artifacts, docs, web-worker templates, checkpoint bundles, and a Raito-shaped OP_RETURN inclusion path. It does not have a configured git remote in the local checkout, and I did not find a public GitHub repo for it; treat it as unpublished/local-only until that changes.
+- `C:\projects\TLZK` is a standalone local TradeLayer ZK proof-kernel prototype. It has scripts, tests, artifacts, docs, web-worker templates, checkpoint bundles, and a Raito-shaped OP_RETURN inclusion path. I configured `origin` as `https://github.com/patrickdugan/TLZK.git`, but GitHub currently returns `Repository not found`; the repo still needs to be created on GitHub before the local `master` head `c3e7ce0451fae860e6601a3c3b61c88af196de74` can be pushed.
 - `C:\projects\UTXORef\UTXO-Ref` contains a broad prototype tree: BitVM3 referee code, deterministic tests/demos, Lightning liquidity sidecar, wallet demo dashboard, stress dashboard, UTXORef/Ark/BitVM mechanism notes, and Lightning/TradeLayer integration sketches. Several surfaces are explicitly fixture/mock/reviewer demos, not live production systems.
 - `C:\projects\TLWallet\tradelayer-wallet` contains browser wallet P2P/WebRTC code, including `WebRTCTransport`, signaling, data-channel muxing, tape replay, and tape verification. This supports the high-level WebRTC access-layer claim, but I am treating it as an integration track rather than a completed decentralized RPC network.
 - `C:\projects\tradelayer.js` contains tx34 ZK batch movement docs and scripts, plus TradeLayer protocol files and tests. This supports the TradeLayer integration track and ZK envelope direction.
@@ -24,13 +24,13 @@ What is concrete in the local tree:
 Live public GitHub check:
 
 - Jurassic Bitcoin: `https://github.com/patrickdugan/jurassic-bitcoin`, `master`, public head `2226da28143496de70106501cfea58ee99f05cb0`.
-- UTXORef: `https://github.com/patrickdugan/UTXO-Ref`, `tradelayer-ln-dlc-demo`, public head `201ad23c1219901dced8a0ded628dd9e25918a54`. Local checkout is ahead at `b713a8fffe42`, so do not cite local-ahead artifacts as public without pushing them from that repo.
+- UTXORef: `https://github.com/patrickdugan/UTXO-Ref`, `tradelayer-ln-dlc-demo`, public head `5e98acde232c416538ce79be46c9183bb59229a5`.
 - TradeLayer.js: `https://github.com/patrickdugan/tradelayer.js`, `zk-tx34-wasm-verifier`, public head `7869620f39b2f2b9f6a6773e950c2297de238ff6`.
-- TradeLayer wallet: `https://github.com/tradelayer-wallet/tradelayer-wallet` is public, but the local `feature/webrtc-p2p-mode` branch at `8f4625eb34fb` is not published as a public branch. Public branches exist, but this specific WebRTC branch should be treated as local/unpublished until pushed.
+- TradeLayer wallet: `https://github.com/tradelayer-wallet/tradelayer-wallet`, `feature/webrtc-p2p-mode`, public head `44bdc87ee8d2a2ceb2e24efdcde0814cccd027f1`.
 - TL-Web: `https://github.com/patrickdugan/TL-Web`, public heads include `main` at `1b0169a6f65af29b3a6cacaf749302549124ca71`, `testnetwallet` at `c4cc48f6604e001d89d84363c3e88a7cdaf02afb`, and `recover-friday-wallet-main` at `72c92ded41e19486264dfbb4d0af5c79dab0df73`.
 - tl-relayer: `https://github.com/tradelayer-wallet/tl-relayer`, `main`, public head `4af6cf4c3de82d44fda078c4bfa19a79deb878ec`.
 - tl-collator: `https://github.com/tradelayer-wallet/tl-collator`, `master`, public head `60d3d2aa6bfbd765ea7abe13199f07714697caa4`.
-- TLZK / zkTL: no public GitHub repo verified from the local checkout; no remote is configured at `C:\projects\TLZK`.
+- TLZK / zkTL: local remote is configured as `https://github.com/patrickdugan/TLZK.git`, but GitHub returns `Repository not found`; publish is blocked on creating that public repo.
 
 What I did not verify:
 
@@ -87,7 +87,7 @@ OP_RETURN-style commitments are useful because they make this pattern concrete. 
   - It consumes `artifacts/grants/bitcoin_defi_graft_map.json` and has a built-in fallback.
 - TLZK proof-kernel prototype:
   - `C:\projects\TLZK` has scripts/tests for TradeLayer state kernels, Raito-shaped OP_RETURN inclusion, checkpoint bundles, web wallet sync bundles, and ZK consensus envelopes.
-  - This is local-only in the current audit; no public GitHub remote was verified.
+  - This is local-only in the current audit; the intended public remote is configured, but the GitHub repo does not exist yet.
   - It includes browser worker templates and WASM verifier scaffolding.
 - TradeLayer tx34 ZK batch movement path:
   - `C:\projects\tradelayer.js\docs\TX34_ZK_BATCH_MOVEMENT_DRAFT.md`;
@@ -95,7 +95,7 @@ OP_RETURN-style commitments are useful because they make this pattern concrete. 
 - Wallet/WebRTC P2P transport:
   - `C:\projects\TLWallet\tradelayer-wallet\packages\wallet-fe\src\p2p\webrtc\WebRTCTransport.ts`;
   - signaling, data-channel muxing, tape replay, and tape verification files.
-  - The wallet repo is public, but the local WebRTC branch is not published as a public head.
+  - The wallet repo and WebRTC branch are now public at `feature/webrtc-p2p-mode`.
 
 ### Working prototypes / local demos
 
@@ -202,7 +202,7 @@ I built and connected pieces of a zk/verifier observability pipeline, plus dashb
 What exists:
 
 - `C:\projects\TLZK` has a standalone TradeLayer proof-kernel prototype.
-- The TLZK/zkTL checkout is local-only in this audit; it should not be described as a live public repo until a remote exists and is reachable.
+- The TLZK/zkTL checkout is local-only in this audit; it has an intended remote, but it should not be described as a live public repo until `patrickdugan/TLZK` is created and reachable.
 - It models Raito-shaped Bitcoin OP_RETURN inclusion receipts.
 - It computes canonical TradeLayer state roots and typed transition kernels for many TradeLayer tx types.
 - It has tests, scripts, artifacts, checkpoint announcements, web wallet sync bundles, and browser worker templates.
@@ -271,13 +271,13 @@ Q2 status: working local/testnet paths and strong integration sketches. Producti
 Public repo anchors:
 
 - Jurassic Bitcoin: `https://github.com/patrickdugan/jurassic-bitcoin` (`master`, `2226da28143496de70106501cfea58ee99f05cb0`).
-- UTXORef: `https://github.com/patrickdugan/UTXO-Ref` (`tradelayer-ln-dlc-demo`, public head `201ad23c1219901dced8a0ded628dd9e25918a54`; local checkout is ahead at `b713a8fffe42`).
+- UTXORef: `https://github.com/patrickdugan/UTXO-Ref` (`tradelayer-ln-dlc-demo`, public head `5e98acde232c416538ce79be46c9183bb59229a5`).
 - TradeLayer.js: `https://github.com/patrickdugan/tradelayer.js` (`zk-tx34-wasm-verifier`, `7869620f39b2f2b9f6a6773e950c2297de238ff6`).
-- TradeLayer wallet: `https://github.com/tradelayer-wallet/tradelayer-wallet` is public; the local WebRTC branch `feature/webrtc-p2p-mode` at `8f4625eb34fb` is not currently a public remote branch.
+- TradeLayer wallet: `https://github.com/tradelayer-wallet/tradelayer-wallet` (`feature/webrtc-p2p-mode`, public head `44bdc87ee8d2a2ceb2e24efdcde0814cccd027f1`).
 - TL-Web: `https://github.com/patrickdugan/TL-Web` (`main`, `1b0169a6f65af29b3a6cacaf749302549124ca71`; `testnetwallet`, `c4cc48f6604e001d89d84363c3e88a7cdaf02afb`).
 - tl-relayer: `https://github.com/tradelayer-wallet/tl-relayer` (`main`, `4af6cf4c3de82d44fda078c4bfa19a79deb878ec`).
 - tl-collator: `https://github.com/tradelayer-wallet/tl-collator` (`master`, `60d3d2aa6bfbd765ea7abe13199f07714697caa4`).
-- TLZK / zkTL: no verified public repo in this audit; cite local files only or publish the repo before sending as public evidence.
+- TLZK / zkTL: intended remote is `https://github.com/patrickdugan/TLZK.git`, but GitHub returns `Repository not found`; cite local files only until the repo is created and pushed.
 
 High-signal files and artifacts to cite or attach:
 
@@ -292,7 +292,7 @@ High-signal files and artifacts to cite or attach:
   - `artifacts/litecoin-bitvm/2026-04-17/run-summary.md`
   - `tools/quirk-museum-vite/README.md`
 - TLZK:
-  - Local-only evidence in this audit; publish before citing as a public repo.
+  - Local-only evidence in this audit; create `patrickdugan/TLZK` on GitHub and push before citing as a public repo.
   - `C:\projects\TLZK\README.md`
   - `C:\projects\TLZK\package.json`
   - `C:\projects\TLZK\docs\ZK_CONSENSUS_ENVELOPE.md`
@@ -306,7 +306,7 @@ High-signal files and artifacts to cite or attach:
   - `C:\projects\UTXORef\UTXO-Ref\integrations\lightning-liquidity-lease-sidecar\README.md`
   - `C:\projects\UTXORef\UTXO-Ref\integrations\wallet-demo\DASHBOARD_UI_PLAN.md`
 - WebRTC / wallet:
-  - Local branch evidence; public repo exists but `feature/webrtc-p2p-mode` is not a public head.
+  - Public branch evidence exists at `feature/webrtc-p2p-mode`.
   - `C:\projects\TLWallet\tradelayer-wallet\packages\wallet-fe\src\p2p\webrtc\WebRTCTransport.ts`
   - `C:\projects\TLWallet\tradelayer-wallet\packages\wallet-fe\src\p2p\tape\TapeVerifier.ts`
   - `C:\projects\tl-relayer`
@@ -401,9 +401,7 @@ That is the stack I want to keep building: Bitcoin as durable reference layer; e
 
 ## Remaining evidence to add before sending
 
-- Decide whether to publish TLZK/zkTL; it is local-only in this audit and should not be cited as a live public repo yet.
-- Decide whether to publish the TLWallet `feature/webrtc-p2p-mode` branch if the WebRTC implementation should be public evidence.
-- Decide whether to push the local-ahead UTXORef work or cite only the public head currently on GitHub.
+- Create the missing public GitHub repo `patrickdugan/TLZK` and push local `master` (`c3e7ce0451fae860e6601a3c3b61c88af196de74`).
 - Exact Q2 commit ranges by repo, if Conor wants milestone-style attribution rather than current public heads.
 - Fresh screenshots:
   - Jurassic/Vite graft dashboard;
