@@ -23,7 +23,7 @@ What is concrete in the local tree:
 
 Live public GitHub check:
 
-- Jurassic Bitcoin: `https://github.com/patrickdugan/jurassic-bitcoin`, `master`, public head `0fdcc0c2717faf9d95f731317c35bbd75d6c0827`.
+- Jurassic Bitcoin: `https://github.com/patrickdugan/jurassic-bitcoin`, `master`; this report itself lives on that branch, so use the latest GitHub head for the exact report commit.
 - UTXORef: `https://github.com/patrickdugan/UTXO-Ref`, `tradelayer-ln-dlc-demo`, public head `5e98acde232c416538ce79be46c9183bb59229a5`.
 - TradeLayer.js: `https://github.com/patrickdugan/tradelayer.js`, `zk-tx34-wasm-verifier`, public head `7869620f39b2f2b9f6a6773e950c2297de238ff6`.
 - TradeLayer wallet: `https://github.com/tradelayer-wallet/tradelayer-wallet`, `feature/webrtc-p2p-mode`, public head `44bdc87ee8d2a2ceb2e24efdcde0814cccd027f1`.
@@ -270,7 +270,7 @@ Q2 status: working local/testnet paths and strong integration sketches. Producti
 
 Public repo anchors:
 
-- Jurassic Bitcoin: `https://github.com/patrickdugan/jurassic-bitcoin` (`master`, `0fdcc0c2717faf9d95f731317c35bbd75d6c0827`).
+- Jurassic Bitcoin: `https://github.com/patrickdugan/jurassic-bitcoin` (`master`; use the latest GitHub head for the exact report commit).
 - UTXORef: `https://github.com/patrickdugan/UTXO-Ref` (`tradelayer-ln-dlc-demo`, public head `5e98acde232c416538ce79be46c9183bb59229a5`).
 - TradeLayer.js: `https://github.com/patrickdugan/tradelayer.js` (`zk-tx34-wasm-verifier`, `7869620f39b2f2b9f6a6773e950c2297de238ff6`).
 - TradeLayer wallet: `https://github.com/tradelayer-wallet/tradelayer-wallet` (`feature/webrtc-p2p-mode`, public head `44bdc87ee8d2a2ceb2e24efdcde0814cccd027f1`).
