@@ -1,0 +1,194 @@
+{
+  "kind": "jurassic_binohash_level_tools",
+  "version": 1,
+  "notes": [
+    "node-free; no signatures verified; keys/prevouts are deterministic placeholders",
+    "digests rendered byte-reversed (uint256::GetHex style)"
+  ],
+  "primitives": [
+    {
+      "primitive": "aggregatable_attestation",
+      "motif": "transcript_multiplicity",
+      "mechanism": "SIGHASH_SINGLE|ANYONECANPAY makes a signer's digest a function of only its own (input, output, index), so independently produced slots compose append-only without re-signing.",
+      "event_commitment": "7c3d9f4a4afca6605181490f0762fbeb84e9b25ab659d6a10a17291eaed88239",
+      "sighash_type": "0x83",
+      "oracle_count": 3,
+      "base_digests": {
+        "0": "8f06347a4fa3cc87c5a705ec1ae0c39614f172d23b0786aab6106998fb381de0",
+        "1": "1ffe231469c729cf7e9256d6ebd4ef5e27531f72141944f171a82cb3d0fc5fad",
+        "2": "3baa212d29ce60418d82da17c7fa34501a2478486bf8f2b882aae1d1c3883969"
+      },
+      "checked_signer_index": 1,
+      "invariants": {
+        "digest_independent_of_other_slot_content": true,
+        "append_later_slot_preserves_earlier_digests": true,
+        "remove_earlier_slot_changes_digest": true,
+        "constant_one_collapse_detected_and_refused": true
+      },
+      "preconditions": [
+        "all signers agree on nVersion and nLockTime",
+        "aggregation is append-only: a signer's index must be preserved, so earlier slots cannot be dropped or reordered (later slots and other-slot contents are free)",
+        "the constant-one collapse (no output at the signed index) is refused before a slot is treated as an attestation"
+      ],
+      "properties": {
+        "P1_semantic_binding": "each payout output carries the event hash",
+        "P2_non_collapse": "constant-one slot refused",
+        "P3_authority_separation": "a slot is evidence of one oracle's attestation, not spend authority over the aggregate",
+        "P4_rotation_invariance": "n/a (attestation, not a handle)"
+      },
+      "overlay_use": "threshold DLC/oracle attestation: any sufficient subset of position-ordered oracle slots composes into one settlement without a re-signing round"
+    },
+    {
+      "primitive": "state_bound_handle_rotation",
+      "motif": "identifier_bifurcation",
+      "mechanism": "a handle derived from the committed state hash can rotate across epochs while the state commitment is fixed and indexer-verifiable.",
+      "state_commitment": "32063fbbb730e696383e5a71735d66dac44654a697d7fff609df47f1dd4c657d",
+      "legacy_dummy_axis": {
+        "rows": [
+          {
+            "epoch": 0,
+            "handle": "2b32d2df24a43c1402de21280121aa490475b5309a2aed1b694b30734e53998f",
+            "txid": "f4c07485fd48b4cabacbcfc05497b5a5508dfe55f15e55acdd07ba034e5b3559",
+            "sighash_digest": "8c32b4c6614cb226ee91fd7b76349dc5eabfad6bad499f87e49c85e6aafaeb69",
+            "handle_verifies": true
+          },
+          {
+            "epoch": 1,
+            "handle": "0c2fb9fc58d2d8809d8d46e0c57546fcea115b703512f041cf26e3bb2aa60e7d",
+            "txid": "6c9531d5cbbde3a8d4f2cb4ace4b9b52f97223815a47d1a1006e7b22feab5ce3",
+            "sighash_digest": "8c32b4c6614cb226ee91fd7b76349dc5eabfad6bad499f87e49c85e6aafaeb69",
+            "handle_verifies": true
+          },
+          {
+            "epoch": 2,
+            "handle": "c8bb3eaa3ddf15219230dbbdef66ff902462d652e0673a8188234db1a9ad5aeb",
+            "txid": "f7ecf0ce4bb07c338fce783986c583d8d521c434ff6c66c71040d0da48595454",
+            "sighash_digest": "8c32b4c6614cb226ee91fd7b76349dc5eabfad6bad499f87e49c85e6aafaeb69",
+            "handle_verifies": true
+          }
+        ],
+        "distinct_txids": 3,
+        "distinct_sighash_digests": 1,
+        "policy": "non-null dummy is policy-dead (NULLDUMMY) / consensus-invalid for witness v0 (BIP147); shown for the historical mechanism only"
+      },
+      "witness_era_form": {
+        "rows": [
+          {
+            "epoch": 0,
+            "handle": "ec29c582f6082a24133fe17d9e5f26ccb3f8ec50092da26b99d8afc3fe800784",
+            "anchor_script_hex": "6a186a62616e63686f7232063fbbb730e696383e5a71735d66da",
+            "handle_script_hex": "6a176a6268ec29c582f6082a24133fe17d9e5f26ccb3f8ec50",
+            "txid": "e8811408e47c6e69813bc7c0d7c612b5b6692913f53209a5d83824e8f49aa9d9",
+            "handle_verifies": true
+          },
+          {
+            "epoch": 1,
+            "handle": "47cf316bf6d5e08be8e5771439f0b0e5fe48e26e026e07f4fede959ac87009ba",
+            "anchor_script_hex": "6a186a62616e63686f7232063fbbb730e696383e5a71735d66da",
+            "handle_script_hex": "6a176a626847cf316bf6d5e08be8e5771439f0b0e5fe48e26e",
+            "txid": "c3d2d69be68c7d0e08a2e471471163409f83b9852d36569993fcffc52bf2d72f",
+            "handle_verifies": true
+          },
+          {
+            "epoch": 2,
+            "handle": "859ed63e5408fe33e96e698259064b0df257b05dfdb132a97e8c7f9cf7d8314f",
+            "anchor_script_hex": "6a186a62616e63686f7232063fbbb730e696383e5a71735d66da",
+            "handle_script_hex": "6a176a6268859ed63e5408fe33e96e698259064b0df257b05d",
+            "txid": "37c321ad9c6398aaec76d69024258514d3ef29d056017f1b85cb81c3f5c6b218",
+            "handle_verifies": true
+          }
+        ],
+        "distinct_anchor_scripts": 1,
+        "policy": "relay-standard under Bitcoin Core 30.0 datacarrier policy; the anchor output is byte-identical across epochs so state keying is stable"
+      },
+      "invariants": {
+        "legacy_txid_moves_digest_fixed": true,
+        "witness_anchor_fixed_across_rotation": true,
+        "all_handles_verify": true
+      },
+      "properties": {
+        "P1_semantic_binding": "handle = H(state_hash || label || epoch)",
+        "P2_non_collapse": "n/a (no signed degenerate digest)",
+        "P3_authority_separation": "the handle indexes; it is never checked by any spend path",
+        "P4_rotation_invariance": "verifier decision is recomputation of the derivation; identical for every epoch"
+      },
+      "overlay_use": "rotating rendezvous / watchtower-alert / proof-anchor handles over a fixed channel or reserve state without re-anchoring the state"
+    },
+    {
+      "primitive": "binohash_grinding_bench",
+      "motif": "transcript_multiplicity",
+      "mechanism": "FindAndDelete makes the signed scriptCode depend on fed pushes; Binohash grinds a PoW nonce so the resulting digest is collision-resistant and Script-readable.",
+      "attribution": "cost model for Robin Linus, Binohash (2026); this bench does not propose a competing scheme",
+      "findanddelete_demo": {
+        "redeem_script_hex": "02dead755121022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f1827051ae",
+        "fed_push_hex": "02dead",
+        "mutated_script_hex": "755121022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f1827051ae",
+        "pushes_removed": 1,
+        "scriptcode_is_data_dependent": true
+      },
+      "cost_assumptions": {
+        "hashes_per_gpu_sec": 10000000000.0,
+        "usd_per_gpu_hour": 0.5,
+        "wall_time_fleet_hps": 10000000000000.0
+      },
+      "cost_table": [
+        {
+          "W1": 32,
+          "W2": 32,
+          "collision_resistance_bits": 64,
+          "honest_work_bits": 34.6,
+          "honest_hashes_log2": 34.6,
+          "wall_time_seconds_at_hashrate": 0.0,
+          "grind_cost_usd": 0.0
+        },
+        {
+          "W1": 42,
+          "W2": 42,
+          "collision_resistance_bits": 84,
+          "honest_work_bits": 44.6,
+          "honest_hashes_log2": 44.6,
+          "wall_time_seconds_at_hashrate": 2.67,
+          "grind_cost_usd": 0.37
+        },
+        {
+          "W1": 48,
+          "W2": 48,
+          "collision_resistance_bits": 96,
+          "honest_work_bits": 50.6,
+          "honest_hashes_log2": 50.6,
+          "wall_time_seconds_at_hashrate": 170.65,
+          "grind_cost_usd": 23.7
+        },
+        {
+          "W1": 56,
+          "W2": 56,
+          "collision_resistance_bits": 112,
+          "honest_work_bits": 58.6,
+          "honest_hashes_log2": 58.6,
+          "wall_time_seconds_at_hashrate": 43687.56,
+          "grind_cost_usd": 6067.72
+        },
+        {
+          "W1": 64,
+          "W2": 64,
+          "collision_resistance_bits": 128,
+          "honest_work_bits": 66.6,
+          "honest_hashes_log2": 66.6,
+          "wall_time_seconds_at_hashrate": 11184014.24,
+          "grind_cost_usd": 1553335.31
+        }
+      ],
+      "invariants": {
+        "scriptcode_is_data_dependent": true,
+        "resistance_matches_w1_plus_w2": true
+      },
+      "properties": {
+        "P1_semantic_binding": "the grind commits the digest to the spending transaction's fields",
+        "P2_non_collapse": "a well-formed Binohash digest is not a verifier-known constant",
+        "P3_authority_separation": "introspection is read-only; it gates nothing by itself",
+        "P4_rotation_invariance": "n/a"
+      },
+      "overlay_use": "trust-minimised transaction introspection for BitVM bridges without a soft fork; this bench picks (W1,W2) against a real cost line"
+    }
+  ]
+}

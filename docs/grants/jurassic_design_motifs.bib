@@ -1,9 +1,23 @@
+% Bibliography for jurassic_design_motifs.tex
+% Revised October 2026: added the BIP lineage that closed each seam, BitVM2,
+% primary sources for the overlay systems the motifs target, watchtower and
+% covenant literature, and the Bitcoin Core 30.0 datacarrier policy change.
+
 @misc{linus2023bitvm,
   author = {Linus, Robin},
-  title = {{BitVM}: Compute Anything on Bitcoin},
+  title = {{BitVM}: Compute Anything on {Bitcoin}},
   year = {2023},
   url = {https://bitvm.org/bitvm.pdf},
   note = {White paper}
+}
+
+@misc{linus2025bitvm2,
+  author = {Linus, Robin and Aumayr, Lukas and Avarikioti, Zeta and Maffei, Matteo and Pelosi, Andrea and Thyfronitis Litos, Orfeas and Stefo, Christos and Tse, David and Zamyatin, Alexei},
+  title = {Bridging {Bitcoin} to Second Layers via {BitVM2}},
+  howpublished = {Cryptology ePrint Archive, Paper 2025/1158},
+  year = {2025},
+  url = {https://eprint.iacr.org/2025/1158},
+  note = {To appear in USENIX Security 2026}
 }
 
 @misc{linus2026binohash,
@@ -11,7 +25,24 @@
   title = {{Binohash}: Transaction Introspection Without Softforks},
   year = {2026},
   url = {https://robinlinus.com/binohash.pdf},
-  note = {Technical note and Delving Bitcoin discussion}
+  note = {Technical note, February 2026; discussion at \url{https://delvingbitcoin.org/t/binohash-transaction-introspection-without-softforks/2288}}
+}
+
+@misc{heilman2024lamport,
+  author = {Heilman, Ethan},
+  title = {Signing a {Bitcoin} Transaction with {Lamport} Signatures (no changes needed)},
+  howpublished = {bitcoin-dev mailing list},
+  month = apr,
+  year = {2024},
+  url = {https://groups.google.com/g/bitcoindev/c/mR53go5gHIk},
+  note = {Thread discusses related constructions by Jeremy Rubin}
+}
+
+@misc{poelstra2021cat,
+  author = {Poelstra, Andrew},
+  title = {{CAT} and {Schnorr} Tricks {I}},
+  year = {2021},
+  url = {https://www.wpsoftware.net/andrew/blog/cat-and-schnorr-tricks-i.html}
 }
 
 @misc{andrychowicz2013malleability,
@@ -56,8 +87,220 @@
   title = {Fork State-Aware Differential Fuzzing for Blockchain Consensus Implementations},
   booktitle = {2025 {IEEE}/{ACM} 47th International Conference on Software Engineering},
   year = {2025},
-  pages = {622--622},
   publisher = {IEEE Computer Society},
   doi = {10.1109/ICSE55347.2025.00085},
   url = {https://doi.ieeecomputersociety.org/10.1109/ICSE55347.2025.00085}
+}
+
+@inproceedings{gudgeon2020sok,
+  author = {Gudgeon, Lewis and Moreno-Sanchez, Pedro and Roos, Stefanie and McCorry, Patrick and Gervais, Arthur},
+  title = {{SoK}: Layer-Two Blockchain Protocols},
+  booktitle = {Financial Cryptography and Data Security (FC 2020)},
+  series = {Lecture Notes in Computer Science},
+  volume = {12059},
+  publisher = {Springer},
+  year = {2020},
+  doi = {10.1007/978-3-030-51280-4_12}
+}
+
+@inproceedings{moser2016covenants,
+  author = {M{\"o}ser, Malte and Eyal, Ittay and Sirer, Emin G{\"u}n},
+  title = {{Bitcoin} Covenants},
+  booktitle = {Financial Cryptography and Data Security: FC 2016 International Workshops, BITCOIN, VOTING, and WAHC},
+  series = {Lecture Notes in Computer Science},
+  volume = {9604},
+  publisher = {Springer},
+  year = {2016},
+  doi = {10.1007/978-3-662-53357-4_9}
+}
+
+@inproceedings{mccorry2019pisa,
+  author = {McCorry, Patrick and Bakshi, Surya and Bentov, Iddo and Meiklejohn, Sarah and Miller, Andrew},
+  title = {Pisa: Arbitration Outsourcing for State Channels},
+  booktitle = {Proceedings of the 1st ACM Conference on Advances in Financial Technologies (AFT '19)},
+  publisher = {Association for Computing Machinery},
+  year = {2019},
+  doi = {10.1145/3318041.3355461}
+}
+
+@misc{poon2016lightning,
+  author = {Poon, Joseph and Dryja, Thaddeus},
+  title = {The {Bitcoin} {Lightning} Network: Scalable Off-Chain Instant Payments},
+  year = {2016},
+  url = {https://lightning.network/lightning-network-paper.pdf}
+}
+
+@misc{dryja2017dlc,
+  author = {Dryja, Thaddeus},
+  title = {Discreet Log Contracts},
+  year = {2017},
+  url = {https://adiabat.github.io/dlc.pdf}
+}
+
+@misc{keceli2023ark,
+  author = {Keceli, Burak},
+  title = {Ark: An Alternative Privacy-Preserving Second Layer Solution},
+  howpublished = {bitcoin-dev mailing list},
+  month = may,
+  year = {2023},
+  url = {https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2023-May/021694.html}
+}
+
+@misc{somsen2018statechains,
+  author = {Somsen, Ruben},
+  title = {Statechains: Off-chain Transfer of {UTXO} Ownership},
+  howpublished = {Scaling Bitcoin 2018, Tokyo},
+  year = {2018},
+  url = {https://github.com/RubenSomsen/rubensomsen.github.io/blob/master/img/statechains.pdf}
+}
+
+@misc{osuntokun2022taprootassets,
+  author = {Osuntokun, Olaoluwa},
+  title = {Taproot Assets Protocol},
+  howpublished = {Draft BIP series, Lightning Labs},
+  year = {2022},
+  url = {https://github.com/Roasbeef/bips/blob/bip-tap/bip-tap.mediawiki}
+}
+
+@misc{rodarmor2023ordinals,
+  author = {Rodarmor, Casey},
+  title = {Ordinal Theory Handbook},
+  year = {2023},
+  url = {https://docs.ordinals.com/}
+}
+
+@misc{shinigami2024,
+  author = {{Keep Starknet Strange contributors}},
+  title = {Shinigami: {Bitcoin} Script Interpreter in {Cairo}},
+  year = {2024},
+  url = {https://github.com/keep-starknet-strange/shinigami}
+}
+
+@misc{bip16,
+  author = {Andresen, Gavin},
+  title = {{BIP} 16: Pay to Script Hash},
+  year = {2012},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki}
+}
+
+@misc{bip34,
+  author = {Andresen, Gavin},
+  title = {{BIP} 34: Block v2, Height in Coinbase},
+  year = {2012},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki}
+}
+
+@misc{bip62,
+  author = {Wuille, Pieter},
+  title = {{BIP} 62: Dealing with Malleability},
+  year = {2014},
+  note = {Withdrawn},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki}
+}
+
+@misc{bip66,
+  author = {Wuille, Pieter},
+  title = {{BIP} 66: Strict {DER} Signatures},
+  year = {2015},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki}
+}
+
+@misc{bip141,
+  author = {Lombrozo, Eric and Lau, Johnson and Wuille, Pieter},
+  title = {{BIP} 141: Segregated Witness (Consensus Layer)},
+  year = {2015},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki}
+}
+
+@misc{bip143,
+  author = {Lau, Johnson and Wuille, Pieter},
+  title = {{BIP} 143: Transaction Signature Verification for Version 0 Witness Program},
+  year = {2016},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki}
+}
+
+@misc{bip147,
+  author = {Lau, Johnson},
+  title = {{BIP} 147: Dealing with Dummy Stack Element Malleability},
+  year = {2016},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0147.mediawiki}
+}
+
+@misc{bip341,
+  author = {Wuille, Pieter and Nick, Jonas and Towns, Anthony},
+  title = {{BIP} 341: Taproot: {SegWit} Version 1 Spending Rules},
+  year = {2020},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki}
+}
+
+@misc{bip342,
+  author = {Wuille, Pieter and Nick, Jonas and Towns, Anthony},
+  title = {{BIP} 342: Validation of Taproot Scripts},
+  year = {2020},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0342.mediawiki}
+}
+
+@misc{bip118,
+  author = {Decker, Christian and Towns, Anthony},
+  title = {{BIP} 118: {SIGHASH\_ANYPREVOUT} for Taproot Scripts},
+  year = {2017},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0118.mediawiki}
+}
+
+@misc{bip119,
+  author = {Rubin, Jeremy},
+  title = {{BIP} 119: {CHECKTEMPLATEVERIFY}},
+  year = {2020},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0119.mediawiki}
+}
+
+@misc{bip347,
+  author = {Heilman, Ethan and Sabouri, Armin},
+  title = {{BIP} 347: {OP\_CAT} in Tapscript},
+  year = {2023},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0347.mediawiki}
+}
+
+@misc{bip78,
+  author = {Dorier, Nicolas},
+  title = {{BIP} 78: A Simple Payjoin Proposal},
+  year = {2019},
+  url = {https://github.com/bitcoin/bips/blob/master/bip-0078.mediawiki}
+}
+
+@misc{bitcoinwiki_contracts,
+  author = {{Bitcoin Wiki contributors}},
+  title = {Contract: Example 3, Assurance Contracts (\texttt{SIGHASH\_SINGLE|ANYONECANPAY})},
+  year = {2012},
+  note = {Deployed later as Hearn's Lighthouse},
+  url = {https://en.bitcoin.it/wiki/Contract}
+}
+
+@misc{bitcoincore30,
+  author = {{Bitcoin Core project}},
+  title = {{Bitcoin} Core 30.0 Release Notes},
+  month = oct,
+  year = {2025},
+  url = {https://bitcoincore.org/en/releases/30.0/}
+}
+
+@misc{bitcoincore30src,
+  author = {{Bitcoin Core project}},
+  title = {{Bitcoin} Core v30.0 source: \texttt{src/script/interpreter.cpp} and \texttt{src/policy/policy.cpp}},
+  year = {2025},
+  url = {https://github.com/bitcoin/bitcoin/tree/v30.0/src}
+}
+
+@misc{dugan2026jurassic,
+  author = {Dugan, Patrick},
+  title = {Jurassic {Bitcoin}: Consensus Observability and Differential Testing Harness},
+  year = {2026},
+  url = {https://github.com/patrickdugan/jurassic-bitcoin}
+}
+
+@misc{dugan2026utxoref,
+  author = {Dugan, Patrick},
+  title = {{UTXO-Ref}: {BitVM}-Style Referee Prototypes for Reserve-Backed Overlays},
+  year = {2026},
+  url = {https://github.com/patrickdugan/UTXO-Ref}
 }

@@ -2,57 +2,82 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{array}
-\usepackage{hyperref}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
+\usepackage[hidelinks]{hyperref}
 
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
-\title{Jurassic Bitcoin: Ossified Tech Debt as an Isomorphic Mosquito for New Features\\}
+\tikzset{
+  box/.style={draw, rounded corners=2pt, align=center, inner sep=4pt, font=\small, text width=2.6cm, minimum height=1.1cm},
+  wide/.style={draw, rounded corners=2pt, align=center, inner sep=4pt, font=\small, text width=3.6cm, minimum height=1.1cm},
+  good/.style={draw, rounded corners=2pt, align=center, inner sep=3pt, font=\footnotesize, text width=2.3cm, fill=green!8},
+  bad/.style={draw, rounded corners=2pt, align=center, inner sep=3pt, font=\footnotesize, text width=2.3cm, fill=red!8},
+  arr/.style={-{Latex[length=2mm]}, thick}
+}
+
+\title{Jurassic Bitcoin: Ossified Tech Debt as an Isomorphic Mosquito for New Features}
 \author{Patrick Dugan}
-\date{April 17, 2026}
+\date{April 17, 2026\\\small Revised October 8, 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Bitcoin's pre-SegWit consensus history contains behaviors that are no longer
-desirable transaction forms but remain informative as design motifs. We focus
-on three reusable motifs: transcript multiplicity, identifier bifurcation, and
-carrier camouflage. Our contribution is an observer pipeline that extracts
-historical Bitcoin windows, materializes seam-family fixtures, classifies them
-with a policy-envelope map, and then lifts the resulting abstractions into live
-TradeLayer prototypes with BitVM-style dispute flows
-\cite{linus2023bitvm,linus2026binohash,yang2021fluffy,kim2025fork}. The point
-is not to revive old bugs. It is to translate fossilized Bitcoin behavior into
-new usable mechanics, inspired by Robin Linus' work with BinoHash.
+Bitcoin's pre-SegWit consensus history contains behaviours that are no longer
+desirable transaction forms but remain informative as design motifs. We isolate
+three: \emph{transcript multiplicity}, \emph{identifier bifurcation}, and
+\emph{carrier camouflage}. Each has a measurable legacy seam (FindAndDelete
+context splits, \texttt{SIGHASH\_SINGLE} digest collapse, and the
+\texttt{CHECKMULTISIG} dummy-element txid axis), each was deliberately closed at
+the base layer by the BIP62, BIP66, BIP143, BIP147 and BIP341 lineage, and each
+reappears as a \emph{controlled} degree of freedom in modern overlay protocols.
+Our contribution is an observer pipeline that extracts historical windows,
+materialises seam fixtures against a Bitcoin Core policy oracle, classifies the
+resulting surfaces with a policy-envelope map, and lifts the abstractions into
+live TradeLayer prototypes with BitVM-style dispute flows
+\cite{linus2023bitvm,linus2025bitvm2,linus2026binohash,yang2021fluffy,kim2025fork}.
+This revision adds a node-free analytic reproduction of the three seams (every
+digest quoted here can be recomputed from one dependency-free script), a minimal
+formalisation of what controlled freedom requires (semantic binding,
+non-collapse, and authority separation), three Binohash-level primitives (one
+per seam) that each carry a capability plain Script lacks and a deterministic
+invariant, the UTXORef mechanism layer that turns the motifs into deterministic
+handles bound to confirmed Bitcoin testnet4 evidence, and an explicit threat
+model. The point is not to revive old bugs. It
+is to translate fossilised Bitcoin behaviour into usable mechanics, in the
+spirit of Robin Linus' Binohash.
 \end{abstract}
 
-\section*{Motifs and Method}
+\section{Introduction}
 
-We use \emph{Jurassic Bitcoin} as shorthand for the pre-SegWit historical era
-in which Bitcoin still exposed many laissez-faire technical fingerprints of its
-early libertarian design culture. That era is over, but some of those old
-fingerprints survive as reusable protocol shapes once they are abstracted away
-from the original transaction forms that carried them. In that sense, the
-observer pipeline is the mosquito in amber: it preserves small but
-information-rich traces of a vanished protocol ecology, then lets us recover
-isomorphic mechanics without reviving the original environment itself. We can then take this DNA and produce monstrous or delightful feature modification.
+We use \emph{Jurassic Bitcoin} as shorthand for the historical period that
+ends, in practical terms, before SegWit-era modularity takes over the protocol
+surface. It names an older Bitcoin in which transaction behaviour still carried
+many laissez-faire, lightly curated technical fingerprints of an earlier
+engineering culture: behaviours that were tolerated, under-specified, or simply
+left in place long enough to ossify. That period is over as a live design
+regime, but its fossils remain informative. The claim of this paper is that some
+of those neglected fingerprints are still \emph{isomorphically} usable as
+protocol mechanics once they are abstracted away from their original,
+historically contingent transaction forms.
 
-We use the term \emph{Jurassic Bitcoin} for the historical period that ends, in
-practical terms, before SegWit-era modularity takes over the protocol surface.
-It refers to an older Bitcoin in which transaction behavior still carried many
-laissez-faire, lightly curated technical fingerprints of an earlier
-libertarian engineering culture: behaviors that were tolerated, under-specified, or simply left in place long enough to ossify. That period is over as a live design regime, but its fossils remain informative. The claim of this paper is that some of those neglected fingerprints are still isomorphically usable as protocol mechanics once they are abstracted away from their original,
-historically contingent transaction forms. SegWit itself had its Witness Data component used in unexpected ways with Ordinals, what some would consider a predatory raptor and others would compare to a herbivorous brontosaurus, but either way the foot print has become a part of Bitcoin history: isomorphic utility is real.
+If Jurassic Bitcoin supplies the fossils, the observer pipeline described here
+is the mosquito in amber: it preserves small but information-rich traces of a
+vanished protocol ecology, then lets us recover isomorphic mechanics without
+reviving the original environment itself. SegWit's own witness space was later
+used in ways nobody specified, through Ordinals and inscriptions
+\cite{rodarmor2023ordinals}; whichever dinosaur one compares that to, the
+footprint became part of Bitcoin history, and isomorphic utility of unintended
+surfaces is real.
 
-If Jurassic Bitcoin supplies the fossils, the observer pipeline is the mosquito
-in amber: it preserves small but information-rich traces of a vanished protocol
-ecology, then lets us recover isomorphic mechanics without reviving the
-original environment itself.
-
-The central claim of this paper is that three motifs recur across both
-historical Bitcoin and modern overlay design:
+The central claim is that three motifs recur across both historical Bitcoin
+and modern overlay design:
 
 \begin{enumerate}
 \item \textbf{Transcript multiplicity}: one broad spend family can admit
@@ -63,419 +88,1154 @@ while the committed core digest stays fixed.
 transaction topology rather than obvious exotic carriers.
 \end{enumerate}
 
-We study those motifs with a deterministic observability toolchain and then lift them into live prototypes where BitVM-style routes, challenges,
-and resolutions can be exercised without claiming that the original legacy
-Bitcoin seams are themselves production-ready protocol constructions. The
-resulting perspective sits downstream of BitVM's dispute-oriented execution
-model and of more recent Binohash-style transaction introspection work, while
-remaining methodologically closer to differential blockchain testing than to new consensus design \cite{linus2023bitvm,linus2026binohash,yang2021fluffy,kim2025fork}.
+There is an inversion at the heart of the argument. At the base layer, every
+one of these motifs was first encountered as a \emph{bug}: transaction
+malleability, a degenerate signature digest, an unconstrained stack element.
+The base layer responded by removing the freedom, culminating in the canonical
+witness digests of BIP143 and BIP341
+\cite{bip62,bip66,bip143,bip147,bip341,bip342}. Overlay protocols, which commit
+to state through their own digests rather than through txids, can afford to
+re-admit the same manifold shapes in a controlled way. Section~\ref{sec:formal}
+states what ``controlled'' has to mean for that to be safe.
+
+We study the motifs with a deterministic observability toolchain and then lift
+them into live prototypes where BitVM-style routes, challenges and resolutions
+can be exercised, without claiming that the legacy Bitcoin seams themselves are
+production-ready constructions. The perspective sits downstream of BitVM's
+dispute-oriented execution model and of Binohash-style transaction
+introspection, while remaining methodologically closer to differential
+blockchain testing than to new consensus design
+\cite{linus2023bitvm,linus2025bitvm2,linus2026binohash,yang2021fluffy,kim2025fork}.
+
+\paragraph{What changed in this revision.} The April draft reported the three
+motifs and the Litecoin grafts. Since then the Bitcoin-side status moved: a
+TradeLayer grant transaction and a Taproot reserve vault were confirmed on
+Bitcoin testnet4 and bound into an off-chain route referee that consumes quirk
+route candidates (Section~\ref{sec:handles}). This revision also adds the
+analytic reproduction of the seams (Section~\ref{sec:measured}), the
+formalisation (Section~\ref{sec:formal}), a related-work survey of the BIP
+lineage and of the newer introspection tricks that build on the same seams
+(Section~\ref{sec:related}), a threat model (Section~\ref{sec:threats}), and
+corrections of record, including the fact that the repository's ``2013 payout
+burst'' window at heights 279150--279320 was mined in January 2014.
 
 \section{Contributions}
 
-This work makes four contributions.
-
 \begin{enumerate}
-\item It defines a reproducible \emph{historical-to-modern} workflow for turning Bitcoin fossils into measured experimental surfaces.
-\item It organizes the current evidence into three reusable overlay-relevant
-motifs rather than a loose list of quirks.
-\item It demonstrates live prototype grafts on testnet with TradeLayer that show how these motifs can interact with BitVM-style flow graphs and dispute edges.
-\item It introduces a policy-envelope mapping method for separating replay-only
-Bitcoin fossils from clean modern isomorphisms.
+\item A reproducible \emph{historical-to-modern} workflow for turning Bitcoin
+fossils into measured experimental surfaces, with stable specimen identifiers
+and paper-ready report generation.
+\item Three overlay-relevant motifs, each anchored to a legacy seam that the
+harness measures at the digest level, together with a dependency-free analytic
+reproduction so the cryptographic facts can be checked without a node.
+\item A minimal formalisation of controlled freedom: four properties
+(semantic binding, non-collapse, authority separation, rotation invariance)
+that separate a usable isomorphism from a re-imported malleability bug.
+\item Three Binohash-level primitives, one per seam (append-only aggregatable
+attestation, state-bound handle rotation, and a Binohash parameter bench),
+each demonstrated by a deterministic node-free invariant and annotated with the
+admission properties it enforces.
+\item A policy-envelope mapping method that separates replay-only fossils,
+ordinary historical cover, and clean modern isomorphisms.
+\item Live prototype grafts: nine LTCTEST procedural-token flow graphs, eight of
+them with dated live-run artifacts, with BitVM-style dispute edges; the UTXORef
+mechanism-handle layer; and a two-stage referee bound to confirmed Bitcoin
+testnet4 transactions.
+\item An explicit threat model, including the consequence of Bitcoin Core 30.0's
+datacarrier policy change for the carrier-camouflage motif.
 \end{enumerate}
 
+\section{Background and Related Work}
+\label{sec:related}
+
+\subsection{Legacy signature hashing and its seams}
+
+Before BIP143, every signature in Bitcoin committed to a digest produced by one
+function, \texttt{SignatureHash(scriptCode, tx, nIn, nHashType)}: blank every
+\texttt{scriptSig}, substitute \texttt{scriptCode} at input \texttt{nIn}, apply
+the \texttt{SIGHASH} mode, serialise, append the hash type, and double-SHA256.
+Three details of that function are the seams this paper measures
+\cite{bitcoincore30src}.
+
+\paragraph{FindAndDelete.} In legacy \texttt{OP\_CHECKSIG} and
+\texttt{OP\_CHECKMULTISIG}, every signature being checked is first deleted from
+\texttt{scriptCode} wherever its push occurs at an opcode boundary, originally
+so that a signature cannot be asked to sign itself. The consequence is that the
+digest depends on the \emph{multiset of signature pushes that happen to appear
+in the script}. For ordinary scripts this is a no-op; for a script that
+contains the signature bytes it is a transcript-selection knob.
+
+\paragraph{\texttt{SIGHASH\_SINGLE} degeneracy.} If the signed input index has
+no corresponding output, \texttt{SignatureHash} returns the constant
+\texttt{uint256::ONE} instead of a digest. A signature over that constant
+verifies for any transaction that reaches the same branch with the same key.
+BIP143 removed the behaviour for witness programs by substituting an all-zero
+\texttt{hashOutputs} in that case \cite{bip143}.
+
+\paragraph{The \texttt{CHECKMULTISIG} dummy element.} Legacy
+\texttt{OP\_CHECKMULTISIG} pops one extra, unused stack element. Its content
+does not enter the digest but does enter the serialised transaction, so it moves
+the txid without invalidating any signature. BIP62 catalogued it as a
+malleability source, \texttt{NULLDUMMY} became relay policy, and BIP147 made it
+consensus for witness version 0 \cite{bip62,bip147}.
+
+\subsection{How the base layer closed the seams}
+
+The lineage is worth stating because it is the reason these surfaces are
+fossils rather than live affordances. BIP62 enumerated third-party malleability
+and was withdrawn in favour of a structural fix; BIP66 made DER encoding strict;
+BIP141 and BIP143 moved witnesses out of the txid and introduced a digest with
+no FindAndDelete and no constant-one branch; BIP147 enforced the null dummy;
+BIP341 and BIP342 dropped \texttt{OP\_CHECKMULTISIG} from Tapscript entirely in
+favour of \texttt{OP\_CHECKSIGADD} and committed the position of
+\texttt{OP\_CODESEPARATOR} in the digest
+\cite{bip62,bip66,bip141,bip143,bip147,bip341,bip342}. Legacy outputs remain
+spendable, so consensus still evaluates the seams today; policy fences them. That
+split between consensus-live and policy-dead is exactly what the harness is
+built to measure (Section~\ref{sec:toolchain}).
+
+\subsection{Introspection and dispute systems built on the same seams}
+
+BitVM reframed Bitcoin Script as a verifier of optimistic computation claims:
+commit, challenge, and expose one incorrect step \cite{linus2023bitvm}. BitVM2
+turned that into a permissionless bridge design with a light-client-based
+pegout \cite{linus2025bitvm2}. Binohash is the result most relevant here: it
+exploits FindAndDelete in legacy \texttt{OP\_CHECKMULTISIG} together with
+proof-of-work signature grinding to obtain a collision-resistant digest of the
+spending transaction that is readable in Script, giving limited transaction
+introspection without a soft fork \cite{linus2026binohash}. Binohash is a
+demonstration that the FindAndDelete seam is not merely a museum piece; this
+paper's harness is the bench on which such constructions can be measured
+against the actual policy envelope. Heilman's Lamport-signature construction,
+which reads ECDSA signature length through \texttt{OP\_SIZE}, is a second
+example of a legacy encoding seam re-used as a feature \cite{heilman2024lamport},
+as are Poelstra's Schnorr-plus-\texttt{OP\_CAT} tricks \cite{poelstra2021cat}.
+Covenant proposals such as \texttt{CHECKTEMPLATEVERIFY}, \texttt{ANYPREVOUT},
+and \texttt{OP\_CAT} are the soft-fork path to the same expressiveness
+\cite{bip119,bip118,bip347,moser2016covenants}; the motifs in this paper are what
+an overlay can do while those proposals remain unactivated.
+
+\subsection{Overlay systems whose coordination surfaces we target}
+
+The modern isomorphisms are drawn from systems whose public coordination
+surfaces are richer than their on-chain footprint: Lightning channels and
+watchtowers \cite{poon2016lightning,mccorry2019pisa}, discreet log contracts and
+their oracle attestations \cite{dryja2017dlc}, Ark rounds and VTXOs
+\cite{keceli2023ark}, statechain handoffs \cite{somsen2018statechains}, and
+Taproot Assets proof anchors and universes \cite{osuntokun2022taprootassets}.
+Gudgeon et al.\ give the systematisation of layer-two protocols that these
+examples sit inside \cite{gudgeon2020sok}. In each case there is a committed
+core (a channel state, an outcome, a VTXO, a handoff, an asset transition) and
+several public handles, transcripts, or publication shapes around it.
+
+\subsection{Differential and historical testing}
+
+The observer pipeline is methodologically closest to consensus-differential
+systems that use executable artifacts and cross-checking harnesses as research
+instruments: Fluffy's multi-transaction differential fuzzing of Ethereum
+clients and fork-state-aware differential fuzzing of consensus implementations
+\cite{yang2021fluffy,kim2025fork}. The difference in emphasis is that we are
+not primarily hunting divergences between two implementations; we are using a
+Core oracle plus a narrow shadow executor to \emph{stratify} known seams by
+era, digest behaviour, and policy outcome.
+
+\subsection{Publication policy drift}
+\label{sec:drift}
+
+Carrier camouflage was framed in April against a world where explicit data
+carriers were policy-limited. Bitcoin Core 30.0 raised the default
+\texttt{-datacarriersize} to 100{,}000 bytes and admits multiple
+\texttt{OP\_RETURN} outputs per transaction for relay and mining
+\cite{bitcoincore30}. Explicit carriers are therefore no longer gated by
+default policy. The consequence for Motif~III is that camouflage no longer buys
+\emph{admission}; it buys resistance to fingerprinting and a cost profile that
+matches ordinary traffic. Section~\ref{sec:threats} returns to this.
+
 \section{Observability Toolchain}
+\label{sec:toolchain}
 
 The repository contributes a practical research tool rather than an alternative
-node implementation. The toolchain has four layers.
+node implementation \cite{dugan2026jurassic}. It is a Rust workspace with a CLI
+(\texttt{replay}, \texttt{fuzz}, \texttt{reduce}, \texttt{replay-era},
+\texttt{fetch-fixtures}, \texttt{mint-*-seam}, \texttt{summarize},
+\texttt{museum}, \texttt{report}) over four layers
+(Figure~\ref{fig:observer-pipeline}).
 
 \paragraph{Historical extraction.}
 Mainnet windows are selected around activation boundaries and structurally
-interesting transaction families, then extracted into reproducible corpora. The
-current project already covers BIP16, BIP34, a 2013 payout burst, and BIP66
-windows, with the pre-SegWit ``Jurassic'' tour intended to end at CSV rather
-than witness-era modular Bitcoin.
+interesting transaction families, then extracted into reproducible corpora
+(Table~\ref{tab:windows}). The pre-SegWit tour is intended to end at CSV rather
+than at witness-era modular Bitcoin.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llll}
+\toprule
+Window & Heights & Anchor & Status \\
+\midrule
+BIP16 enforcement & 173780--173830 & P2SH at 173805 \cite{bip16} & extracted \\
+BIP34 buried activation & 227900--227960 & height-in-coinbase at 227931 \cite{bip34} & extracted \\
+Payout burst (``payout2013'') & 279150--279320 & January 2014 miner payout fanouts & extracted, deep slice \\
+BIP66 boundary & 363700--363760 & strict DER \cite{bip66} & extracted \\
+BIP65 boundary & 388360--388420 & \texttt{CHECKLOCKTIMEVERIFY} & planned \\
+CSV boundary & 419300--419360 & \texttt{CHECKSEQUENCEVERIFY} & planned \\
+\bottomrule
+\end{tabular}
+\caption{Curated mainnet windows. The repository labels the 279150--279320 window
+``2013'' after the coinbase-scan trial that found it; the blocks themselves
+were mined on 7--8 January 2014, which this revision corrects throughout.}
+\label{tab:windows}
+\end{table}
 
 \paragraph{Seam-family fixtures and replay.}
-Curated fixture families capture legacy behaviors such as FindAndDelete context
-splits, \texttt{SIGHASH\_SINGLE} degeneracy, and \texttt{CHECKMULTISIG}
-dummy-element txid variation. These fixtures can be replayed, classified, and
-reported with stable identifiers and digest-level metadata.
+Curated fixture families capture legacy behaviours such as FindAndDelete
+context splits, \texttt{SIGHASH\_SINGLE} degeneracy, and \texttt{CHECKMULTISIG}
+dummy-element txid variation. Fixtures are minted on regtest with real funding
+outpoints, replayed through \texttt{testmempoolaccept}, executed by the Rust
+shadow, and reported with stable identifiers: a \texttt{specimen\_id} is the
+SHA-256 of the canonical (key-sorted) JSON of the reduced testcase, so two
+operators who mint the same seam obtain the same identifier. Each specimen
+carries the derived legacy sighash digest, txid, policy outcome and reason, and
+quirk-family fields such as removal counts or dummy-element size.
 
 \paragraph{Historical carrier and sidecar benches.}
-The toolchain also supports ordinary-looking 2013 mainnet carrier families,
-especially payout-shaped topologies in the \texttt{279150..279320} window. That
-allows overlay publication ideas to be discussed in terms of historical cover
-rather than only abstract commitment formats.
+The toolchain also supports ordinary-looking carrier families in the
+279150--279320 window, especially payout-shaped topologies, so that overlay
+publication ideas can be discussed in terms of historical cover rather than only
+abstract commitment formats (Section~\ref{sec:carriers}).
 
 \paragraph{Modern live graft harnesses.}
-TradeLayer testnet is used as a controllable live environment for prototyping
-procedural-token flows, oracle relays, BitVM-style caches, challenges,
-resolutions, and payout edges. This gives a live isomorphism layer without
-claiming that the exact historical Bitcoin transaction forms survive unchanged.
-In that sense, the observer process is closer to consensus-differential systems
-that use executable artifacts and cross-checking harnesses as research
-instruments than to a paper-only catalogue of quirks \cite{yang2021fluffy,kim2025fork}.
+TradeLayer on Litecoin testnet (LTCTEST) is used as a controllable live
+environment for procedural-token flows, oracle relays, BitVM-style caches,
+challenges, resolutions and payout edges, and Bitcoin testnet4 is used for the
+reserve-bound referee layer (Section~\ref{sec:handles}). This gives a live
+isomorphism layer without claiming that the exact historical Bitcoin transaction
+forms survive unchanged.
+
+\paragraph{Oracle scope.} The Core oracle is \texttt{testmempoolaccept} on a
+current node. Epoch flags from the consensus profile are an organisational lens
+for stratified replay, not proof of full historical block-validation semantics
+at height $H$. The Rust shadow is intentionally narrow (one input, a P2WPKH-style
+opcode slice, deterministic signature hooks); it exists to classify, not to
+validate.
 
 \begin{figure}[t]
 \centering
-\fbox{\parbox[c][1.7in][c]{0.9\linewidth}{\centering
-Figure placeholder.\\[0.5em]
-Historical observer workflow from mainnet window extraction to fixture replay,
-policy-envelope labeling, and live Litecoin graft execution.}}
-\caption{Observer pipeline for the current repository. Replace this placeholder
-with a workflow diagram showing extraction, replay, classification, and live
-prototype grafting.}
+\begin{tikzpicture}[node distance=0.55cm and 0.45cm]
+\node[box] (extract) {Mainnet windows\\\texttt{extract-era}};
+\node[box, right=of extract] (fixtures) {Seam fixtures\\\texttt{mint-*-seam}\\\texttt{replay-era}};
+\node[box, right=of fixtures] (oracle) {Core policy oracle\\+ Rust shadow\\(differential)};
+\node[box, right=of oracle] (map) {Policy-envelope\\map};
+\node[box, right=of map] (live) {Live grafts\\LTCTEST meshes\\BTC testnet4 referee};
+\node[box, below=of oracle] (museum) {Museum, labels,\\\texttt{report} tables};
+\draw[arr] (extract) -- (fixtures);
+\draw[arr] (fixtures) -- (oracle);
+\draw[arr] (oracle) -- (map);
+\draw[arr] (map) -- (live);
+\draw[arr] (oracle) -- (museum);
+\coordinate (fb) at ($(live.south)+(0,-1.9)$);
+\coordinate (fbL) at (fb -| fixtures.south);
+\draw[arr] (live.south) -- (fb) -- (fbL) -- (fixtures.south);
+\node[font=\footnotesize, above] at ($(fb)!0.5!(fbL)$) {mechanism refs feed back as fixtures};
+\end{tikzpicture}
+\caption{Observer pipeline: extraction, seam minting and replay, differential
+classification, policy-envelope labelling, and live grafting. Live mechanism
+references are written back as fixtures so the next replay can test them.}
 \label{fig:observer-pipeline}
 \end{figure}
 
 \section{Three Design Motifs}
+\label{sec:motifs}
 
 \subsection{Motif I: Transcript Multiplicity}
 
-The first motif is that one broad spend family can admit multiple effective
-signing transcripts. In the legacy seam bench, FindAndDelete subset variation
-and \texttt{SIGHASH\_SINGLE} degeneracy both show that small structural changes
-can alter the effective digest or collapse it without changing the broader
-transaction family. The important abstraction is not the historical script quirk
-itself; it is the existence of a transcript-selection manifold. Recent
-introspection work such as Binohash is especially relevant here because it
-re-opens the design space for deliberately engineered
-transaction-observable transcript surfaces without requiring a soft fork
-\cite{linus2026binohash}.
+One broad spend family can admit multiple effective signing transcripts. In the
+legacy seam bench, FindAndDelete subset variation and \texttt{SIGHASH\_SINGLE}
+degeneracy both show that small structural changes can alter the effective
+digest, or collapse it, without changing the broader transaction family. The
+important abstraction is not the historical script quirk; it is the existence
+of a transcript-selection manifold with two distinct regions: a benign region in
+which several transcripts alias to one digest class, and a hazardous region in
+which the digest collapses to a verifier-known constant. Binohash lives in the
+first region and makes it load-bearing \cite{linus2026binohash}; the
+constant-one branch lives in the second and must be fenced.
 
-That abstraction is useful for modern overlays because many BitVM- and
-DLC-adjacent systems depend on alternative off-chain transcripts, branch
-packages, reveal paths, or dispute narratives. A protocol designer may want the
-same higher-level state machine while preserving some freedom over transcript
-selection, packaging, or attestation form.
-
-The current repository lifts this motif into a live Litecoin relay surface where
-two distinct transcript aliases are accepted against the same committed state,
-and then further grafts those transcript preludes onto a challengeable
-procedural-token route.
+Modern overlays want this because BitVM- and DLC-adjacent systems depend on
+alternative off-chain transcripts, branch packages, reveal paths and dispute
+narratives. A designer may want the same higher-level state machine while
+preserving freedom over transcript selection, packaging, or attestation form:
+a compact relay form and a full evidence form of one proof, or a success
+package and a timeout package over one claim.
 
 \subsection{Motif II: Identifier Bifurcation}
 
-The second motif is that a public identifier can vary while the committed core
-stays fixed. The historical dummy-element seam is the canonical example in the
-current project: txids move while the legacy sighash digest remains stable. The
-legacy path is policy-rejected today, but it exposes a clean separation between
-\emph{semantic commitment} and \emph{public handle}.
+A public identifier can vary while the committed core stays fixed. The
+dummy-element seam is the canonical example: txids move while the legacy
+sighash digest is invariant. The legacy path is policy-rejected today, but it
+exposes a clean separation between \emph{semantic commitment} and
+\emph{public handle}. Classical Bitcoin work encountered this family as a
+malleability problem rather than as a design affordance, which makes the
+historical contrast useful \cite{andrychowicz2013malleability,decker2014malleability}.
 
-This matters to modern overlays because practical systems often need visible
-session identifiers, anchor labels, namespace handles, rendezvous tags, or
-publication references even when the semantic core is fixed elsewhere. The live
-Litecoin graft demonstrates the same shape with namespace-labeled relays: one
-committed state, multiple public labels, and a further graft onto a live
-challengeable route. Classical Bitcoin work mostly encountered this family as a
-malleability problem, not as a design affordance, which makes the historical
-contrast useful \cite{andrychowicz2013malleability,decker2014malleability}.
+Practical systems need visible session identifiers, anchor labels, namespace
+handles, rendezvous tags and publication references even when the semantic core
+is fixed elsewhere. The motif says: derive every such handle from the core
+commitment plus a role and a label, so that rotation is free and verification is
+unchanged.
 
 \subsection{Motif III: Carrier Camouflage}
 
-The third motif is that overlay commitments should hide inside ordinary-looking
-transaction topology rather than obviously exotic publication surfaces. The
-historical 2013 carrier bench shows that strong candidate covers already existed
-in ordinary payout and redistribution topologies, including high-fanout sprays,
-exact-value batch redistributions, and large aggregator families.
+Overlay commitments should be able to hide inside ordinary-looking transaction
+topology rather than obviously exotic publication surfaces. The historical
+carrier bench shows that strong candidate covers already existed in ordinary
+payout and redistribution topologies: high-fanout sprays, exact-value batch
+redistributions, and large aggregators (Table~\ref{tab:carriers}). The point is
+not simply that big transactions existed. The point is that ordinary historical
+cover is a model for how modern overlays should think about publication shape,
+ambient noise and carrier selection. This is adjacent in spirit to
+transaction-shape privacy work such as PayJoin, where the operational question
+is how to inhabit ordinary-looking transaction space without leaking a
+distinctive surface \cite{bip78,ghesmati2022payjoin}.
 
-This motif is especially relevant for oracle publication, watcher cadence, DLC
-settlement sidecars, and related overlay systems. The point is not simply that
-``big transactions existed.'' The point is that ordinary historical cover can
-provide a model for how modern overlays think about publication shape, ambient
-noise, and carrier selection. This is adjacent in spirit to transaction-shape
-privacy work such as PayJoin, where the operational question is how to inhabit
-ordinary-looking transaction space without leaking a distinctive surface
-\cite{ghesmati2022payjoin}.
+\section{Measured Seam Surfaces}
+\label{sec:measured}
 
-The current Bitcoin-side replay bench for synthetic oracle sidecars still needs
-funded prevouts before it can be fully materialized on a live Bitcoin node.
-However, the companion Litecoin prototypes already show the settlement and
-dispute structure that such sidecars would want to influence.
+\subsection{Regtest-funded seams}
+
+Three seam manifests are minted with real regtest prevouts so that Core returns
+policy-specific reasons instead of \texttt{missing-inputs}. The
+\texttt{SIGHASH\_SINGLE} manifest has four specimens (two bug forms at a
+pre-BIP16 representative height, two controls at a post-BIP34 height, each with
+and without \texttt{ANYONECANPAY}); the DUMMYGRIND manifest has three (empty,
+one-byte zero, and 32-byte dummies); the FindAndDelete manifest has three
+signature subsets at the BIP16 boundary height. In the funded runs the
+\texttt{aa} and \texttt{aaaa} subsets share one digest while \texttt{aabb}
+produces a distinct digest under the same policy rejection reason; the two
+\texttt{SIGHASH\_SINGLE} bug specimens collapse to the constant-one digest while
+the controls diverge; and the non-empty dummy variants change the txid while
+preserving the sighash digest and are rejected under a \texttt{NULLDUMMY}-style
+reason. The companion note \emph{Jurassic Surfaces} renders those runs as
+\texttt{report --format latex} tables directly from the artifact directories.
+
+\subsection{Analytic reproduction without a node}
+
+The cryptographic content of each seam is a pure function of legacy
+serialisation and the original \texttt{SignatureHash}, so it can be reproduced
+without a node. \texttt{scripts/seam\_digests\_standalone.py} ports
+\texttt{FindAndDelete} and \texttt{SignatureHash} verbatim (including the
+\texttt{uint256::ONE} branches), builds deterministic specimens from
+SHA-256-derived placeholder keys and prevouts, and emits the tables below. No
+signature is verified; the claim is about digest classes and txids, which do
+not depend on key validity. Digests are rendered byte-reversed, as
+\texttt{uint256::GetHex()} does, so the constant-one digest prints as
+$0^{63}1$, matching the tripwire value used in Section~\ref{sec:handles}.
+
+\paragraph{Seam A: FindAndDelete context split.} The redeemScript is
+\texttt{<aa> OP\_DROP <bb> OP\_DROP OP\_2 <pkA> <pkB> <pkC> OP\_3 OP\_CHECKMULTISIG}:
+a script that contains the one-byte ``signature'' pushes it will be fed. That
+is the only kind of script for which legacy FindAndDelete changes the
+scriptCode, and it is a crafted, legacy-only degree of freedom, which is the
+point. Table~\ref{tab:seamA} shows four signature multisets. Removing
+\texttt{aa} once or twice yields the same scriptCode (deletion is idempotent
+per push class), so \texttt{subset\_aa} and \texttt{subset\_aaaa} alias to one
+digest; \texttt{subset\_aabb} deletes a second push class and splits; the
+baseline with a signature absent from the script is a third class. Every row has
+a distinct txid because the \texttt{scriptSig} differs; the digest classes are
+what the motif is about.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llrll}
+\toprule
+Variant & Signatures & Removed & scriptCode (SHA-256) & Legacy sighash digest \\
+\midrule
+\texttt{baseline\_cc} & \texttt{cc} & 0 & \texttt{504221f54f4b3561\ldots} & \texttt{b5dd22b737b575b1\ldots} \\
+\texttt{subset\_aa} & \texttt{aa} & 1 & \texttt{784d55748eaffe81\ldots} & \texttt{fdd8e6839fef0aeb\ldots} \\
+\texttt{subset\_aaaa} & \texttt{aa,aa} & 1 & \texttt{784d55748eaffe81\ldots} & \texttt{fdd8e6839fef0aeb\ldots} \\
+\texttt{subset\_aabb} & \texttt{aa,bb} & 2 & \texttt{0efad003bc30a61a\ldots} & \texttt{6fb01edab44922f3\ldots} \\
+\bottomrule
+\end{tabular}
+\caption{Seam A, analytic reproduction (\texttt{SIGHASH\_ALL}, input 0). Three
+digest classes over one spend family; the two \texttt{aa} subsets alias.}
+\label{tab:seamA}
+\end{table}
+
+\paragraph{Seam B: \texttt{SIGHASH\_SINGLE} degeneracy.} A two-input
+transaction is signed at input index~1 with \texttt{SIGHASH\_SINGLE}. With one
+output the index is out of range and the digest is the constant one, with or
+without \texttt{ANYONECANPAY}; with two outputs the controls produce ordinary,
+distinct digests (Table~\ref{tab:seamB}). A signature over the constant is
+valid for every transaction that reaches the same branch, which is why an
+overlay must treat $0^{63}1$ as a rejection tripwire and never as an identifier.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llcl}
+\toprule
+Variant & Type & In/Out & Legacy sighash digest \\
+\midrule
+\texttt{sighash\_single\_bug} & \texttt{0x03} & 2/1 & $0^{63}1$ (constant one) \\
+\texttt{sighash\_single\_bug\_anyonecanpay} & \texttt{0x83} & 2/1 & $0^{63}1$ (constant one) \\
+\texttt{sighash\_single\_control} & \texttt{0x03} & 2/2 & \texttt{7f39cc0c32cd3c5a\ldots} \\
+\texttt{sighash\_single\_control\_anyonecanpay} & \texttt{0x83} & 2/2 & \texttt{f0d98ef6e3f1547f\ldots} \\
+\bottomrule
+\end{tabular}
+\caption{Seam B, analytic reproduction (input index 1). Both bug forms collapse;
+both controls diverge.}
+\label{tab:seamB}
+\end{table}
+
+\paragraph{Seam C: DUMMYGRIND.} A 1-of-1 P2SH multisig spend varies only the
+dummy element: the empty vector (\texttt{00}), a one-byte zero push
+(\texttt{01 00}), and a 32-byte zero push. The legacy digest blanks every
+\texttt{scriptSig} and substitutes the redeemScript, so all three share one
+digest while the serialised transaction, and therefore the txid, differs
+(Table~\ref{tab:seamC}). Note that \texttt{CScript} encodes a one-byte vector as
+\texttt{01 xx} and never as \texttt{OP\_1..OP\_16}, which is why the empty and
+one-byte-zero dummies are distinct bytes with the same numeric value. The
+32-byte variant shows the shape of the affordance: a 256-bit field in the
+unlocking data that moves the public identifier and nothing else. Relay policy
+rejects every non-empty dummy under \texttt{NULLDUMMY}; witness version 0
+rejects it by consensus \cite{bip147}.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llll}
+\toprule
+Variant & Dummy push & txid & Legacy sighash digest \\
+\midrule
+\texttt{dummygrind\_empty} & \texttt{00} & \texttt{645c0d4006a4cec0\ldots} & \texttt{f5f83c1dd45ccc26\ldots} \\
+\texttt{dummygrind\_zero} & \texttt{0100} & \texttt{53c89506fc9fa99f\ldots} & \texttt{f5f83c1dd45ccc26\ldots} \\
+\texttt{dummygrind\_32} & \texttt{20 00$\times$32} & \texttt{ceaa66e4a25c06f7\ldots} & \texttt{f5f83c1dd45ccc26\ldots} \\
+\bottomrule
+\end{tabular}
+\caption{Seam C, analytic reproduction. Three txids, one digest.}
+\label{tab:seamC}
+\end{table}
+
+\subsection{Historical carrier specimens}
+\label{sec:carriers}
+
+Table~\ref{tab:carriers} lists the four specimens the carrier bench treats as
+covers, with shapes re-verified against a public block explorer for this
+revision. The 202-output spray is the strongest broad cover: 156 outputs of
+0.01~BTC and 18 of 0.02~BTC give it the repeated low-denomination rhythm of a
+pool payout, although one change output still holds 68\% of the value. The
+101-output transaction is an exact-value redistribution (50 outputs of 1~BTC and
+50 of 0.5~BTC) with no dominant output. The 27-input aggregator is the right
+carrier for identifier churn because consolidation dominates the visible shape.
+The mixed P2SH specimen is small and is kept as a migration-era control rather
+than as a carrier.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{L{2.3cm}L{1.9cm}L{1.6cm}L{4.0cm}L{1.5cm}L{1.3cm}}
+\toprule
+Specimen & txid prefix & Height (date) & Shape & Largest output share & Size (B) \\
+\midrule
+payout spray & \texttt{a321554f\ldots} & 279209 (2014-01-08) & 1 in, 202 P2PKH out; 156$\times$0.01, 18$\times$0.02~BTC & 0.682 & 7027 \\
+exact-value batch & \texttt{a9ead3b6\ldots} & 279234 (2014-01-08) & 1 in, 101 P2PKH out; 50$\times$1.0, 50$\times$0.5~BTC & 0.250 & 3625 \\
+aggregator & \texttt{ac91df69\ldots} & 279213 (2014-01-08) & 27 in, 19 P2PKH out & 0.064 & 5035 \\
+P2SH mix & \texttt{b2054298\ldots} & 279228 (2014-01-08) & 1 in, 2 P2SH + 1 P2PKH out & 0.882 & 501 \\
+\bottomrule
+\end{tabular}
+\caption{Carrier specimens from the 279150--279320 window, shapes verified
+October 2026.}
+\label{tab:carriers}
+\end{table}
+
+\section{Controlled Freedom: A Minimal Formalisation}
+\label{sec:formal}
+
+The motifs are safe only when the freedom they introduce sits above a fixed
+commitment rather than beside it. The following is deliberately minimal; it is
+what the prototypes actually enforce, not a security proof.
+
+Let $S$ be an overlay semantic state (a lease, an oracle outcome, a VTXO
+transition, a reserve route) and let $c = H(S)$ be its canonical commitment
+under a collision-resistant hash of a canonical serialisation. Define:
+
+\begin{itemize}
+\item $\mathcal{T}(c)$, the set of \emph{transcripts} a verifier accepts as
+evidence for $c$ (compact and full proof packages, retry-equivalent success
+proofs, branch-specific challenge packages). Transcript multiplicity is the
+design decision $|\mathcal{T}(c)| > 1$.
+\item $\mathcal{N}(c)$, the set of \emph{public handles} that resolve to $c$
+(rendezvous labels, proof anchors, round ids, alert handles), with a resolution
+map $\nu : \mathcal{N}(c) \to \{c\}$. Identifier bifurcation is the design
+decision that $\nu$ is many-to-one and that rotating within $\mathcal{N}(c)$ is
+a no-op on $S$.
+\item $\mathcal{C}$, a family of \emph{carrier} transaction shapes with a shape
+statistic $\sigma$ (input and output counts, output-type histogram, repeated
+amounts, largest-output share). Carrier camouflage is the design decision to
+publish under a carrier whose $\sigma$ is drawn from an ambient distribution of
+ordinary traffic.
+\end{itemize}
+
+Four properties separate a usable isomorphism from a re-imported bug:
+
+\begin{description}
+\item[P1, semantic binding.] Every $t \in \mathcal{T}(c)$ commits to $c$: if the
+verifier accepts $t$ for $c'$ then $c' = c$. Aliases are aliases \emph{of a
+commitment}, never free-floating evidence.
+\item[P2, non-collapse.] No transcript digest in $\mathcal{T}(c)$, and no
+candidate the verifier is willing to promote to an identifier, equals a
+verifier-known constant. Concretely, $0^{63}1$ is rejected before it can become
+a funding, claim or challenge id. The constant-one branch is the historical
+instance; the property generalises to any degenerate digest.
+\item[P3, authority separation.] Admitting a transcript, handle or carrier never
+substitutes for spend authority. A route transcript candidate is not a spend
+authorisation; admissibility additionally requires live reserve evidence and an
+exact payout-vector commitment (Section~\ref{sec:handles}).
+\item[P4, rotation invariance.] For all $n, n' \in \mathcal{N}(c)$ the
+verifier's decision is identical. Handles index; they do not authorise.
+\end{description}
+
+The contrast with base-layer malleability is now precise. Pre-BIP62
+malleability was multiplicity over the \emph{txid}, in a system where the txid
+was also the commitment that downstream transactions spent from, so there was
+no stable $c$ above the moving identifier. The base-layer fix made the digest
+and the txid canonical. Overlays can re-admit multiplicity because their $c$ is
+not the txid: the seams have the same manifold shape, bound at a different
+point. That is what ``isomorphic'' means in the title.
 
 \section{Policy-Envelope Mapping as Method}
+\label{sec:envelope}
 
-The paper's methodological lens is a policy-envelope map rather than a fourth
-coequal protocol claim. Each measured surface falls into one of three buckets:
+The methodological lens is a policy-envelope map rather than a fourth coequal
+protocol claim. Each measured surface falls into one of three buckets:
 
 \begin{enumerate}
 \item \textbf{Replay-only fossils}: historically informative, but no longer
-clean live surfaces on Bitcoin today.
-\item \textbf{Ordinary historical cover}: surfaces that were already ordinary in
-their native Bitcoin era.
+clean live surfaces on Bitcoin today (FindAndDelete subsets, the constant-one
+branch, non-null dummies).
+\item \textbf{Ordinary historical cover}: surfaces that were already ordinary
+in their native era (the carrier specimens).
 \item \textbf{Clean modern isomorphisms}: live contemporary grafts that preserve
 the same abstract motif without relying on the old transaction form.
 \end{enumerate}
 
-This classification prevents a common failure mode in ``quirk mining'' papers:
-confusing a historical mechanism with a deployable modern protocol. Our
-framework is explicit that many legacy Bitcoin mechanisms should remain museum
-specimens, while their \emph{abstract shape} can still inform current overlay
-design.
+This classification prevents a common failure mode of ``quirk mining'':
+confusing a historical mechanism with a deployable modern protocol. Many legacy
+mechanisms should remain museum specimens while their abstract shape informs
+overlay design. The generated crosswalk
+(\texttt{artifacts/grants/policy\_envelope\_mapping.md}) assigns every fixture,
+carrier and live flow to a bucket together with its relay compatibility and
+execution role. Table~\ref{tab:envelope} gives the revised status by motif.
 
-\begin{center}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.21\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth} >{\raggedright\arraybackslash}p{0.24\linewidth}}
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{L{2.4cm}L{3.3cm}L{4.2cm}L{4.4cm}}
 \toprule
-Motif & Historical surface & Modern live isomorphism & Present status \\
+Motif & Historical surface & Modern isomorphism & Status (October 2026) \\
 \midrule
-Transcript multiplicity & FindAndDelete context splits; \texttt{SIGHASH\_SINGLE} degeneracy & Litecoin relay aliases and fused router-dispute graft & Live as a relay and dispute prelude motif \\
-Identifier bifurcation & Dummy-element txid variation & Litecoin namespace-labeled relays and fused router-dispute graft & Live as a namespace/search-surface motif \\
-Carrier camouflage & 2013 payout and redistribution topologies & Litecoin procedural-token settlement/dispute graphs; Bitcoin replay bench pending funded prevouts & Historically grounded; Bitcoin live materialization still incomplete \\
+Transcript multiplicity & FindAndDelete context splits; \texttt{SIGHASH\_SINGLE} degeneracy & LTCTEST relay aliases; fused router-dispute graft; UTXORef transcript switchboard; testnet4 route referee accepts \texttt{accepted\_transcript\_alias\_compact} & Live as relay and dispute prelude; bound to a confirmed Bitcoin testnet4 reserve \\
+Identifier bifurcation & Dummy-element txid variation & LTCTEST namespace relays; UTXORef namespace relay matrix; testnet4 route referee accepts \texttt{accepted\_identifier\_namespace\_rotated} & Live as namespace motif; bound to a confirmed Bitcoin testnet4 reserve \\
+Carrier camouflage & January 2014 payout and redistribution topologies & LTCTEST settlement and dispute graphs; UTXORef carrier shadow routes; testnet4 watchtower cadence referee with sweep, payout-batch and rebalance profiles & Historically grounded; referee-level on testnet4; on-chain Bitcoin carrier is still an explicit \texttt{OP\_RETURN}; funded oracle-sidecar replay pending \\
 \bottomrule
 \end{tabular}
+\caption{Motif status, revised.}
+\label{tab:envelope}
+\end{table}
+
+\section{From Motifs to Mechanism Handles}
+\label{sec:handles}
+
+The April draft stopped at Litecoin flow graphs. The UTXORef prototype layer
+\cite{dugan2026utxoref} has since turned the motifs into deterministic handles
+that existing Lightning, Taproot Assets, Ark and proof-execution prototypes
+carry in their evidence bundles, and bound those handles to confirmed Bitcoin
+testnet4 transactions through two off-chain referees.
+
+\subsection{Deterministic handle derivation}
+
+Let $h = H(\text{canonical semantic statement})$ be the
+\texttt{semanticStateHash} of one overlay claim. The mechanism catalogue derives,
+for a target protocol $p$:
+
+\begin{align*}
+\texttt{transcriptDigest}_k &= \mathrm{SHA256}(h \,\|\, \texttt{"|"} \,\|\, \texttt{packageClass}_k), \\
+\texttt{transcriptSwitchboardId} &= H(\{h, p, [\texttt{transcriptDigest}_k]_k\}), \\
+\texttt{publicHandleId}_j &= H(\{h, p, \texttt{handleRole}_j, \texttt{label}_j, j\}), \\
+\texttt{carrierCommitmentId}_m &= H(\{h, p, \texttt{carrierRouteId}_m, \texttt{ordinaryTopology}_m, m\}), \\
+\texttt{rejectionTripwireDigest} &= 0^{63}1 .
+\end{align*}
+
+Every handle is a function of $h$ (P1 and P4 by construction), the switchboard
+carries one explicitly rejected variant whose digest is the constant one (P2 as
+a catalogue entry rather than a comment), and none of the handles is consumed
+by any spend path (P3). Table~\ref{tab:targets} lists where the handles are
+bound.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{L{2.2cm}L{4.6cm}L{6.6cm}}
+\toprule
+Target & Prototype & Fields bound into evidence \\
+\midrule
+Lightning & liquidity lease (PTLC/adaptor success, timeout challenge) & \texttt{jurassicMechanismRefId}, \texttt{transcriptSwitchboardId}, watchtower \texttt{publicHandleId}, sweep or splice \texttt{carrierCommitmentId} in offer, success and challenge evidence \\
+Taproot Assets & RFQ stablecoin quote & \texttt{proofAnchorHandleId}, \texttt{proofCarrierCommitmentId}, \texttt{proofTranscriptDigest} in quote, settlement and challenge evidence \\
+Ark & liquidity graft & \texttt{roundClaimHandleId}, \texttt{roundCarrierCommitmentId}, \texttt{roundTranscriptDigest} in quote, settlement, challenge and bundle cores \\
+Shinigami-style & proof publication scaffold & verifier handle, proof blob reference, execution trace carrier; scaffold only, no external verifier claimed \cite{shinigami2024} \\
+\bottomrule
+\end{tabular}
+\caption{Mechanism handles bound into UTXORef prototype evidence.}
+\label{tab:targets}
+\end{table}
+
+\subsection{Quirk-indexed route referee on Bitcoin testnet4}
+
+The route referee binds a quirk route candidate to live reserve evidence before
+a BitVM route or spend proposal is treated as admissible application state. Its
+rule is the operational form of P3:
+
+\begin{center}
+\texttt{route transcript candidate $\neq$ spend authority.}
 \end{center}
 
-\section{BitVM Prototype Applications}
+A claim core carries the motif, a public handle, \texttt{semanticStateHash},
+\texttt{routeTranscriptHash}, \texttt{withdrawalRootHex},
+\texttt{finalOutputVectorHash}, \texttt{liveTraceHash}, the
+\texttt{reserveOutpoint}, and a challenge window. The referee admits a claim
+only if the route transcript hash is one of the candidates generated from the
+quirk manifest, the live trace hash matches the current import of the reserve
+vault, the withdrawal root matches the UTXORef withdrawal queue, the final output
+vector hash matches the expected payout vector, and the reserve is confirmed and
+CSV-safe. Four demo outcomes exercise the motifs: a compact transcript alias is
+accepted, a namespace-rotated handle over the same grant state is accepted, a
+mutated withdrawal root is rejected with reason \texttt{withdrawal\_root}, and
+an unknown route transcript is rejected with reason
+\texttt{route\_transcript\_candidate}.
 
-The current live prototype layer is deliberately framed as \emph{BitVM-style}
-application work, not as a claim that the legacy Bitcoin quirks directly
-implement BitVM \cite{linus2023bitvm}. The relevant applications are as follows.
+\subsection{Camouflaged watchtower cadence referee}
 
-\subsection{Motif Wrapper Versus Vanilla BitVM}
-
-Vanilla BitVM is best understood here as a dispute-oriented execution pattern:
-participants commit to a computation or state transition, and if one party
-publishes an incorrect claim, the protocol exposes that claim through a
-challenge path. The Jurassic Bitcoin grafts do not change that security model
-and do not require changing Bitcoin Core. Instead, they add a deterministic
-application wrapper around BitVM-style flows.
-
-The wrapper has three jobs. First, transcript multiplicity lets one committed
-state carry compact and full transcript packages, so a dispute graph can choose
-between short relay forms, full evidence forms, or challenge-specific witness
-narratives. Second, identifier bifurcation separates public handles from the
-semantic core: an oracle event, Taproot Assets proof anchor, watchtower alert,
-router branch, or proof package may all point back to the same committed state
-without overloading one identifier. Third, carrier camouflage treats publication
-as a placement problem. Instead of making every proof or sidecar look like a
-special protocol announcement, the prototype attaches carrier hints such as
-payout batches, rebalances, sweeps, wallet batches, or distribution shadows.
-
-The resulting architecture is therefore not ``better BitVM consensus.'' It is a
-product-facing packaging layer for BitVM-adjacent systems. A vanilla BitVM flow
-provides the cache, challenge, resolution, and payout edges. The Jurassic wrapper
-adds transcript aliases, namespace handles, carrier hints, procedural-token
-state, and observer artifacts that make those edges easier to route, index,
-audit, and integrate with TradeLayer, DLC sidecars, Lightning watchtowers,
-Taproot Assets anchors, Ark-style batches, or proof-carrying execution systems.
-The tradeoff is that the application layer now has more explicit watcher,
-indexing, naming, and artifact-management requirements. Those requirements are
-acceptable for the prototypes because they are deterministic and visible in the
-flow graph, but they should not be confused with a simplification of BitVM's
-underlying dispute assumptions.
-
-\subsection{Transcript Selector and Branch Packaging}
-
-Transcript multiplicity suggests a search bench for alternative dispute
-transcripts, branch packaging, and attestation forms. In the live Litecoin
-grafts, transcript aliases can be attached to the same contract reference before
-the route moves into challengeable branches. Binohash is an especially relevant
-comparison point because it makes transaction introspection itself into a
-programmable input to BitVM-adjacent designs \cite{linus2026binohash}.
-
-\subsection{Anchor and Session-ID Search}
-
-Identifier bifurcation suggests search surfaces for public handles: session ids,
-anchor names, rendezvous labels, or publication namespaces. The live namespace
-grafts demonstrate that these handles can move while the committed state stays
-fixed.
-
-\subsection{Challengeable Carrier-Style Routing}
-
-Carrier camouflage suggests that publication and settlement need not be thought
-of as isolated \texttt{OP\_RETURN}-style acts. Instead, they can be embedded in
-ordinary-looking payout and redistribution shapes. The live Litecoin prototypes
-show the operational side of that claim: one route can proceed to release while
-another is challenged and blocked.
-
-\subsection{Procedural-Token Flow Graphs}
-
-The most concrete prototype result is that the motifs can be integrated into
-procedural-token flow graphs. The current fused Litecoin experiment already
-supports:
-
-\begin{itemize}
-\item transcript and namespace preludes on the same contract reference,
-\item a short-epoch routing phase,
-\item BitVM-style cache opening,
-\item challenge and resolution phases,
-\item both released and blocked terminal outcomes.
-\end{itemize}
-
-This is the strongest evidence in the project that the motifs are not merely
-descriptive labels but operational design patterns.
+The second stage asks whether watchers are publishing timely, bound
+observations of an admitted route while keeping ordinary-looking publication
+profiles. A cadence claim binds the admitted \texttt{routeClaimHash}, the
+reserve outpoint, the live trace hash, a watchtower epoch, the expected cadence
+in blocks, a publication height, a carrier profile, a publication handle, and
+\[
+\texttt{semanticAlertHash} = H(\texttt{routeClaimHash}, \texttt{reserveOutpoint}, \texttt{watchtowerEpoch}),
+\]
+which is independent of the carrier handle, so the handle may rotate between
+\texttt{wallet\_sweep\_checkpoint}, \texttt{payout\_batch\_checkpoint} and
+\texttt{rebalance\_checkpoint} profiles while the alert core stays fixed. The
+demo accepts a sweep-like and a payout-batch checkpoint, rejects a stale
+checkpoint with reason \texttt{cadence\_freshness}, and rejects an alert handle
+that points at the wrong route claim with reason
+\texttt{publication\_handle\_binding}. Figure~\ref{fig:referees} shows the
+two-stage pattern.
 
 \begin{figure}[t]
 \centering
-\fbox{\parbox[c][1.7in][c]{0.9\linewidth}{\centering
-Figure placeholder.\\[0.5em]
-Fused procedural-token route with transcript and namespace preludes feeding a
-BitVM-style cache, challenge, resolve, and payout split.}}
-\caption{Live Litecoin flow-graph scaffold. Replace this placeholder with the
-hybrid router-dispute graph used in the fused procedural-token run.}
+\begin{tikzpicture}[node distance=0.5cm and 0.6cm]
+\node[wide] (cand) {Quirk route candidate\\\footnotesize motif, transcript alias or namespace, \texttt{routeTranscriptHash}};
+\node[wide, right=of cand] (route) {Route claim\\\footnotesize binds \texttt{semanticStateHash}, \texttt{withdrawalRoot}, \texttt{finalOutputVectorHash}, \texttt{liveTraceHash}, \texttt{reserveOutpoint}};
+\node[wide, right=of route] (cadence) {Cadence claim\\\footnotesize binds \texttt{routeClaimHash}, epoch, carrier profile, rotating handle, \texttt{semanticAlertHash}};
+\node[wide, below=of route] (live) {Live import\\\footnotesize testnet4 grant tx (h.\,133659) and P2TR reserve vault (h.\,143201)};
+\node[good, below=of cand] (ok1) {accept: alias compact; namespace rotated};
+\node[bad, below=of ok1] (no1) {reject: mutated withdrawal root; unknown transcript};
+\node[good, below=of cadence] (ok2) {accept: sweep-like; payout-batch checkpoint};
+\node[bad, below=of ok2] (no2) {reject: stale cadence; wrong-route handle};
+\draw[arr] (cand) -- (route);
+\draw[arr] (route) -- (cadence);
+\draw[arr] (live) -- (route);
+\draw[arr] (live.east) -| (cadence.south);
+\draw[arr, dashed] (route.south west) -- (ok1.north east);
+\draw[arr, dashed] (cadence.south) -- (ok2.north);
+\end{tikzpicture}
+\caption{Two-stage referee pattern: a quirk route candidate becomes a
+reserve-bound route claim, and only an admitted route claim can anchor a
+camouflaged watchtower cadence claim. Both referees are off-chain objects with
+challenge evidence; neither changes the vault spend path.}
+\label{fig:referees}
+\end{figure}
+
+\subsection{Live Bitcoin anchors and what they do and do not show}
+
+Table~\ref{tab:anchors} records the Bitcoin testnet4 transactions the referees
+import, with confirmation status checked for this revision. Three honest
+qualifications follow. First, the grant transaction is a bare
+\texttt{OP\_RETURN} with a 55-byte TradeLayer payload and no value output: it
+is exactly the explicit-marker shape that Motif~III argues against, so the
+camouflage demonstrated on Bitcoin lives in the referee's carrier
+\emph{profiles}, not yet in the on-chain footprint. Second, the reserve
+outpoint the July referee runs bind was spent four days later through a
+Taproot script path; an admitted claim is therefore a snapshot at the live
+import's height, and a fresh import yields a different \texttt{liveTraceHash}
+and a different admission. Third, both referees are off-chain: they decide what
+the application treats as admissible evidence, and the BitVM-style dispute
+assumption is unchanged.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{L{2.6cm}L{2.4cm}L{2.6cm}L{6.0cm}}
+\toprule
+Role & txid prefix & Confirmed & Shape \\
+\midrule
+\texttt{tlBTC} grant (TradeLayer tx11) & \texttt{7dec37be\ldots} & 133659, 2026-05-04 & 1 P2WPKH input; 1 \texttt{OP\_RETURN} output, 55-byte payload, 0 sats; 226 B \\
+UTXORef reserve vault & \texttt{93f953df\ldots} & 143201, 2026-07-06 & 1 P2WPKH input; output 0 P2TR 20{,}000 sats (the reserve), output 1 P2WPKH change \\
+Reserve spend & \texttt{63f71446\ldots} & 143690, 2026-07-10 & spends \texttt{93f953df\ldots:0} with a 4-element witness (script path); 1 P2WPKH output of 19{,}000 sats \\
+\bottomrule
+\end{tabular}
+\caption{Bitcoin testnet4 anchors imported by the referees, as of October 8, 2026.}
+\label{tab:anchors}
+\end{table}
+
+\section{Binohash-Level Primitives}
+\label{sec:primitives}
+
+The mechanism handles of Section~\ref{sec:handles} package the motifs for
+existing prototypes. This section goes one level deeper and asks the Binohash
+question directly \cite{linus2026binohash}: can each seam carry a
+\emph{named primitive} with a capability that plain Script lacks, a precise
+precondition, and an honest cost or policy line? We give three, each
+demonstrated by a deterministic, node-free invariant in
+\texttt{scripts/binohash\_level\_tools.py}. As with the seam reproduction, no
+signature is verified; the demonstration is a digest-level identity or
+collision bound, which does not depend on key validity. Every invariant below
+is reported \texttt{PASS} by the script, and each primitive is annotated with
+the admission properties (P1--P4) of Section~\ref{sec:formal} that it enforces.
+
+\subsection{Primitive 1: Append-Only Aggregatable Attestation}
+
+The constructive half of the \texttt{SIGHASH\_SINGLE} seam is not the collapse
+but \texttt{SIGHASH\_SINGLE|ANYONECANPAY}. Under that flag a signer's digest is
+a function of only its own input, its own output, and its index: ANYONECANPAY
+drops every other input from the hash, and SINGLE nulls the earlier outputs and
+truncates away the later ones. Independently produced ``slots'' therefore
+compose into one transaction without a re-signing round. This is the mechanism
+behind assurance contracts \cite{bitcoinwiki_contracts}; we lift it to
+threshold oracle attestation, where each oracle signs one
+(funding slot, payout slot) pair binding a shared event hash and an aggregator
+assembles any sufficient subset.
+
+The script demonstrates four facts about a three-oracle example. First, the
+checked signer's digest is unchanged when every other slot's input and output
+content is mutated (\texttt{digest\_independent\_of\_other\_slot\_content}):
+content independence is what lets slots be produced in isolation. Second,
+appending a later oracle slot leaves all earlier signers' digests fixed
+(\texttt{append\_later\_slot\_preserves\_earlier\_digests}): aggregation is
+append-only. Third, removing an \emph{earlier} slot changes a signer's digest
+(\texttt{remove\_earlier\_slot\_changes\_digest}), because SINGLE binds the
+signer to its output index; an aggregator may append and may rewrite other
+slots' contents, but it may not drop or reorder earlier slots. Fourth, a slot
+whose signed index has no output collapses to the constant one and is refused
+(\texttt{constant\_one\_collapse\_detected\_and\_refused}), which is property P2
+enforced at the point of use. The primitive enforces P1 (each payout output
+carries the event hash), P2, and P3 (a slot is evidence of one attestation, not
+spend authority over the aggregate). The precondition, stated honestly, is that
+signers agree on \texttt{nVersion} and \texttt{nLockTime} and that composition
+preserves index order.
+
+\subsection{Primitive 2: State-Bound Handle Rotation}
+
+The dummy-element seam moves the txid while the sighash is fixed, but the raw
+seam gives no way for a third party to tell an authentic rotation from an
+unrelated malleation. The primitive supplies the missing derivation:
+\[
+\texttt{handle} = H(\texttt{stateHash} \,\|\, \texttt{label} \,\|\, \texttt{epoch}),
+\]
+so an indexer verifies a rotation by one recomputation (property P4) and the
+handle is bound to the committed state (property P1) yet is never read by any
+spend path (property P3). The script shows two carriers for the same rotation.
+The \emph{legacy} carrier places the handle in the unused
+\texttt{CHECKMULTISIG} dummy: three epochs give three distinct txids over one
+fixed sighash digest (\texttt{legacy\_txid\_moves\_digest\_fixed}), the historic
+mechanism, which is policy-dead under \texttt{NULLDUMMY} and consensus-invalid
+for witness v0 \cite{bip147}. The \emph{witness-era} carrier is the deployable
+one: the committed state is anchored once in a byte-identical
+\texttt{OP\_RETURN} output while the rotating handle rides a second
+\texttt{OP\_RETURN} output, so the anchor is stable across epochs
+(\texttt{witness\_anchor\_fixed\_across\_rotation}) and the whole shape is
+relay-standard under Bitcoin Core 30.0 \cite{bitcoincore30}. All six handles
+recompute from the state (\texttt{all\_handles\_verify}). The overlay use is a
+rotating rendezvous, watchtower-alert, or proof-anchor handle over a fixed
+channel or reserve state, without re-anchoring the state. The honesty line from
+Section~\ref{sec:threats} carries over: rotation defeats third-party indexing,
+not linkage by anyone who holds \texttt{stateHash}.
+
+\subsection{Primitive 3: A Binohash Parameter Bench}
+
+The third primitive does not propose a competing scheme; it is a cost
+accountant for Binohash itself, so a protocol designer can choose parameters
+against a real line rather than a feeling \cite{linus2026binohash}. The script
+first reproduces the concrete degree of freedom: a redeemScript that embeds the
+pushes it is fed, so after FindAndDelete the signed scriptCode is a function of
+chosen data (\texttt{scriptcode\_is\_data\_dependent}). That is the surface
+Binohash grinds against. It then tabulates Linus' two-round parameters: with
+weights $W_1, W_2$ the digest has $W_1 + W_2$ bits of collision resistance at
+roughly $W_2 + 2.6$ bits of honest work. Table~\ref{tab:binohash} gives the
+line at an illustrative, configurable rented-GPU price; the
+$W_1 = W_2 = 42$ row lands at 84-bit resistance for well under the order of a
+hundred dollars of grinding, matching the regime Linus reports, while 56-bit
+weights are already economically out of reach. The value of the bench is that
+the knee of that curve is where a BitVM-bridge designer must sit: enough
+resistance to bind an introspected transaction, little enough work to grind at
+spend time.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{rrrrrr}
+\toprule
+$W_1$ & $W_2$ & Resistance (bits) & Honest work (bits) & Wall time (s) & Grind cost (USD) \\
+\midrule
+32 & 32 & 64 & 34.6 & 0.00 & 0.00 \\
+42 & 42 & 84 & 44.6 & 2.67 & 0.37 \\
+48 & 48 & 96 & 50.6 & 170.65 & 23.70 \\
+56 & 56 & 112 & 58.6 & 43687.56 & 6067.72 \\
+64 & 64 & 128 & 66.6 & 11184014.24 & 1553335.31 \\
+\bottomrule
+\end{tabular}
+\caption{Binohash grinding bench, generated by
+\texttt{scripts/binohash\_level\_tools.py}. Wall time assumes a modest rented
+fleet; cost assumes \$0.50 per GPU-hour at $10^{10}$ hashes per GPU-second.
+Both are configurable; the point is the shape of the knee, not the exact
+dollar figure.}
+\label{tab:binohash}
+\end{table}
+
+\subsection{What ``live'' means here}
+
+These are demonstrations, not broadcasts. Primitive 1's composability and
+Primitive 2's rotation are exact digest identities that hold for any key, and
+Primitive 3's bound is Linus' analysis reproduced against a cost model; all
+three run offline and deterministically. The nearest deployed relatives are
+the assurance-contract pattern for Primitive 1
+\cite{bitcoinwiki_contracts}, the oracle-sidecar and watchtower-beacon LTCTEST
+meshes already in the repository for Primitives 1 and 2, and BitVM bridges for
+Primitive 3 \cite{linus2025bitvm2}. We deliberately stop short of broadcasting
+funded Bitcoin transactions for these primitives: that step is the funded
+oracle-sidecar materialisation listed as future work in
+Section~\ref{sec:threats}, and it is gated on the same prevout funding as the
+replay bench.
+
+\section{BitVM Prototype Applications}
+\label{sec:bitvm}
+
+The live prototype layer is deliberately framed as \emph{BitVM-style}
+application work, not as a claim that the legacy quirks implement BitVM
+\cite{linus2023bitvm}.
+
+\subsection{Motif wrapper versus vanilla BitVM}
+
+Vanilla BitVM is a dispute-oriented execution pattern: participants commit to a
+computation or state transition, and if one party publishes an incorrect claim,
+the protocol exposes it through a challenge path. The Jurassic grafts do not
+change that security model and do not require changing Bitcoin Core. They add a
+deterministic application wrapper with three jobs. Transcript multiplicity lets
+one committed state carry compact and full transcript packages, so a dispute
+graph can choose between short relay forms, full evidence forms, or
+challenge-specific witness narratives. Identifier bifurcation separates public
+handles from the semantic core, so an oracle event, a Taproot Assets proof
+anchor, a watchtower alert, a router branch, or a proof package can all point
+back to one commitment without overloading one identifier. Carrier camouflage
+treats publication as a placement problem and attaches carrier hints such as
+payout batches, rebalances, sweeps, wallet batches, or distribution shadows.
+
+The resulting architecture is not ``better BitVM consensus.'' It is a
+product-facing packaging layer. A vanilla flow provides the cache, challenge,
+resolution and payout edges; the wrapper adds transcript aliases, namespace
+handles, carrier hints, procedural-token state and observer artifacts that make
+those edges easier to route, index, audit and integrate. The cost is that the
+application layer acquires explicit watcher, indexing, naming and
+artifact-management requirements. Those are acceptable in the prototypes because
+they are deterministic and visible in the flow graph; they are not a
+simplification of BitVM's dispute assumptions.
+
+\subsection{Procedural-token flow graphs}
+
+The most concrete prototype result is that the motifs integrate into
+procedural-token flow graphs. The fused LTCTEST experiment
+(\texttt{short\_epoch\_router\_dispute}) binds four relay preludes to one
+contract reference before settlement (two transcript-alias attestations tagged
+\texttt{aa} and \texttt{aaaa}, two namespace attestations whose blob references
+end in \texttt{namespace-zero} and \texttt{namespace-32}, a deliberate echo of
+Seams A and C), routes bucket loss through \texttt{pnl\_sweep}, opens two
+excess \texttt{bitvm\_cache} branches, and sends one through
+\texttt{bitvm\_challenge} to \texttt{bitvm\_resolve(reject)} and
+\texttt{bitvm\_payout} while the other resolves \texttt{uphold} and stays
+blocked (Figure~\ref{fig:fused-route}). One run therefore exhibits transcript
+and namespace preludes, a short-epoch routing phase, cache opening, challenge and
+resolution, and both released and blocked terminal outcomes.
+Table~\ref{tab:prototype-results} summarises every prototype surface and its
+current status.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.45cm and 0.5cm]
+\node[box] (commit) {Procedural token commit\\\footnotesize one contract ref};
+\node[box, above right=0.1cm and 0.5cm of commit] (alias) {Transcript aliases\\\footnotesize \texttt{aa}, \texttt{aaaa}};
+\node[box, below right=0.1cm and 0.5cm of commit] (ns) {Namespace handles\\\footnotesize \texttt{namespace-zero}, \texttt{namespace-32}};
+\node[box, right=3.4cm of commit] (sweep) {\texttt{pnl\_sweep}\\\footnotesize bucket loss};
+\node[box, above right=0.1cm and 0.5cm of sweep] (cacheA) {\texttt{bitvm\_cache} A};
+\node[box, below right=0.1cm and 0.5cm of sweep] (cacheB) {\texttt{bitvm\_cache} B};
+\node[good, right=of cacheA] (relA) {challenge $\to$ resolve(reject) $\to$ payout released};
+\node[bad, right=of cacheB] (blkB) {challenge $\to$ resolve(uphold) $\to$ payout blocked};
+\draw[arr] (commit) -- (alias);
+\draw[arr] (commit) -- (ns);
+\draw[arr] (alias) -- (sweep);
+\draw[arr] (ns) -- (sweep);
+\draw[arr] (sweep) -- (cacheA);
+\draw[arr] (sweep) -- (cacheB);
+\draw[arr] (cacheA) -- (relA);
+\draw[arr] (cacheB) -- (blkB);
+\end{tikzpicture}
+\caption{Fused LTCTEST router-dispute flow. Relay preludes for Motifs I and II
+sit on the same contract reference as the challengeable settlement graph.}
 \label{fig:fused-route}
 \end{figure}
 
 \begin{table}[t]
 \centering
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.27\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth} >{\raggedright\arraybackslash}p{0.15\linewidth} >{\raggedright\arraybackslash}p{0.22\linewidth}}
+\small
+\begin{tabular}{L{3.4cm}L{2.9cm}L{1.6cm}L{5.8cm}}
 \toprule
-Prototype surface & Motif emphasis & Live status & Notes \\
+Prototype surface & Motif emphasis & Status & Notes \\
 \midrule
-Transcript alias relay & Transcript multiplicity & Passed & Two accepted relay transcripts over one committed state \\
-Identifier namespace relay & Identifier bifurcation & Passed & Stable semantic state with rotated public labels \\
-Hybrid router-dispute flow & Carrier camouflage + dispute routing & Passed & Released and blocked terminal branches in one run \\
-Oracle sidecar mesh & All three motifs & Passed & Alias, namespace, and payout-shaped carrier hints on one sidecar state \\
-Watchtower beacon mesh & All three motifs & Passed & Compact/full alert proofs with rotating public handles \\
-Statechain handoff mesh & All three motifs & Passed & Alternate handoff transcripts plus rotated checkpoint handles \\
-Bitcoin oracle-sidecar replay & Carrier camouflage & Pending & Needs funded prevouts before live Bitcoin materialization \\
+Transcript alias relay & I & passed & two accepted relay transcripts over one committed state (LTCTEST) \\
+Identifier namespace relay & II & passed & stable semantic state with rotated public labels (LTCTEST) \\
+Hybrid router-dispute flow & III + dispute routing & passed & released and blocked terminal branches in one run (LTCTEST) \\
+Oracle sidecar mesh & I, II, III & passed & alias, namespace and payout-shaped carrier hints on one sidecar state \\
+Taproot Assets anchor mesh & I, II, III & registered & compact/full proof transcripts, rotated asset and universe handles, wallet-batch hints; live run ready \\
+Watchtower beacon mesh & I, II, III & passed & compact/full alert proofs with rotating public handles \\
+Statechain handoff mesh & I, II, III & passed & alternate handoff transcripts plus rotated checkpoint handles \\
+UTXORef mechanism refs & I, II, III & deterministic tests & handles bound into Lightning, Taproot Assets, Ark and scaffold evidence \\
+Quirk-indexed route referee & I, II & live import & bound to confirmed testnet4 grant and reserve; 2 accepted, 2 rejected cases \\
+Camouflaged watchtower cadence & III & live import & 2 accepted profiles, 2 rejected cases, over an admitted route claim \\
+Bitcoin oracle-sidecar replay & III & pending & synthetic replay stops at \texttt{missing-inputs}; needs funded prevouts \\
 \bottomrule
 \end{tabular}
-\caption{Representative prototype outcomes. This table can be tightened into a
-camera-ready results summary once final figure numbers and artifact references
-are fixed.}
+\caption{Prototype outcomes, revised. ``Passed'' rows have dated LTCTEST
+artifacts with txids; ``live import'' rows have confirmed testnet4 anchors.}
 \label{tab:prototype-results}
 \end{table}
 
+\subsection{Transcript selector, anchor search, carrier-style routing}
+
+Transcript multiplicity suggests a search bench for alternative dispute
+transcripts, branch packaging and attestation forms; Binohash is the relevant
+comparison point because it makes transaction introspection itself a
+programmable input to BitVM-adjacent designs \cite{linus2026binohash}.
+Identifier bifurcation suggests search surfaces for public handles: session
+ids, anchor names, rendezvous labels, publication namespaces. Carrier
+camouflage suggests that publication and settlement need not be isolated
+\texttt{OP\_RETURN}-style acts but can be embedded in ordinary-looking payout
+and redistribution shapes, with one route proceeding to release while another is
+challenged and blocked.
+
 \section{Applications Beyond BitVM}
+\label{sec:beyond}
 
-The project began with BitVM-style dispute flows because they provide a clean
-modern setting in which branch selection, relay freedom, and publication
-topology can all be made visible at once. However, the same three motifs also
-admit non-BitVM application meshes, and the repository now includes live
-Litecoin proofs for three such cases.
+The same three motifs admit non-BitVM application meshes, and the repository
+includes live LTCTEST proofs for several.
 
-\subsection{Oracle Sidecars}
+\paragraph{Oracle sidecars.} The \emph{oracle sidecar mesh} binds one semantic
+sidecar state to two transcript aliases (``fast'' and ``full'' attestations),
+two public namespace handles, and two payout-shaped carrier hints modelled on
+the spray and exact-value specimens of Table~\ref{tab:carriers}. The Bitcoin
+replay bench for the same sidecars is where P2 first appeared operationally: the
+synthetic casebook includes two constant-one publications that the hazard
+filter rejects by construction.
 
-The first non-BitVM application is a DLC or oracle-sidecar publication surface.
-The live \emph{oracle sidecar mesh} binds one semantic sidecar state to two
-distinct transcript aliases, two public namespace handles, and two
-payout-shaped carrier hints. Concretely, the current LTCTEST prototype accepts
-``fast'' and ``full'' attestations, rotates the public handle of the same state
-between versioned sidecar labels, and associates the publication with carrier
-profiles modeled on ordinary 2013 payout families. This is a direct example of
-how transcript multiplicity, identifier bifurcation, and carrier camouflage can
-co-exist without the application itself being framed as a BitVM dispute graph.
+\paragraph{Watchtower beacons.} The \emph{watchtower beacon mesh} expresses one
+alert state through compact and full proof transcripts with a rotating public
+alert handle and rebalance- or sweep-shaped carrier hints. The testnet4 cadence
+referee is the reserve-bound continuation of this mesh. Pisa's
+accountable-watchtower model is the natural comparison: our contribution is the
+packaging and publication surface, not the accountability mechanism
+\cite{mccorry2019pisa}.
 
-\subsection{Watchtower Beacons}
+\paragraph{Statechain handoffs.} The \emph{statechain handoff mesh} treats an
+ownership transition as a fixed core with acknowledgement and finalisation
+transcripts, rotated checkpoint handles, and ordinary checkpoint publication
+shapes \cite{somsen2018statechains}.
 
-The second non-BitVM application is a watchtower or fraud-monitor beacon
-surface. The live \emph{watchtower beacon mesh} shows that one alert state can
-be expressed through compact and full proof transcripts, while the public alert
-handle rotates independently of the semantic core. The same prototype also tags
-the alert publication with ordinary wallet-traffic carrier hints such as
-rebalance and sweep patterns. That gives a live proof that watcher systems can
-use the three motifs as engineering knobs for proof packaging, search-surface
-design, and publication cover.
+\paragraph{Taproot Assets anchors.} The \emph{Taproot Assets anchor mesh}
+splits one asset transition into compact and full proof packages, rotates
+asset-id and universe-anchor handles, and publishes under wallet-batch or
+distribution-shadow hints \cite{osuntokun2022taprootassets}; the UTXORef RFQ
+prototype carries the corresponding handle ids.
 
-\subsection{Statechain Handoffs}
+\paragraph{Lightning deposits into tokenised BTC.} The LN-to-\texttt{tlBTC}
+path that produced the testnet4 grant is itself a small instance of all three
+motifs: the deposit carries a wallet invoice receipt, a bridge receipt and a
+grant transcript that all bind one payment hash; the invoice id, request id and
+property id are distinct handles over that hash; and the on-chain action is an
+ordinary managed-token grant rather than a bespoke transaction shape (with the
+qualification of Section~\ref{sec:handles} that the grant is an explicit
+\texttt{OP\_RETURN}).
 
-The third non-BitVM application is a statechain-style handoff checkpoint. The
-live \emph{statechain handoff mesh} treats the ownership transition as a fixed
-semantic core while permitting two handoff transcripts (acknowledgement and
-finalization), two rotated checkpoint handles, and two ordinary checkpoint
-publication shapes. This is especially useful for the paper because it shows
-that the same motifs are not confined to oracle publication or challenge
-systems; they also apply to off-chain transfer and checkpoint protocols that
-need observable but non-rigid coordination surfaces.
+\section{Threat Model and Limitations}
+\label{sec:threats}
 
-Taken together, these three meshes strengthen the paper's central claim. The
-repository is no longer merely showing that old Bitcoin seams can be lifted into
-BitVM-flavored demos. It now shows that the same historical abstractions can be
-ported into oracle publication, watcher beacons, and statechain-style handoff
-surfaces while remaining measurable, executable, and policy-envelope aware.
+\paragraph{Re-imported malleability.} If an overlay keys state on a transcript
+digest rather than on $c$, aliases become double-count or replay vectors: a
+retry-equivalent success proof would be credited twice. P1 and application-level
+idempotence on $\mathcal{T}(c)$ are the mitigations, and the prototypes mark
+retry-equivalent packages explicitly so that settlement logic can collapse them.
+
+\paragraph{Collapse hazards beyond the constant one.} P2 names $0^{63}1$ because
+that is the historical instance, but any digest that is independent of the
+claimed state is equally dangerous. The tripwire should be a predicate over
+degenerate inputs (out-of-range indices, empty output sets, zero-length
+transcripts), not a single blacklisted value.
+
+\paragraph{Handle rotation is not privacy against the verifier.} Rotation
+defeats naive indexing by third parties, but anyone holding $h$ can link every
+handle in $\mathcal{N}(c)$, by construction. The motif is a namespace property;
+it is not an unlinkability guarantee. Rotation also raises observer cost: a
+watcher must index every handle class, which is why the prototypes emit the
+handle derivations as artifacts.
+
+\paragraph{Carrier camouflage: efficacy and ethics.} With Core 30.0 policy
+(Section~\ref{sec:drift}), explicit carriers are relay-standard, so camouflage
+no longer buys admission. What remains is resistance to protocol
+fingerprinting and a fee profile aligned with ordinary traffic. That is a
+legitimate goal with precedent in PayJoin \cite{bip78}, but ``ordinary-looking''
+can also be read as evasion of a node operator's stated policy. We restrict the
+claim to protocol self-fingerprinting, and we note that the Bitcoin-side
+artifacts produced so far are explicit \texttt{OP\_RETURN} transactions: the
+camouflage thesis is demonstrated at the referee layer and on LTCTEST, not yet
+in Bitcoin's on-chain footprint.
+
+\paragraph{Oracle and shadow limits.} \texttt{testmempoolaccept} reports current
+policy at the tip, not historical block validation; the Rust shadow executes a
+narrow opcode slice; the synthetic Bitcoin replay fixtures stop at
+\texttt{missing-inputs} until real prevouts are funded. The analytic
+reproduction of Section~\ref{sec:measured} is deliberately independent of all
+three so that the digest-level claims do not inherit those limits.
+
+\paragraph{Litecoin is not Bitcoin.} LTCTEST is a live engineering environment
+with TradeLayer available, not evidence about Bitcoin consensus. The testnet4
+work narrows that gap for the reserve-bound referees but not for the
+procedural-token flows.
+
+\paragraph{Snapshot evidence.} The reserve outpoint bound by the July referee
+runs has since been spent (Table~\ref{tab:anchors}). Admission is relative to a
+live import, and the referee rejects stale trace hashes by design; readers
+reproducing the demo should expect a fresh import to change the admitted set.
+
+\paragraph{No on-chain enforcement.} The mechanism handles and both referees are
+off-chain objects. They decide what an application treats as admissible
+evidence and produce challenge evidence for disputes; they do not change the
+Taproot vault spend path, Bitcoin consensus, or BitVM's underlying dispute
+assumptions.
 
 \section{Discussion}
 
 The useful interpretation of these results is not that old Bitcoin bugs should
 be revived. It is that historical Bitcoin reveals protocol degrees of freedom
-that can be abstracted and measured. Some of those degrees of freedom are
-cryptographic, such as digest aliasing or txid movement. Others are topological,
-such as publication inside ordinary payout structure. The project's value lies
-in making those degrees of freedom reproducible, classifiable, and portable into
-modern experimental grafts.
-
-This also clarifies the role of Litecoin in the project. Litecoin is not
-presented as a substitute claim about Bitcoin consensus. It is used as a live
-engineering environment where the motifs can be integrated with TradeLayer and
-BitVM-style flows, demonstrating that the abstractions are fertile enough to
-support working prototypes. That combination of historical corpus extraction,
-replay, and live cross-environment grafting is methodologically closest to the
-``observe, replay, differential-check, then generalize'' pattern seen in
-consensus bug-finding work \cite{yang2021fluffy,kim2025fork}.
+that can be abstracted and measured. Some are cryptographic, such as digest
+aliasing or txid movement; others are topological, such as publication inside
+ordinary payout structure. The project's value lies in making those degrees of
+freedom reproducible, classifiable and portable into modern experimental
+grafts, with the four properties of Section~\ref{sec:formal} as the admission
+test. That Binohash independently made the FindAndDelete seam load-bearing for
+transaction introspection suggests the vein is real; this paper's claim is
+narrower and complementary, namely that the same seams, read as motifs, give
+overlay designers a vocabulary for coordination surfaces they already build by
+hand.
 
 \section{Future Work}
 
-The next steps fall into three categories.
+\paragraph{Bitcoin-side materialisation.} Since April, the testnet4 grant and
+reserve vault have been confirmed and bound into the referees. The remaining
+Bitcoin-side blocker is funded-prevout materialisation for the oracle-sidecar
+replay bench, so that the carrier-camouflage thesis can be evaluated against a
+live Bitcoin carrier rather than an explicit \texttt{OP\_RETURN}. A second step
+is to re-import the reserve after its spend and record how admission changes.
 
-\subsection{Bitcoin-side materialization}
+\paragraph{Reusable overlay templates.} The UTXORef mechanism catalogue is a
+first step from scenario-specific harnesses toward parametric declarations of
+relay preludes, routing buckets and dispute edges. The next step is to make the
+flow-graph fixtures the source of truth for both the LTCTEST runners and the
+referees.
 
-The main remaining Bitcoin-side blocker is funded-prevout materialization for
-the oracle-sidecar replay benches. Once the replay fixtures spend real inputs,
-the carrier-camouflage thesis can be evaluated against live Bitcoin behavior
-rather than only against historical extraction and synthetic replay structure.
+\paragraph{Generalised tripwire.} Replace the single constant-one check with a
+predicate over degenerate digest inputs, and add the \texttt{SIGHASH\_SINGLE}
+hazard family to the regtest seams as policy-stamped controls.
 
-\subsection{Reusable overlay templates}
+\paragraph{Mainnet Litecoin and later Bitcoin windows.} Rerun the ossification
+walk against Litecoin mainnet, and extend the Bitcoin tour through the BIP65
+and CSV boundaries listed in Table~\ref{tab:windows}.
 
-The current Litecoin prototypes are already live, but they still exist as
-scenario-specific harnesses. A natural next step is to encode them as reusable
-flow-graph templates where relay preludes, routing buckets, and dispute edges
-are declared parametrically rather than by one-off scripts.
+\paragraph{Binohash-style adaptation by other developers.} The broader agenda
+is to encourage other Bitcoin developers to mine these motifs: alternative
+transcript alias surfaces for challenge systems, new namespace or anchor search
+constructions, ordinary transaction topology as commitment cover, contract-layer
+analogues of the same manifold shapes, and DLC or BitVM systems that use relay
+and identifier freedom without depending on policy-rejected legacy forms
+\cite{linus2026binohash}. The message to the community is intentionally
+modest: take these motifs, test them inside your own covenant, DLC, watchtower,
+wallet-coordination or BitVM-adjacent setting, and see whether they open design
+space without inheriting the old pathologies.
 
-\subsection{Binohash-style adaptation by other developers}
+\section*{Artifacts and Reproduction}
 
-The broader research agenda is to encourage other Bitcoin developers to mine
-these motifs in new ways. ``Binohash-style'' is the right shorthand here because
-it captures the larger move of treating old script and transaction boundary
-conditions as raw material for new introspection-capable constructions rather
-than as dead historical accidents \cite{linus2026binohash}:
-
-\begin{itemize}
-\item alternative transcript alias surfaces for challenge systems,
-\item new namespace or anchor search constructions,
-\item novel uses of ordinary transaction topology as commitment cover,
-\item covenant-like or contract-layer analogues of the same manifold shapes,
-\item DLC and BitVM systems that make deliberate use of relay and identifier
-freedom without depending on legacy policy-rejected transaction forms.
-\end{itemize}
-
-Instructionally, the message to the broader Bitcoin development community is
-simple and intentionally modest. The ecosystem now includes individual
-maintainers, new contributors, nonprofits, research groups, wallet teams,
-infrastructure companies, and protocol startups with very different goals and
-risk tolerances. This paper is not asking that community to standardize around
-the specific Litecoin grafts or to rehabilitate Jurassic-era transaction forms.
-It is offering a small toolkit of strange but measured abstractions, together
-with application examples, and suggesting a directionally correct next step:
-take these motifs, test them inside your own covenant, DLC, watchtower,
-wallet-coordination, or BitVM-adjacent setting, and see whether they open new
-design space without inheriting the old pathologies.
-
-In that sense, the project's goal is not to close the book on Jurassic Bitcoin.
-It is to make the fossils legible enough that other protocol engineers can adapt
-their abstract affordances elsewhere.
-
-\section*{Artifacts}
-
-Representative repository artifacts include:
+Representative repository artifacts:
 
 \begin{itemize}
-\item \texttt{artifacts/grants/overlay\_hook\_summary.md}
-\item \texttt{artifacts/grants/overlay\_carrier\_bench\_2013.md}
-\item \texttt{artifacts/grants/policy\_envelope\_mapping.md}
-\item \texttt{docs/grants/four\_ossification\_proposals.md}
-\item \texttt{docs/litecoin-bitvm/procedural\_tokens.md}
+\item \texttt{scripts/seam\_digests\_standalone.py} and
+\texttt{docs/grants/seam\_digests\_standalone.\{json,md,tex\}}: the analytic
+reproduction behind Tables~\ref{tab:seamA}--\ref{tab:seamC}.
+\item \texttt{scripts/binohash\_level\_tools.py} and
+\texttt{docs/grants/binohash\_level\_tools.\{json,md\}}: the three primitives of
+Section~\ref{sec:primitives} with their PASS/FAIL invariants and the cost line
+of Table~\ref{tab:binohash}.
+\item \texttt{fixtures/manifests/*\_core\_seam\_poc.json},
+\texttt{payout\_2013\_carrier\_camouflage.json},
+\texttt{oracle\_sidecar\_2013\_replay\_poc.json}: seam and carrier manifests.
+\item \texttt{artifacts/grants/policy\_envelope\_mapping.md},
+\texttt{overlay\_hook\_summary.md}, \texttt{overlay\_carrier\_bench\_2013.md},
+\texttt{bitcoin\_defi\_graft\_map.md}: generated crosswalks.
+\item \texttt{docs/litecoin-bitvm/procedural\_tokens.md} and
+\texttt{fixtures/litecoin-bitvm/procedural\_flow\_graphs.json}: the LTCTEST
+flow graphs.
+\item In UTXO-Ref: \texttt{bitvm3/utxo\_referee/jurassic\_bitvm\_mechanisms.js},
+\texttt{quirk\_indexed\_route\_referee.js},
+\texttt{camouflaged\_watchtower\_cadence\_referee.js} and their reports.
 \end{itemize}
+
+Representative commands:
+
+\begin{verbatim}
+python scripts/seam_digests_standalone.py
+python scripts/binohash_level_tools.py
+cargo run -p jurassic-bitcoin-cli -- mint-findanddelete-seam \
+  --out fixtures/blobs/p2sh-findanddelete-core-seam.json
+cargo run -p jurassic-bitcoin-cli -- replay-era \
+  --manifest fixtures/manifests/p2sh_findanddelete_core_seam_poc.json \
+  --out-dir artifacts/p2sh-findanddelete-core-seam --limit-per-epoch 50 --force
+cargo run -p jurassic-bitcoin-cli -- report \
+  --dir artifacts/p2sh-findanddelete-core-seam --format latex
+node bitvm3/utxo_referee/quirk_indexed_route_demo.js
+node bitvm3/utxo_referee/camouflaged_watchtower_cadence_demo.js
+\end{verbatim}
 
 \section*{Conclusion}
 
 Bitcoin's old quirks are not just anecdotes. When measured carefully, they
 define reproducible search surfaces. Transcript multiplicity, identifier
-bifurcation, and carrier camouflage together form a compact vocabulary for
-reasoning about how ossified historical behavior can inspire modern overlay
-systems. The toolchain and prototypes in this repository show that such motifs
-can be extracted, classified, and experimentally lifted into live BitVM-style
-applications without confusing historical fossils for deployable mechanisms.
+bifurcation and carrier camouflage together form a compact vocabulary for
+reasoning about how ossified historical behaviour can inspire modern overlay
+systems, and semantic binding, non-collapse, authority separation and rotation
+invariance are the conditions under which that inspiration is safe to act on.
+The toolchain, the analytic reproduction, the three Binohash-level primitives,
+the Litecoin grafts and the testnet4-bound referees in these repositories show
+that the motifs can be extracted, classified, formalised, turned into specified
+primitives with checkable invariants, and lifted into live BitVM-style and
+non-BitVM applications without confusing historical fossils for deployable
+mechanisms.
 
 \bibliographystyle{plain}
 \bibliography{jurassic_design_motifs}

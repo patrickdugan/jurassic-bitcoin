@@ -1,0 +1,185 @@
+{
+  "kind": "jurassic_seam_digests_standalone",
+  "version": 1,
+  "notes": [
+    "pure-function reproduction; no node, no RPC, no signatures verified",
+    "digest hex is byte-reversed (uint256::GetHex style)",
+    "keys and prevouts are deterministic sha256 placeholders"
+  ],
+  "seams": [
+    {
+      "seam": "findanddelete_context_split",
+      "motif": "transcript_multiplicity",
+      "redeem_script_hex": "01aa7501bb755221022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f182702102738ade19f2b83eb400fc00011c5fd6de69ca8c641a94f50fb3cc209a76bf6b1f210246662429ab957f4b35f56e0e2a32bc1f229210aaf4199745a0cc589323e6e7c453ae",
+      "script_pubkey_hex": "a91492afb0fc9297cc785091a15410cbd2f67e16f86b87",
+      "sighash_type": "0x01",
+      "rows": [
+        {
+          "variant": "baseline_cc",
+          "signatures": [
+            "cc"
+          ],
+          "note": "signature absent from scriptCode: nothing deleted",
+          "pushes_removed": 0,
+          "script_code_hex": "01aa7501bb755221022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f182702102738ade19f2b83eb400fc00011c5fd6de69ca8c641a94f50fb3cc209a76bf6b1f210246662429ab957f4b35f56e0e2a32bc1f229210aaf4199745a0cc589323e6e7c453ae",
+          "script_code_sha256": "504221f54f4b356117c320e4f2caeff26fdedfd300c8edd7d25f2f8e798be2c6",
+          "txid": "2640844b2518cdec364478d7698524acaa078766ee201098e50af35794fcadb0",
+          "sighash_digest": "b5dd22b737b575b1e048d127793deb7cf4e34b4caa69f6a6d18f47b93b7e5da7"
+        },
+        {
+          "variant": "subset_aa",
+          "signatures": [
+            "aa"
+          ],
+          "note": "one aa signature: both aa pushes deleted",
+          "pushes_removed": 1,
+          "script_code_hex": "7501bb755221022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f182702102738ade19f2b83eb400fc00011c5fd6de69ca8c641a94f50fb3cc209a76bf6b1f210246662429ab957f4b35f56e0e2a32bc1f229210aaf4199745a0cc589323e6e7c453ae",
+          "script_code_sha256": "784d55748eaffe8133d3d9c73318458536a6ccfe13bc3fc72ff2709558b65dad",
+          "txid": "2c5e38810332aa8add9b659dc0c802c0b745348348a8c5f4911db59002c78528",
+          "sighash_digest": "fdd8e6839fef0aeb770b0c1fe68bb25e962d112471ff901dc9bb0d0eaab8fb59"
+        },
+        {
+          "variant": "subset_aaaa",
+          "signatures": [
+            "aa",
+            "aa"
+          ],
+          "note": "two aa signatures: same scriptCode as subset_aa",
+          "pushes_removed": 1,
+          "script_code_hex": "7501bb755221022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f182702102738ade19f2b83eb400fc00011c5fd6de69ca8c641a94f50fb3cc209a76bf6b1f210246662429ab957f4b35f56e0e2a32bc1f229210aaf4199745a0cc589323e6e7c453ae",
+          "script_code_sha256": "784d55748eaffe8133d3d9c73318458536a6ccfe13bc3fc72ff2709558b65dad",
+          "txid": "553aafc7b3d18f0b103b65bfdd01042f83cb34373a51f545e4bca8822e59b78f",
+          "sighash_digest": "fdd8e6839fef0aeb770b0c1fe68bb25e962d112471ff901dc9bb0d0eaab8fb59"
+        },
+        {
+          "variant": "subset_aabb",
+          "signatures": [
+            "aa",
+            "bb"
+          ],
+          "note": "aa and bb: a second push class is deleted",
+          "pushes_removed": 2,
+          "script_code_hex": "75755221022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f182702102738ade19f2b83eb400fc00011c5fd6de69ca8c641a94f50fb3cc209a76bf6b1f210246662429ab957f4b35f56e0e2a32bc1f229210aaf4199745a0cc589323e6e7c453ae",
+          "script_code_sha256": "0efad003bc30a61aa377bb8713ef6f0132acec6ee3d23a7a1cef65bb55f4df2a",
+          "txid": "3e34923ce6bf0df718b15b10935d612c034673eb7c38d046144226db8a90cf03",
+          "sighash_digest": "6fb01edab44922f39002649e93a2a1197a5a4afdfaa47b480457b11d76d72017"
+        }
+      ],
+      "digest_classes": {
+        "b5dd22b737b575b1e048d127793deb7cf4e34b4caa69f6a6d18f47b93b7e5da7": [
+          "baseline_cc"
+        ],
+        "fdd8e6839fef0aeb770b0c1fe68bb25e962d112471ff901dc9bb0d0eaab8fb59": [
+          "subset_aa",
+          "subset_aaaa"
+        ],
+        "6fb01edab44922f39002649e93a2a1197a5a4afdfaa47b480457b11d76d72017": [
+          "subset_aabb"
+        ]
+      },
+      "claims": [
+        "subset_aa and subset_aaaa share one sighash digest (FindAndDelete is idempotent per push class)",
+        "subset_aabb has a distinct digest under the same spend family and the same policy envelope",
+        "every variant has a distinct txid because the scriptSig differs; the digest classes are what the motif is about"
+      ]
+    },
+    {
+      "seam": "sighash_single_degeneracy",
+      "motif": "transcript_multiplicity_hazard",
+      "script_code_hex": "76a9142156a52c32408dd5076e45bd7de566787cab080b88ac",
+      "constant_one_digest": "0000000000000000000000000000000000000000000000000000000000000001",
+      "rows": [
+        {
+          "variant": "sighash_single_bug",
+          "sighash_type": "0x03",
+          "inputs": 2,
+          "outputs": 1,
+          "input_index": 1,
+          "note": "2-in/1-out, sign input 1 with SINGLE",
+          "txid_unsigned_template": "3efbee593b9e1487c13ee97732934a2167228e525668b212dbe81ecd3a916f53",
+          "sighash_digest": "0000000000000000000000000000000000000000000000000000000000000001",
+          "constant_one": true
+        },
+        {
+          "variant": "sighash_single_bug_anyonecanpay",
+          "sighash_type": "0x83",
+          "inputs": 2,
+          "outputs": 1,
+          "input_index": 1,
+          "note": "2-in/1-out, SINGLE|ANYONECANPAY",
+          "txid_unsigned_template": "3efbee593b9e1487c13ee97732934a2167228e525668b212dbe81ecd3a916f53",
+          "sighash_digest": "0000000000000000000000000000000000000000000000000000000000000001",
+          "constant_one": true
+        },
+        {
+          "variant": "sighash_single_control",
+          "sighash_type": "0x03",
+          "inputs": 2,
+          "outputs": 2,
+          "input_index": 1,
+          "note": "2-in/2-out, sign input 1 with SINGLE",
+          "txid_unsigned_template": "3c67bf11833c73afec37cf075d1c0d7a4ebda4d5a86de8181d50e7b7176df6ca",
+          "sighash_digest": "7f39cc0c32cd3c5a288d020f113f6cfeaf4438944ffffbd68c0b84bbca14c4e2",
+          "constant_one": false
+        },
+        {
+          "variant": "sighash_single_control_anyonecanpay",
+          "sighash_type": "0x83",
+          "inputs": 2,
+          "outputs": 2,
+          "input_index": 1,
+          "note": "2-in/2-out, SINGLE|ANYONECANPAY",
+          "txid_unsigned_template": "3c67bf11833c73afec37cf075d1c0d7a4ebda4d5a86de8181d50e7b7176df6ca",
+          "sighash_digest": "f0d98ef6e3f1547f3583affbbf4ef714c15b0315225d3b0be305cf3b38763503",
+          "constant_one": false
+        }
+      ],
+      "claims": [
+        "both bug specimens collapse to the constant-one digest regardless of ANYONECANPAY",
+        "both controls produce ordinary, distinct digests",
+        "a signature over the constant-one digest is valid for any transaction that reaches the same out-of-range branch, which is why overlays must treat it as a rejection tripwire, never as an identifier"
+      ]
+    },
+    {
+      "seam": "dummygrind_txid_axis",
+      "motif": "identifier_bifurcation",
+      "redeem_script_hex": "5121022a20fb39a27fe7417776adc7ab5cad661bf312f6dee74b0ce13c547196f1827051ae",
+      "script_pubkey_hex": "a914a5f751fdaf927da1743703877544340a03fbfa0c87",
+      "rows": [
+        {
+          "variant": "dummygrind_empty",
+          "dummy_hex": "",
+          "dummy_push_hex": "00",
+          "note": "empty vector dummy (OP_0): the NULLDUMMY-clean form",
+          "txid": "645c0d4006a4cec04eef1fc75626b491c768a2819798e3c1ff4f6b77bc284add",
+          "sighash_digest": "f5f83c1dd45ccc264b03107fcd874fe21ebe6237d6f547f511fcba84451ef888",
+          "policy_note": "non-empty dummy violates SCRIPT_VERIFY_NULLDUMMY (standardness for legacy, consensus for witness v0 since BIP147)"
+        },
+        {
+          "variant": "dummygrind_zero",
+          "dummy_hex": "00",
+          "dummy_push_hex": "0100",
+          "note": "one-byte zero push (01 00): same numeric value, different bytes",
+          "txid": "53c89506fc9fa99fb6c268f5316aca67e9de31ac66ae66853d24d3895f9cb247",
+          "sighash_digest": "f5f83c1dd45ccc264b03107fcd874fe21ebe6237d6f547f511fcba84451ef888",
+          "policy_note": "non-empty dummy violates SCRIPT_VERIFY_NULLDUMMY (standardness for legacy, consensus for witness v0 since BIP147)"
+        },
+        {
+          "variant": "dummygrind_32",
+          "dummy_hex": "0000000000000000000000000000000000000000000000000000000000000000",
+          "dummy_push_hex": "200000000000000000000000000000000000000000000000000000000000000000",
+          "note": "32-byte dummy: a 256-bit free field in the unlocking data",
+          "txid": "ceaa66e4a25c06f75dac4f78bf2353d1f7ea63ae50c0a098128b1fd2146927ce",
+          "sighash_digest": "f5f83c1dd45ccc264b03107fcd874fe21ebe6237d6f547f511fcba84451ef888",
+          "policy_note": "non-empty dummy violates SCRIPT_VERIFY_NULLDUMMY (standardness for legacy, consensus for witness v0 since BIP147)"
+        }
+      ],
+      "distinct_txids": 3,
+      "distinct_sighash_digests": 1,
+      "claims": [
+        "three distinct txids over one unchanged sighash digest: the public identifier moves while the committed core is fixed",
+        "no re-signing is needed because the legacy digest blanks every scriptSig and substitutes the redeemScript"
+      ]
+    }
+  ]
+}
