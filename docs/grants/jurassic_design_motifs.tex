@@ -45,9 +45,10 @@ live TradeLayer prototypes with BitVM-style dispute flows
 This revision adds a node-free analytic reproduction of the three seams (every
 digest quoted here can be recomputed from one dependency-free script), a minimal
 formalisation of what controlled freedom requires (semantic binding,
-non-collapse, and authority separation), three Binohash-level primitives (one
-per seam) that each carry a capability plain Script lacks and a deterministic
-invariant, the UTXORef mechanism layer that turns the motifs into deterministic
+non-collapse, and authority separation), four Binohash-level primitives that
+each carry a capability plain Script lacks and a deterministic invariant, a
+limits result that records three Binohash-covenant escalations that break and
+why, the UTXORef mechanism layer that turns the motifs into deterministic
 handles bound to confirmed Bitcoin testnet4 evidence, and an explicit threat
 model. The point is not to revive old bugs. It
 is to translate fossilised Bitcoin behaviour into usable mechanics, in the
@@ -131,10 +132,15 @@ reproduction so the cryptographic facts can be checked without a node.
 \item A minimal formalisation of controlled freedom: four properties
 (semantic binding, non-collapse, authority separation, rotation invariance)
 that separate a usable isomorphism from a re-imported malleability bug.
-\item Three Binohash-level primitives, one per seam (append-only aggregatable
-attestation, state-bound handle rotation, and a Binohash parameter bench),
-each demonstrated by a deterministic node-free invariant and annotated with the
-admission properties it enforces.
+\item Four Binohash-level primitives (append-only aggregatable attestation,
+state-bound handle rotation, a Binohash parameter bench, and a
+SINGLE-authored/ALL-frozen settlement that gets per-contributor output rows and
+a closed template with no soft fork), each demonstrated by a deterministic
+node-free invariant and annotated with the admission properties it enforces.
+\item A limits result: three natural Binohash-covenant escalations that each
+break, for two recurring reasons (the deleted push must be a verifying
+signature; a core commits its own prevout) plus the reusable constant-one, with
+the mechanism behind each break reproduced node-free.
 \item A policy-envelope mapping method that separates replay-only fossils,
 ordinary historical cover, and clean modern isomorphisms.
 \item Live prototype grafts: nine LTCTEST procedural-token flow graphs, eight of
@@ -797,13 +803,16 @@ The mechanism handles of Section~\ref{sec:handles} package the motifs for
 existing prototypes. This section goes one level deeper and asks the Binohash
 question directly \cite{linus2026binohash}: can each seam carry a
 \emph{named primitive} with a capability that plain Script lacks, a precise
-precondition, and an honest cost or policy line? We give three, each
-demonstrated by a deterministic, node-free invariant in
-\texttt{scripts/binohash\_level\_tools.py}. As with the seam reproduction, no
-signature is verified; the demonstration is a digest-level identity or
-collision bound, which does not depend on key validity. Every invariant below
-is reported \texttt{PASS} by the script, and each primitive is annotated with
-the admission properties (P1--P4) of Section~\ref{sec:formal} that it enforces.
+precondition, and an honest cost or policy line? We give four, demonstrated by
+deterministic, node-free invariants in
+\texttt{scripts/binohash\_level\_tools.py} (Primitives 1--3) and
+\texttt{scripts/covenant\_limits.py} (Primitive 4), and we then record in
+Section~\ref{sec:limits} three escalations that do \emph{not} work and why. As
+with the seam reproduction, no signature is verified; the demonstration is a
+digest-level identity or collision bound, which does not depend on key validity.
+Every invariant below is reported \texttt{PASS} by its script, and each
+primitive is annotated with the admission properties (P1--P4) of
+Section~\ref{sec:formal} that it enforces.
 
 \subsection{Primitive 1: Append-Only Aggregatable Attestation}
 
@@ -904,18 +913,108 @@ dollar figure.}
 \label{tab:binohash}
 \end{table}
 
+\subsection{Primitive 4: SINGLE-Authored, ALL-Frozen Settlement}
+\label{sec:prim4}
+
+The fourth primitive is the sound construction that the broken covenant ideas
+of Section~\ref{sec:limits} were reaching for, and it needs no Binohash, no
+grinding, and no soft fork. It rests on a duality between two sighash modes that
+\texttt{scripts/covenant\_limits.py} verifies node-free. A
+\texttt{SIGHASH\_SINGLE|ANYONECANPAY} signature at input index $j$ pins exactly
+output $j$ and is invariant to every other input and to outputs appended after
+$j$: it gives a party its own output row but fences nothing globally. The dual
+mode \texttt{SIGHASH\_ALL|ANYONECANPAY} fences the entire output set, including
+appends, but forces one shared template with no per-party rows. Neither alone
+gives per-contributor rows \emph{and} a closed template.
+
+Compose them on one transaction, using different sighash types on different
+inputs (which Bitcoin permits). Each party authors its own output row with a
+SINGLE|ACP signature at its input, independently and append-only, with no
+coordination. One \emph{closer} input then freezes the assembled output vector
+with a single ALL|ACP signature. The result has both properties at once: the
+script checks (\texttt{FACT 5}, all passing) show that after the freeze,
+tampering with any party's row breaks both that party's row-pin and the closer's
+freeze simultaneously, an untouched party's row-pin still verifies, and no output
+can join the table after the freeze. The primitive keeps P1 (every row-pin and
+the freeze commit to transaction fields) and P3 (a row-pin authorises one row,
+never the aggregate); P2 and P4 do not apply.
+
+The delta is precise. Over the assurance-contract pattern, which is ALL|ACP over
+one shared template \cite{bitcoinwiki_contracts}, it adds independent
+per-contributor rows. Over Primitive 1, which is SINGLE|ACP attestation with no
+global fence, it adds the closing freeze. The honest caveat is value
+conservation: legacy sighash does not commit input amounts, so a legacy
+deployment leaves conservation to inspection, while the BIP143 witness-v0 sighash
+commits the input amount and closes the hole \cite{bip143}. The overlay use is a
+TradeLayer or DLC batch settlement in which each counterparty owns its payout row
+and a coordinator freezes the batch before broadcast, with no pre-signed payout
+matrix and no new opcode.
+
+\subsection{Limits: Three Binohash-Covenant Mirages}
+\label{sec:limits}
+
+Before claiming the primitives it is worth recording what does \emph{not} work,
+because the failures are sharp and reusable. A structured design exploration
+surfaced three natural escalations that each try to turn a seam into a richer,
+consensus-enforced covenant. All three break, and
+\texttt{scripts/covenant\_limits.py} reproduces the mechanism behind each break
+node-free. Two rocks recur.
+
+\paragraph{The menu covenant (R1: the deleted push must be a verifying
+signature).} The idea embeds $m$ \texttt{OP\_DROP}-guarded ``class'' pushes in a
+legacy \texttt{CHECKMULTISIG} redeemScript so that feeding a subset deletes
+exactly those pushes and selects one of $2^m$ digest classes, a one-of-$k$
+template selector in $O(1)$ data. The digest-class partition is genuine and
+reproduced (it is power-set injective and delete-idempotent, the same law as
+Seam~A). It is nonetheless not selectable on-chain: legacy FindAndDelete removes
+only a push that is a \emph{signature}, which must ECDSA-verify against a
+committed key over the post-deletion digest. A short class constant is not a
+valid signature, and a fixed signature-shaped constant validates exactly one
+message, which is the very digest its deletion changes, a $2^{256}$ grind.
+Fixing the deleted value removes precisely the free variable that Binohash
+grinds, so the covenant cannot be ground into existence; the script decays to a
+plain multisig with decorative pushes.
+
+\paragraph{The script-enforced resolution anchor (R2: the core commits its own
+prevout).} The idea bakes a Binohash constant $K$ into a UTXO so that spending it
+forces the spend to resolve a public handle to a committed state, with no
+indexer. But every legacy sighash, and therefore any Binohash core, serialises
+the spending input's own prevout; the script confirms the core changes when the
+prevout changes. So $K$ must commit the funding txid, which depends on $K$
+through the redeemScript and scriptPubKey: a fixed point of a collision-resistant
+hash, of the scheme's own security order to construct. And because Binohash pins
+the \emph{whole} transaction, it cannot be projected onto one output, so there is
+no variant that keeps a sub-region free; the only retreat, checking $K$ in the
+light client, collapses the construction into ordinary client-side validation.
+
+\paragraph{The dead-man absence attestation (R3: the constant-one is reusable and
+evadable).} The idea reads the \texttt{SIGHASH\_SINGLE} constant-one as a
+self-announcing proof that a reserve output at a fixed index is absent. The
+constant is verifier-known and identical across unrelated transactions (shown),
+so a signature over it is reusable, transaction-independent spend authority, which
+violates authority separation (P3) rather than attesting a timed state. Absence
+is also evadable: a dishonest custodian keeps a dust decoy at the index, the
+digest becomes ordinary, and no tripwire fires (shown). The real check is content
+inspection of the output, which uses none of the degeneracy.
+
+The common root is that a whole-transaction Binohash pin commits the spending
+input's own prevout and the entire transaction, which is why the sound way to get
+per-row ownership plus a closed template is the mixed-sighash construction of
+Primitive~4, not a baked-constant covenant.
+
 \subsection{What ``live'' means here}
 
-These are demonstrations, not broadcasts. Primitive 1's composability and
-Primitive 2's rotation are exact digest identities that hold for any key, and
-Primitive 3's bound is Linus' analysis reproduced against a cost model; all
-three run offline and deterministically. The nearest deployed relatives are
-the assurance-contract pattern for Primitive 1
-\cite{bitcoinwiki_contracts}, the oracle-sidecar and watchtower-beacon LTCTEST
-meshes already in the repository for Primitives 1 and 2, and BitVM bridges for
-Primitive 3 \cite{linus2025bitvm2}. We deliberately stop short of broadcasting
-funded Bitcoin transactions for these primitives: that step is the funded
-oracle-sidecar materialisation listed as future work in
+These are demonstrations, not broadcasts. Primitive 1's composability,
+Primitive 2's rotation, and Primitive 4's fence duality are exact digest
+identities that hold for any key, Primitive 3's bound is Linus' analysis
+reproduced against a cost model, and the three negative results of
+Section~\ref{sec:limits} are reproduced the same way; all run offline and
+deterministically. The nearest deployed relatives are the assurance-contract
+pattern for Primitives 1 and 4 \cite{bitcoinwiki_contracts}, the oracle-sidecar
+and watchtower-beacon LTCTEST meshes already in the repository for Primitives 1
+and 2, and BitVM bridges for Primitive 3 \cite{linus2025bitvm2}. We deliberately
+stop short of broadcasting funded Bitcoin transactions for these primitives: that
+step is the funded oracle-sidecar materialisation listed as future work in
 Section~\ref{sec:threats}, and it is gated on the same prevout funding as the
 replay bench.
 
@@ -1189,9 +1288,13 @@ Representative repository artifacts:
 \texttt{docs/grants/seam\_digests\_standalone.\{json,md,tex\}}: the analytic
 reproduction behind Tables~\ref{tab:seamA}--\ref{tab:seamC}.
 \item \texttt{scripts/binohash\_level\_tools.py} and
-\texttt{docs/grants/binohash\_level\_tools.\{json,md\}}: the three primitives of
+\texttt{docs/grants/binohash\_level\_tools.\{json,md\}}: Primitives 1--3 of
 Section~\ref{sec:primitives} with their PASS/FAIL invariants and the cost line
 of Table~\ref{tab:binohash}.
+\item \texttt{scripts/covenant\_limits.py} and
+\texttt{docs/grants/covenant\_limits.\{json,md\}}: the SINGLE/ALL fence duality
+behind Primitive~4 and the three break mechanisms of Section~\ref{sec:limits},
+17 node-free checks.
 \item \texttt{fixtures/manifests/*\_core\_seam\_poc.json},
 \texttt{payout\_2013\_carrier\_camouflage.json},
 \texttt{oracle\_sidecar\_2013\_replay\_poc.json}: seam and carrier manifests.
@@ -1211,6 +1314,7 @@ Representative commands:
 \begin{verbatim}
 python scripts/seam_digests_standalone.py
 python scripts/binohash_level_tools.py
+python scripts/covenant_limits.py
 cargo run -p jurassic-bitcoin-cli -- mint-findanddelete-seam \
   --out fixtures/blobs/p2sh-findanddelete-core-seam.json
 cargo run -p jurassic-bitcoin-cli -- replay-era \
@@ -1230,12 +1334,13 @@ bifurcation and carrier camouflage together form a compact vocabulary for
 reasoning about how ossified historical behaviour can inspire modern overlay
 systems, and semantic binding, non-collapse, authority separation and rotation
 invariance are the conditions under which that inspiration is safe to act on.
-The toolchain, the analytic reproduction, the three Binohash-level primitives,
-the Litecoin grafts and the testnet4-bound referees in these repositories show
-that the motifs can be extracted, classified, formalised, turned into specified
-primitives with checkable invariants, and lifted into live BitVM-style and
-non-BitVM applications without confusing historical fossils for deployable
-mechanisms.
+The toolchain, the analytic reproduction, the four Binohash-level primitives,
+the limits result that fences off three covenant mirages, the Litecoin grafts
+and the testnet4-bound referees in these repositories show that the motifs can
+be extracted, classified, formalised, turned into specified primitives with
+checkable invariants, bounded by what they provably cannot do, and lifted into
+live BitVM-style and non-BitVM applications without confusing historical fossils
+for deployable mechanisms.
 
 \bibliographystyle{plain}
 \bibliography{jurassic_design_motifs}

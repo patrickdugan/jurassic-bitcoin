@@ -1,0 +1,108 @@
+{
+  "kind": "jurassic_covenant_limits",
+  "version": 1,
+  "checks": [
+    {
+      "section": "fence_gap",
+      "name": "SINGLE|ACP pins its own output j",
+      "pass": true,
+      "detail": "one-sat change to output j flips the digest"
+    },
+    {
+      "section": "fence_gap",
+      "name": "SINGLE|ACP ignores another party's output (k>j)",
+      "pass": true,
+      "detail": "changing output 2 leaves signer 1's digest fixed"
+    },
+    {
+      "section": "fence_gap",
+      "name": "SINGLE|ACP ignores other inputs",
+      "pass": true,
+      "detail": "changing input 0's prevout leaves signer 1's digest fixed"
+    },
+    {
+      "section": "fence_gap",
+      "name": "SINGLE|ACP does NOT fence appended outputs (the leak)",
+      "pass": true,
+      "detail": "4 extra outputs appended, signer 1's digest unchanged -> pool not fenced"
+    },
+    {
+      "section": "fence_gap",
+      "name": "legacy sighash does not commit the input amount",
+      "pass": true,
+      "detail": "no value in the serialized input -> conservation needs BIP143 or inspection"
+    },
+    {
+      "section": "all_acp_dual",
+      "name": "ALL|ACP fences every output",
+      "pass": true,
+      "detail": "changing ANY output flips the digest"
+    },
+    {
+      "section": "all_acp_dual",
+      "name": "ALL|ACP fences appended outputs too",
+      "pass": true,
+      "detail": "appending outputs flips the digest (unlike SINGLE)"
+    },
+    {
+      "section": "all_acp_dual",
+      "name": "ALL|ACP still ignores appended inputs",
+      "pass": true,
+      "detail": "changing a non-signing input's prevout leaves the digest fixed"
+    },
+    {
+      "section": "whole_tx_fixed_point",
+      "name": "whole-tx core changes with the spending input's prevout",
+      "pass": true,
+      "detail": "a Binohash core over the tx depends on the spent input's txid:vout"
+    },
+    {
+      "section": "whole_tx_fixed_point",
+      "name": "baked-constant-equals-own-core is a fixed point (structural)",
+      "pass": true,
+      "detail": "K -> redeem -> scriptPubKey -> funding txid -> prevout -> core must equal K"
+    },
+    {
+      "section": "constant_one",
+      "name": "constant-one is identical across unrelated txs (reusable authority)",
+      "pass": true,
+      "detail": "a signature over 0^63||1 is not bound to any particular transaction"
+    },
+    {
+      "section": "constant_one",
+      "name": "absence collapses to constant-one",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "section": "constant_one",
+      "name": "a decoy output at index i evades the collapse (break)",
+      "pass": true,
+      "detail": "custodian keeps a dust decoy at index i -> ordinary digest -> no tripwire"
+    },
+    {
+      "section": "single_authored_all_frozen",
+      "name": "tamper breaks the victim party's own row-pin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "section": "single_authored_all_frozen",
+      "name": "tamper simultaneously breaks the closer's freeze",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "section": "single_authored_all_frozen",
+      "name": "an untouched party's row-pin still verifies after the tamper",
+      "pass": true,
+      "detail": "party 0 is unaffected -- rows are independent"
+    },
+    {
+      "section": "single_authored_all_frozen",
+      "name": "appending an uncommitted output breaks the closer's freeze",
+      "pass": true,
+      "detail": "no output can join the table after the ALL|ACP freeze"
+    }
+  ]
+}
