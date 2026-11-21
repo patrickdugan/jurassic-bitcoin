@@ -85,10 +85,14 @@ funding transaction, builds both spending branches, and calls
 block actually includes its txid. Each invocation creates a fresh funding
 pair so both branches can be tested independently.
 
-Core policy commonly rejects FindAndDelete self-deletion with
-SCRIPT_VERIFY_CONST_SCRIPTCODE, while consensus block validation can accept
-the spend. These outcomes are intentionally recorded separately; the native
-CI job is the deciding evidence.
+Bitcoin Core 30.2 returned `mempool-script-verify-flag-failed
+(Signature is found in scriptCode)` for both candidates under default policy.
+It accepted direct `generateblock` submissions for A and B after independently
+funding each trial. A cross-branch signature substitution was rejected by
+`TestBlockValidity` on each trial with a false final stack element, leaving
+the chain tip unchanged. See the passing
+[native evidence run](https://github.com/patrickdugan/jurassic-bitcoin/actions/runs/44934441875).
+These outcomes separate node relay policy from current consensus validation.
 
 ## Controls
 
