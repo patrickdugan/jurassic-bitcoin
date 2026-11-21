@@ -265,9 +265,6 @@ class CoreRPC:
         self.url = url.rstrip("/")
         self.auth = "Basic " + base64.b64encode((username + ":" + password).encode()).decode()
 
-    def wallet(self, name: str) -> CoreRPC:
-        return CoreRPC(self.url + "/wallet/" + name, self.auth_user, self.auth_password)
-
     def __call__(self, method: str, *params):
         payload = json.dumps({"jsonrpc": "1.0", "id": "jb-fad01", "method": method,
                               "params": params}).encode()
@@ -354,6 +351,28 @@ def run_regtest(node: CoreRPC, confirm_branch: str | None) -> dict:
     if confirm_branch:
         selected = variants[confirm_branch]
         before = node("getbestblockhash")
+        swapped = "B" if confirm_branch == "A" else "A"
+        invalid = replace(
+            selected.tx,
+            vin=(selected.tx.vin[0],
+                 replace(selected.tx.vin[1],
+                         script_sig=script_sig(setup, selected.puzzle_signature, swapped))),
+        )
+        # Consensus-level rejection, independent of standard mempool policy.
+        try:
+            node("generateblock", miner_addr, [ser_tx(invalid).hex()])
+        except RPCFailure as exc:
+            if node("getbestblockhash") != before:
+                raise AssertionError("rejected challenge advanced regtest tip") from exc
+            result["native_negative"] = {
+                "kind": "cross_branch_puzzle_signature",
+                "invalid_txid": txid_hex(invalid),
+                "rejected": True,
+                "reason": str(exc),
+            }
+        else:
+            raise AssertionError("cross-branch invalid puzzle signature mined")
+
         mined = node("generateblock", miner_addr, [ser_tx(selected.tx).hex()])
         block = node("getblock", mined["hash"], 1)
         if txid_hex(selected.tx) not in block["tx"]:
@@ -390,7 +409,12 @@ def main() -> None:
     output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"experiment": result["experiment"], "checks": result["checks"],
                       "txids": {k: v["txid"] for k, v in result["variants"].items()},
-                      "receipt": str(output), "confirmed": result.get("confirmed_branch")},
+                      "receipt": str(output), "confirmed": result.get("confirmed_branch"),
+                      "native_negative": result.get("native_negative"),
+                      "mempool_policy": {
+                          k: {"allowed": v.get("allowed"), "reason": v.get("reject-reason")}
+                          for k, v in result.get("mempool_policy", {}).items()
+                      }},
                      indent=2))
 
 
