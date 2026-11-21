@@ -1,0 +1,74 @@
+name: JB-FAD01 legacy FindAndDelete
+
+on:
+  push:
+    branches: [research/jb-fad01-live-findanddelete]
+  pull_request:
+    paths:
+      - "scripts/jb_fad01.py"
+      - "scripts/seam_digests_standalone.py"
+      - "tests/test_jb_fad01.py"
+      - ".github/workflows/jb-fad01.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ECDSA verification dependency
+        run: python -m pip install "cryptography>=44,<47"
+      - name: Seven cryptographic rejection controls
+        run: python -m unittest discover -s tests -p "test_jb_fad01.py" -v
+      - name: Emit deterministic signed candidates
+        run: python scripts/jb_fad01.py --output /tmp/jb-fad01-offline.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jb-fad01-offline
+          path: /tmp/jb-fad01-offline.json
+
+  native-regtest:
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Fetch integrity-pinned Bitcoin Core 30.2
+        run: |
+          curl -fsSL --retry 3 -o /tmp/bitcoin-core.tar.gz https://bitcoincore.org/bin/bitcoin-core-30.2/bitcoin-30.2-x86_64-linux-gnu.tar.gz
+          echo "6aa7bb4feb699c4c6262dd23e4004191f6df7f373b5d5978b5bcdd4bb72f75d8  /tmp/bitcoin-core.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/bitcoin-core.tar.gz -C /tmp
+          echo "/tmp/bitcoin-30.2/bin" >> "$GITHUB_PATH"
+      - name: Start isolated regtest
+        run: |
+          mkdir -p "$RUNNER_TEMP/jb-fad01-datadir"
+          /tmp/bitcoin-30.2/bin/bitcoind -datadir="$RUNNER_TEMP/jb-fad01-datadir" -regtest -daemon -server -rpcuser=user -rpcpassword=pass -fallbackfee=0.0001
+          for i in $(seq 1 60); do
+            if /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad01-datadir" -regtest -rpcuser=user -rpcpassword=pass getblockchaininfo >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          echo "regtest RPC did not start" >&2
+          exit 1
+      - name: Verify both conflicting branches in native block validation
+        run: |
+          python scripts/jb_fad01.py --live-regtest --confirm-branch A --output /tmp/jb-fad01-native-A.json
+          python scripts/jb_fad01.py --live-regtest --confirm-branch B --output /tmp/jb-fad01-native-B.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad01-native-receipts
+          path: /tmp/jb-fad01-native-*.json
+          if-no-files-found: warn
+      - name: Stop isolated node
+        if: always()
+        run: /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad01-datadir" -regtest -rpcuser=user -rpcpassword=pass stop || true
