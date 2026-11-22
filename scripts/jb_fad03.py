@@ -261,7 +261,7 @@ def report(setup, funding_txid: str, honest_script: bytes,
                     if row["mode"] == "SINGLE_BUG" and row["short_witness_found"]]
     result = {
         "experiment": "JB-FAD03A",
-        "source": "Jurassic Bitcoin / JS-P2SH FindAndDelete legacy consensus",
+        "source": "Jurassic Bitcoin / bare legacy FindAndDelete consensus",
         "scope": "offline ECDSA verification; native results require --live-regtest",
         "funding_txid": funding_txid,
         "resource_bounds": script_resources(setup.script_pubkey),
@@ -483,7 +483,7 @@ def main() -> None:
     else:
         setup = make_setup()
         data, _, _, _ = report(setup, "12" * 32,
-                                p2sh(AUX_REDEEM), p2sh(op(0x51)))
+                                p2sh(AUX_REDEEM), p2sh(op(0x52)))
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
