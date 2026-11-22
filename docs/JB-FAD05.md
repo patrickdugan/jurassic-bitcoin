@@ -460,6 +460,40 @@ Two relay facts come out of the staging:
 The signed settlement bytes are in the receipt. Unless a miner includes the
 funding transaction, no testnet4 block will carry this staging.
 
+## Regtest proof of concept
+
+`scripts/jb_fad05_poc.py` carries the testnet4 staging through to
+confirmation on regtest:
+
+- It uses the same builder (`stage()` in `jb_fad05_testnet4.py`) and the same
+  shape: 4 × 546-sat aux coins, a 1,000-sat vault, 1 sat/vB.
+- Core runs with the testnet4 node's policy (`-acceptnonstdtxn=1`).
+- The harness plays the miner that testnet4 lacks.
+- With `--bitcoin-rs`, every block also goes to an isolated bitcoin-rs node,
+  and the tips must match after each step.
+
+Local run in WSL, Core 31.1 + bitcoin-rs `dd6c2040`, 149 s
+(`docs/JB-FAD05-regtest-poc.json`):
+
+| Step | Result |
+|---|---|
+| 1 | wallet funded to height 450 |
+| 2 | funding `405286fb…dc6d` (2,944 vB) signed; settlement `366c3c62…6c8e` ground in 0.52 s; indices (0,1,2,3,9) / (0,2,5,7,8) |
+| 3 | `sendrawtransaction(funding)`: accepted into the mempool |
+| 4 | `sendrawtransaction(settlement)`: refused, `Signature is found in scriptCode` (the same refusal as on testnet4) |
+| 5 | one block mined from the mempool confirms the funding; the vault holds 1,000 sats |
+| 6 | `generateblock` includes the settlement directly: vault spent, 816-sat payout to P2WSH(successor ‖ salt ‖ wallet key) |
+| 7 | referee accepts the settlement against the registered policy (statement `c886b96b…`) |
+| 8 | buried at 7 confirmations; bitcoin-rs tip equals Core's after every step |
+
+This closes the staging gap. The same transaction shape that testnet4 relay
+refuses is valid under both consensus engines once a miner includes it. CI
+job `bitcoin-rs-two-engine` runs the proof of concept on Core 30.2 and
+publishes each step as a notice annotation.
+
+    cd scripts
+    python jb_fad05_poc.py --bitcoind <bitcoind> [--bitcoin-rs <bitcoin-rs>] --output /tmp/poc.json
+
 ## Not built
 
 - A BitVM disprove circuit. The only referee is the Python one in this branch.

@@ -165,6 +165,25 @@ jobs:
           sums = (d / "SHA256SUMS").read_text().split()
           print("::notice title=jb-fad05-two-engine::two-engine.json sha256 " + sums[0])
           PY
+      - name: Regtest proof of concept (testnet4 staging shape, miner-direct settlement)
+        run: |
+          set -o pipefail
+          cd scripts
+          python jb_fad05_poc.py --bitcoind /tmp/bitcoin-30.2/bin/bitcoind \
+            --bitcoin-rs "$RUNNER_TEMP/bitcoin-rs/target/quickstart/bitcoin-rs" \
+            --bitcoin-rs-commit "$BITCOIN_RS_COMMIT" \
+            --output /tmp/jb-fad05-two-engine/poc.json
+      - name: Publish proof-of-concept steps as public annotations
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib
+          p = pathlib.Path("/tmp/jb-fad05-two-engine/poc.json")
+          r = json.loads(p.read_text())
+          for s in r["steps"]:
+              print(f"::notice title=jb-fad05-poc::[{s['step']}] {s['text']} tips_match={s.get('tips_match')}")
+          print("::notice title=jb-fad05-poc::" + json.dumps(r["engines"]) + " poc.json sha256 " + hashlib.sha256(p.read_bytes()).hexdigest())
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
