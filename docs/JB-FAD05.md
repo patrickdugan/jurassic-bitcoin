@@ -413,8 +413,21 @@ It also accepts every counterexample transaction that Core accepts (CE1–CE4).
 
 One local run in four timed out on an RPC call at the 120-second client
 limit. The launcher's clients now wait up to 900 s and record the slowest
-call (0.13 s in the clean run). CI job `bitcoin-rs-two-engine` builds the
-same commit and repeats the run against Core 30.2.
+call (0.13 s in the clean run).
+
+CI job `bitcoin-rs-two-engine` builds bitcoin-rs
+`dd6c2040606cc5069923211e5371decfd43cdb9d` and repeats the run against
+Core 30.2. In
+[run 45015858932](https://github.com/patrickdugan/jurassic-bitcoin/actions/runs/45015858932)
+(commit `ebaa335`) it recorded:
+
+- 307 comparisons: 24 Core-accepted blocks, 273 hand-built blocks with
+  refused transactions, 9 invalidations, 1 positive control;
+- 0 disagreements and 0 reason-class mismatches;
+- positive control accepted by both engines, and final tips equal.
+
+The receipt `two-engine.json` has sha256 `7fa8a89c33f1615f48a7e85572936de50deb163ced900bee87dc99949c49c273`.
+The same run's native lane also passed A–G and the referee on Core 30.2.
 
 ## Testnet4 staging
 
