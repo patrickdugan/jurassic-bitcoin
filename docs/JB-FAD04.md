@@ -92,6 +92,7 @@ validated header chain:
     python scripts/jb_fad04_verify.py \
       --native-receipt artifacts/jb-fad04/native.json \
       --trusted-blockhash <trusted_block_hash> \
+      --trusted-policy <separately_authenticated_vault_policy.json> \
       --output artifacts/jb-fad04/referee.json
 
 GitHub Actions in .github/workflows/jb-fad04.yml performs these stages
@@ -122,3 +123,25 @@ References:
 - BIP144: https://bips.dev/144/
 - Keyless CHECKSIG reference:
   https://github.com/patrickdugan/Spiral/blob/main/BIPSpace/Keyless-CHECKSIG/bip-keyless-checksig.md
+
+
+## Trusted policy boundary
+
+The referee CLI **requires** an external policy file with schema
+jb-fad04-policy-v1. Its fields include the trusted vault funding txid,
+pool vout, locking-script SHA256, expected recipient script, minimum
+payout and expected ten nonce indices. The verifier compares these
+separate inputs to bytes recovered from the actual transaction.
+
+The verifier refuses an absent policy, a changed claimed payout, a
+substituted vault outpoint, or different claimed indices. These checks
+address the self-attestation hazard of deriving an authorization rule
+from the transaction supplied by the claimant.
+
+GitHub CI creates a clearly labeled policy fixture from its regtest
+wallet's chosen funding and payout values to exercise the interface.
+That CI-generated policy is not an independent authorization source.
+A real BitVM deployment must register and authenticate the expected
+policy through a mechanism that the adversary cannot edit. Whether
+Bitcoin consensus enforces that policy through a fraud-proof/DLC
+settlement path is still unproved.
