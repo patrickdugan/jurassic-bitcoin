@@ -54,9 +54,13 @@ FUNDING_FEE_SATS = 30_000
 
 
 class Campaign:
-    def __init__(self, node: CoreRPC, miner: str):
+    def __init__(self, node: CoreRPC, miner: str, alt_miner: str):
         self.node = node
         self.miner = miner
+        # Alternative histories pay a different coinbase address. Otherwise
+        # re-mining the same transaction on the same parent within one second
+        # reproduces the hash of a block that was just invalidated.
+        self.alt_miner = alt_miner
 
     def tip(self) -> str:
         return self.node("getbestblockhash")
@@ -69,8 +73,9 @@ class Campaign:
     def unspent(self, outpoints) -> bool:
         return all(self.node("gettxout", t, v, False) is not None for t, v in outpoints)
 
-    def mine(self, tx: Tx) -> str:
-        block = self.node("generateblock", self.miner, [ser_tx(tx).hex()])["hash"]
+    def mine(self, tx: Tx, *, alternative: bool = False) -> str:
+        coinbase = self.alt_miner if alternative else self.miner
+        block = self.node("generateblock", coinbase, [ser_tx(tx).hex()])["hash"]
         if txid_hex(tx) not in self.node("getblock", block, 1)["tx"]:
             raise AssertionError("direct block omitted the transaction")
         return block
@@ -91,7 +96,7 @@ class Campaign:
     def accept_alternative(self, label: str, tx: Tx, watch) -> dict:
         tip = self.tip()
         pol = self.policy(tx)
-        block = self.mine(tx)
+        block = self.mine(tx, alternative=True)
         spent = not self.unspent(watch)
         self.node("invalidateblock", block)
         if self.tip() != tip or not self.unspent(watch):
@@ -231,7 +236,7 @@ def run_native(node: CoreRPC) -> dict:
     if not coins:
         raise RuntimeError("no mature fixture coin")
     coin = coins[0]
-    c = Campaign(node, miner)
+    c = Campaign(node, miner, wallet("getnewaddress", "jb-fad05-alt-history", "bech32"))
     setup = make_setup()
     op_pub = pubkey_bytes(OPERATOR_SECRET)
     bonds = tuple(bond_script(setup.hors.tables[r], op_pub) for r in range(ROUNDS))
@@ -393,7 +398,9 @@ def main():
         # Workflow-command annotations are readable on public repos without
         # authentication, unlike raw job logs.
         import traceback
-        for line in traceback.format_exc().splitlines()[-12:]:
+        lines = traceback.format_exc().splitlines()
+        # GitHub keeps at most 10 error annotations per step: message first.
+        for line in [lines[-1]] + lines[-9:-1]:
             print("::error title=jb-fad05-native::" + line.replace("%", "%25"), flush=True)
         raise
     out = Path(args.output)
