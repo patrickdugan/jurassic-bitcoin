@@ -70,8 +70,8 @@ class DualRoundTests(unittest.TestCase):
         self.assertEqual(len(self.candidate.first_subset),POOL_T)
         self.assertEqual(len(self.candidate.second_subset),POOL_T)
         self.assertEqual(len(self.candidate.index_digest),10)
-        self.assertEqual(self.candidate.nonce_attempts.keys(),
-                         {"round_1","round_2"}.keys())
+        self.assertEqual(set(self.candidate.nonce_attempts),
+                         {"round_1","round_2"})
 
     def test_two_different_codeseparator_scriptcodes(self):
         c=self.candidate
