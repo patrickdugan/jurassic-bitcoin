@@ -1,0 +1,4450 @@
+{
+ "experiment": "JB-FAD05 two-engine regtest demonstration (local WSL run)",
+ "full_receipt_sha256": "e1e156069f1c4bcf7c0b7e902ad43deb34bdc0b1b79128c2b152116b8627e604",
+ "two_engine": {
+  "bitcoind_sha256": "986e63b3c8770f08d0059820ad3dd085d1ab9e1bea23946c243f858a06888a08",
+  "bitcoind_version": "/Satoshi:31.1.0/",
+  "bitcoin_rs_sha256": "f49710aab309a718ed8a0a7bea59d66a8d3286f9dcdfa2de99dd7d0729e500c0",
+  "bitcoin_rs_commit": "dd6c20406",
+  "bitcoin_rs_validation_engine": "native",
+  "p2p_link": "none; blocks replayed via submitblock",
+  "seconds": 101.3,
+  "bitcoin_rs_slowest_rpc": {
+   "seconds": 0.13,
+   "method": "invalidateblock"
+  }
+ },
+ "honest_txid": "37a92317027a76499282d5e78e99ae38a4fd17a24f0b0a5ccd47769916a6b172",
+ "positive_control": {
+  "label": "positive control: valid settlement in hand-built block",
+  "kind": "handmade-block-positive-control",
+  "block": "62347d96b1efb7c703299b694cd2a64731cc291f81d187290aaf9a5341cc7319",
+  "core": "accepted",
+  "bitcoin_rs": "accepted",
+  "tips": [
+   "62347d96b1efb7c703299b694cd2a64731cc291f81d187290aaf9a5341cc7319",
+   "62347d96b1efb7c703299b694cd2a64731cc291f81d187290aaf9a5341cc7319"
+  ],
+  "agree": true
+ },
+ "summary": {
+  "mirrored_prefix_blocks": 450,
+  "comparisons": 312,
+  "by_kind": {
+   "core-accepted-block": 29,
+   "handmade-block-positive-control": 1,
+   "handmade-block-with-refused-tx": 268,
+   "invalidate": 14
+  },
+  "final_tips_match": true,
+  "disagreements": 0,
+  "reason_class_mismatches": 0
+ },
+ "rows": [
+  {
+   "label": "funding",
+   "kind": "core-accepted-block",
+   "block": "6ef8d0572f6d9c00897613dbd201879dbfd98e04642d405bc47105c81be7c99f",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "positive control: valid settlement in hand-built block",
+   "kind": "handmade-block-positive-control",
+   "block": "62347d96b1efb7c703299b694cd2a64731cc291f81d187290aaf9a5341cc7319",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "tips": [
+    "62347d96b1efb7c703299b694cd2a64731cc291f81d187290aaf9a5341cc7319",
+    "62347d96b1efb7c703299b694cd2a64731cc291f81d187290aaf9a5341cc7319"
+   ],
+   "agree": true
+  },
+  {
+   "label": "positive control rollback",
+   "kind": "invalidate",
+   "block": "62347d96b1efb7c703299b694cd2a64731cc291f81d187290aaf9a5341cc7319",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "payout+1",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "6a1ca36aaa52b11907ccf4aa388ff74b1b4ac7e0d7db8b44a02d84160258ef02",
+   "core": "block-script-verify-flag-failed (Script failed an OP_CHECKSIGVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: CHECKSIGVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "CHECKSIGVERIFY",
+    "CHECKSIGVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "fee+1000",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a5ac954fb9bc474b4d9928af399b0125ebd128b103a97a3f068f1c61c7b85380",
+   "core": "block-script-verify-flag-failed (Script failed an OP_CHECKSIGVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: CHECKSIGVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "CHECKSIGVERIFY",
+    "CHECKSIGVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "successor",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9f7b59c396cabadc512ea08945f199c5242631ff27178c7289f361d5dc93220a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_CHECKSIGVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: CHECKSIGVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "CHECKSIGVERIFY",
+    "CHECKSIGVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "recipient",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5bdb03ba79c2c4956c9b95ffdcf04f9d55e76f2e105e5deb61a4e984525e6f90",
+   "core": "block-script-verify-flag-failed (Script failed an OP_CHECKSIGVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: CHECKSIGVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "CHECKSIGVERIFY",
+    "CHECKSIGVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "extra output",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "be669477c935dc9e42b54f3398c28ebc045fae6fa043153755ebb56b68987329",
+   "core": "block-script-verify-flag-failed (Script failed an OP_CHECKSIGVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: CHECKSIGVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "CHECKSIGVERIFY",
+    "CHECKSIGVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "outpoint",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8070a0b8ed046ba59f9328ae2227d5c9ec68057d2112d930827ff4df7f815928",
+   "core": "block-script-verify-flag-failed (Script failed an OP_CHECKSIGVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: CHECKSIGVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "CHECKSIGVERIFY",
+    "CHECKSIGVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "bad preimage",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5aa6185cb09d502db2b77848fbb4ac77929d09d23da702c3acee2ee6d07b76c4",
+   "core": "block-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: EQUALVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "EQUALVERIFY",
+    "EQUALVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "cross round",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "18818069594016cbb5f104c6b9276f07189a90d1cdaecc93f9094a7f0c5abe15",
+   "core": "block-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: EQUALVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "EQUALVERIFY",
+    "EQUALVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "duplicate",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "35ee2df941f2431a2cd421ae77d2400a999bc911223962a1f9d70254240902c4",
+   "core": "block-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: EQUALVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "EQUALVERIFY",
+    "EQUALVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "reordered",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "fa85af99be231dd5cee3ca9fe7fb1d47cd314d0922f98650cf2e19ff65a4a6f5",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "ascending",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "48306c8efc32a7537f914d87ff4c36a0916c5011f6b592e5a860a058c25292bf",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "subset",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5b389b9732526e3b7bec20d87615c43b782e8c2a2eefc5a211e7f433e0518b47",
+   "core": "block-script-verify-flag-failed (Script evaluated without error but finished with a false/empty top stack element)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: EVAL_FALSE)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "EVAL_FALSE",
+    "EVAL_FALSE"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "range",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7f0e19047ad42eb999c64a2a7dc32696f32d0ac293e21bc061626809db59c67f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "high-S",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "25fdc83025101e78ee78ce72b4d82cdd6b2253b42602c0b5be9cf2fe43f59092",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x0",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ad5bb76f2edb9b0a6b1086611b4a62937beb7ad58c2502bf69f21901df9c9a8d",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x1",
+   "kind": "core-accepted-block",
+   "block": "7361c73cf9a854d468bff97d1609996f85daf183ef88e1de0f29440546b15b51",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "flag 0x1 rollback",
+   "kind": "invalidate",
+   "block": "7361c73cf9a854d468bff97d1609996f85daf183ef88e1de0f29440546b15b51",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "flag 0x2",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e1262feb96aee349a9903122607b14898a12b90ca205d8e9d0f0d3ff7424174f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x3",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9b76dff5b2027077e87803c340af2163bbdec5c432383805d6060bb31de8a64b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x4",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1244348cc1e2ceb9f6c1137cf9fc2fdd2ffe24fae117f58333c86d64b4f52f34",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x5",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "dda1775411d79187958d1475107c4709db6ca44c71059d893edec96bf36cea7c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x6",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ac33c8b717c1ef365029a28ccea1fdf13a89648536c507258219a17c7a0da92e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x7",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "0b19fada79363ba1239a532a7e6e237a78f0d0afb2e593374b4ac57c2f8f8e34",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x8",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a5a027265e0d8ab8c08a123463a4932ef235b14fb20eb8b056b473ac940efa70",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x9",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "47f3ac7eb72ab803a5e092db56907a096c772555bdcc845c6cc7da3b825ddfb5",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c37fbdb3376aaec758793c35bc7d1c34078ab68a4ae62a324f9f7caaced9a0ba",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ecce10b29909b8f5a6e0e07e0b8212ad4f6e66e4b07f85fda4bb455e9f2cffd6",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8dfeff7b197532fecfffa7fbbe8841c92ef8c2ac587d136014268fcbc169c79a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "993a8cac7685da078c30fefafde2eaa174c8dd66542b233f5bd369e120d9ef93",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5f9a2bc4310136cdd03b2536448bba5421d5accf0922faf43fcb63a8866eb95e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d19a6c0c99c23b9f7650f1066cc32a08358d029250e90b8183327d04c34db87d",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x10",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1d35fe0b090caa80531b212e9982cddb1947d7e4b83867e0d67372af9e0e65b0",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x11",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c58d4ef1986f3c59f47e00880cac066e8554f9af7d0452b7ac3d90604a67c779",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x12",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1c9e3b3344036da3b23b23a5985e744f2eb31a10d6b977a6375a472d096044df",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x13",
+   "kind": "core-accepted-block",
+   "block": "3332282f38aed7a01d817404a73d4e114e5b0d869ee2dc469083f77ecc83f402",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "flag 0x13 rollback",
+   "kind": "invalidate",
+   "block": "3332282f38aed7a01d817404a73d4e114e5b0d869ee2dc469083f77ecc83f402",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "flag 0x14",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "583d4ad65d7526cc108a60865f944130dfff9ef251caa1e6dcbde5775f6c3ad4",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x15",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5e64e6de494cd8a1d8adbfa06a0b7612111f195f90037da3a5a333cec7355b30",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x16",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "57e54a31f6eef316bc241f37b256e531ad2418ec36894e2acaec125631731cea",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x17",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5d704c6868d68e8ec4f82e851cbbd4e8b6465b50ea696b6788ab899e8a3b3404",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x18",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "02999a1184627ab2d2450207781115c44dcaae5dd8787271adedd98777e30865",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x19",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ed3edd697c112aca4ef7b8bb618456df15e7627d517466661b000633836cebfb",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x1a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "53ce18f95b4696514adc084caaa6e16f4849ed08bad957db5ba1d68d9ef93560",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x1b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "0441ae3f2e385594f5372c0a55a3669dc2bbcd19b112df5d6b361f0a5613cdb9",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x1c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "109de131e8fb81aaf5c81b1b910817d8e504a12391afc1a6970d297b6cf38060",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x1d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "67e99124dfa9ad2e4a997c79773f17b7651918bf237d64e2eb00105060da645a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x1e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a6d1b4d5cbfbf370de5e413ef3d42f8efd1e07a00e8d6ac7a9d0b0605cbe0ab7",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x1f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "91d464a82739c8a9528a47a0a1cdccbd6987e01b65a1b4884349188f2e9d980c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x20",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ea1f3550a0bbcd796ec6d8b00116ec62dd5427a35f4f66a0ec2e77283b70c9f3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x21",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "f4414a2c6c85d095f422d9c9c4dc290b079d95f944cd05d1443aa95e1391f90b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x22",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "25b36446b4e6645473626a452b42de057f88736aa3ac5e255df3a860c0756739",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x23",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e81d8d193ff5a6814e2f7a865f4f753bc42ccbbc0ea45b4756f97f1e85d57a95",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x24",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "80cbaa53c5e73b610d007760f4478fa34f21ca7dcbb5f9a21c4592a542785396",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x25",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9e09475db897981c07851eec7c9d359feae2f1ee1f97c8a48f0c6da1c5ae78c1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x26",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "86eb401a08ab1cbc4e1964ea549772c99508d38750dfad1ac2e7442aadf286ba",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x27",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "076fc214ad49d75c78a287fc12bd55209d9d5cfff292e06c2795047b3a9a61e8",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x28",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "0866e13ef31987dd6c1b32d6cb87c61f1fccb8f8ff17cf8e27d8e2c062935267",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x29",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9ed10c08ed1b1c095ec667f65392fa9cff6b89678df7b1694187deea01fa5965",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x2a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "fd82749143f48fa9b3bd887b8d47e574ac8805f523ad918cc9a9e2aa4b50c261",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x2b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "27b858fa4247c3d893ad772b616d21c3c3afe957e3ac86ccaa5f00df4ec0d061",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x2c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "bed957ff5d783d0a4fa111b98d34c25b93264f42c0c1089adb2726140919354f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x2d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5eae5a8372732452373fd4a458410bf12a442a9412ac226b5020ed33ce8efd80",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x2e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "fc6aeef356dc0fb9127d693cb915853d7760e56f0f02995e5331d20ba68b8f1c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x2f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "6090dfd3af2d90255572f3e1904a2b205688be47282861156165aea1c359c86c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x30",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "3fa33a4c68879c215a42db6da6739c7a1a919bcc971b06e1e251e11f3daee6fa",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x31",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7760147e171a4283f60786c1f3c3caf014e2ef9a8510bb3ef8f06f4fd04e596a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x32",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a278926cb8c2080647c64d9181111f74ad5c3513cdc3aea1f44f002b15b5a99e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x33",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "fd49eb82786150d659073efe2fbf1b7ba73dba8f399e761eef5412c2a392afab",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x34",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "508f777063582f83a142e6b3af1bbd7de892fc9a15f19a5cb5936cba209c4129",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x35",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "6dd624ca741c5d463a6ddd291a3e3492f6535e374a1297698c3abea4f612e659",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x36",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "2f69d579b7bc64263c60aa5c67cd58210aae0b5f4edd6be8b83e05fdd1020d5b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x37",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "bda7fb9e222aa1d2de30412fcfe6265eb8bb5ba1fde96df45106ff7b6628c5bf",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x38",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5bde4226d14e0bd3dff565199b1c4c7cd439d08bf97cd1567afd25b7a26abd4f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x39",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "4da15929c0067f424c872aacc07d93e41e02b93af35c6ad4c394bed2667370db",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x3a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "f26b90e7add8302b3125b86f571d3ff7e59a1a1e900231f0a5c5baffba95b2b1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x3b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "99e17dcbd6c0af447d2842bc002e01e493bd1bd0133507d007c3aa0ccc8e32f1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x3c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5132f24454227acd9eb0998a963755fab613db7a021b2ab92bb3d48455b6c6e3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x3d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d93e714c0d403c0b1f55ab5ab904c0b4f659cfc936c953e2641d6e58ffd7f8fc",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x3e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7bb9956b8cea0028d6d76ff5f389828d33a2f271b9e5d7638e8f9c0c9177baae",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x3f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1d5d62e060172bd8fddb09af3dc6fbf17a44ac815545e798dfb255c48f724c26",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x40",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9df691aecbb2019f2113098708abf52a1cb53ca97f3a0bb585978ce2a36aad68",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x41",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "2fef059fcba3e6904ee9d4aef82217d4b836bfb50018e4f8f25755f9145f4436",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x42",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "cb2e3ec6c67c27d1126311f955dc6660fd7fdce99b66d837c39e5d6e496bd0cb",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x43",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "f0359f23d5dce7f86733557d92384642542a865e2b4ed711463b6333e151a040",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x44",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "4c055653d045f4bfb5e07136afae0f5646d611848f1a84b76eb232d1a0844eb1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x45",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "edbaac93bae4e8c6b2420e31681c31281a1f9baf93a9ebe7d5e7f833712c285f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x46",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5c8e4a802bf3497024f7986bb839cabe8fa3304e8116c5fe738eeb7a3e6e3ee9",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x47",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "3fdc4326801d280e124b132525a03c0ed4810d0ce4fb1ecd5ef6c1ab0cd49ed9",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x48",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "bdd96e853b95592f0aadbeb5971040db0c38563521003bcf55045f923bc7c683",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x49",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "849ee49d70560e00eb1390059f1b9bf449088e693e512b8f9584f508989f65e5",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x4a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "76c5519e0cfa9d18cafb43503150394a0475ad51875d273b017bd86107999a60",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x4b",
+   "kind": "core-accepted-block",
+   "block": "55e96e30418002e8a554f63e686448ee8368978a08bb52e1071070641a78b92e",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "flag 0x4b rollback",
+   "kind": "invalidate",
+   "block": "55e96e30418002e8a554f63e686448ee8368978a08bb52e1071070641a78b92e",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "flag 0x4c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5c04b27eab2718597c9e324113f85ce7529c82f1aaca3833b3614be6dfd44a5b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x4d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8468f1e19a095d9a9f59d79116cab53452f2f871ef6410f85d9cd86f201bd9c4",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x4e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9a951225dab809d4363519f35c67570f7dcf2df9cbcc56706ee4a89fc03595c3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x4f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "99189c3043fa99de499ae3648c833a1e90280148e393e8f2d5c8a24185a26768",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x50",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5a02afd05a83bc4e51a7a4b174f145e29b2d85db3c5f2e8faeed03a118882ce0",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x51",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "0e6464b7dd722c889b6954ccd73c69c7ea4f01fdb51938c3db57cf37efe8946e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x52",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "07b2643c7e0c8bf47a3d938bf8639d8efb56642e3d4d48fa708cb164dc779c2c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x53",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1e694f2f9b9e6c2c6450d5da9aad4981c148d61739be1835f13f15740eb0886f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x54",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7d7f2d5455a4ded64fbeacdce55eb87738ae09f05ef3d5be01d9815b9fe93f89",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x55",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "89253144905f5f5d9496d35b43f6b724b7d70e7cfe0accb0a21602af93f1b532",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x56",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7a613f0cabdfbcc09df3fa592016bb817901be3defe3c7e51d1659161b107bb8",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x57",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c23a5f7be346e11aa3d1f325d57b5805aa5745a724aa6a73a6175b5dccf77ead",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x58",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "87e1f830323735f8ad24d7ce2e8a5215590eb33a3d4b652e18c9eef9b6affdca",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x59",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "2324746956df2d5f1424ba6599eadaf7ecd767fb89989a1acf6ff6cfc97a2cc3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x5a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "cc98b16d19c5e3754e3acb6200f30a4a68dfcde3a198df2991ef45c38f62940d",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x5b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "4c24f0d87406e156599c93d6b2a39d4f9d3ea5f30982e2df180e9d7f7b13a5da",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x5c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c30e00b618e6cad47f52a43f216be2adc5fa5f46d6fb130175348d20bf0ed976",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x5d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "885f4b9e233f4bfe520ecb27d9823dd5dbd346a7210541fb28791853889be21a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x5e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7f0f83890baaec951d696348788ee2f64092cbcc94cc9357127660d69b93d3e7",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x5f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "b9222d4e1cc807a92be8992027a9bfecd2a8adf299b46e7ac6728069a8423a43",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x60",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "249cd60f02f33fa66a4ebb492b768761b99b2065d658895857f4dba77106b3da",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x61",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "58a6a4a12824cb6b57afcb4b5e713bd65e723b03b512cafd1930197e49ab074b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x62",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a4b9f1d327d0e924266115d998c7544377c1671c8c22bcefaf2271eb38bf4dff",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x63",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "67e9ce017f0686aded1ae5dae894fd8675bb16bc1f10ffa013891a0e9b123930",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x64",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "dbf8ee560dec95fac4a892b1dbfbf3fac80b7e12884926a40db3610146863206",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x65",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "79c7e18393613047826e1edcb578202ba098bfe41d3ebcca8ee90987d346d048",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x66",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d1f40969cc72e7b7a266d04e232708ecced000f00adee05c79e7443df79c469b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x67",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7446fe10ca8d658ab409cdf045b226c69bc4ff16b088f5048a5f2a1219a4caca",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x68",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ef6fc447ff246ef27839d4f76356de576b07dd644d7db2ed4db07c2807320564",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x69",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7b9c08b3536c5fced8f233f130db29aaab36c1af2b9ccb0e474cd12da1667b2c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x6a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "44a69989dba2f7c5b04d1d5289b9ddfff09d2fadd48a9f8f519bde8b4a15b80c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x6b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "218f5ce990d16e5dc344b25470b9589fef188feeac3e015d1faa400a2e35bc87",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x6c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "b6ccad42de193a2876685c0cb28497a95c51b2362f2a41ee219bf359961728cc",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x6d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "131a595e826c4b3898c144347746bfde3e6bb38f7dd0558c8b157677ca5b7b56",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x6e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "307bd6a498d58db15a79ad40493f433e796e76ed53ec2eda056da73ed4e3831b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x6f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e69834d3be74e5f376ef03bcfef22111c20eea17b220e79f16ccf04c40c1a8c2",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x70",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "72503d61ace97ab985ecbb6749a48cec7a93973f544daff0986e268c98604896",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x71",
+   "kind": "core-accepted-block",
+   "block": "3b38597b78e17729be10335a6b4da862b46d8dfcf880916c4b6f5946c865f48c",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "flag 0x71 rollback",
+   "kind": "invalidate",
+   "block": "3b38597b78e17729be10335a6b4da862b46d8dfcf880916c4b6f5946c865f48c",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "flag 0x72",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "cecfb0a2b4920ebc62879b3f40bb923ed1da98891196bb3e6361c9e411f71fd2",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x73",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "45e89bb080149950f9156981d8b0c148d1a400a6888c2b1f342137abecb915e0",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x74",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c4a80f5906bf746d784dc8128f689d9c3f728375b31e0caea70010d08efaeb4f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x75",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "94fc2f6e1d0eb863c106785d982f1dc7506fce59fd42144063f531c532b7a9ff",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x76",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d62a902f2670ac2b78fe40935651b45d69ebc380128276864f6a80d64895fbb7",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x77",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9eeb6c3b5cb5e887ffea728f29108d860785af710520f90dcdd9d586de69c2fb",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x78",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "65613c8f9dc3ffe1cfefbd2cebf1266d7881c000e9291be340681864c171cecc",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x79",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "517da363d52ec274298f560fc559cd758cc96d8dae9377d4f4d9eea7cc5b7f3b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x7a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "2396660a5d31ee381eacc750d75d9d92d52d39449ab20db1fb878203672dd95d",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x7b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ec23021399c40d7caa07218cfd9ab5536daf46b9f6fe8974ac5419abab51c1a6",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x7c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e0731fd9571e7b844c890724ae6679b19e0518476bdebc7d4603547a8f329f62",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x7d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "4b9d933040abc145fc1c15de37a471211c728c821205d66b29e024733e082040",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x7e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "65db1c4e7444c3127c5e74307b77f6ef4f1aa5e05e4926d20eebab0bcd5cf660",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x7f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "2fae6c93ddc39cce6e4f34fb71ffb925b746d8857bbb606d16a67beca2e6708e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x80",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "45665d40ca11ac7b9c7e33de6162d30039308fd226594805e522bf4d2fcd5bc4",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x81",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7b522a385654291ffb42d92e66bd8d00e843e03bb10a5cf4cd1921caeccdd415",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x82",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "09857d721cdeec12f811799f13a99f35b9dc047c57ec3c273952fb00b049b4d9",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x83",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8043dd97ab871784a5857860758a3f6ed375447d71a50052db3d334e9ac40854",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x84",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d936a6afbb186e57ae9c306fdc0b10eab66ffc3708e2483b18d648e2f891534e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x85",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "eea8f6e4a0f7150225a2299c98d3f6599789ec489006f6fb66d6daa83896e4d9",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x86",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ab9fb88db176b051b8eca8d182a9f14abb19d9b15b725479a9cf46c91747dcd8",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x87",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9890626c5294cb241c2cab06539d99d90fd3adb40e2203ec72e7754eee001fbe",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x88",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "052a009d0f915187e222d20b48db673d2b1b11e5976d7db5ccec5065aaba3b37",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x89",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d86c5c78cb2a281301f0dcd0540f2bdd2d1c0bb821d53bcc15a9c14ee72e960f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x8a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "84646499ec94622a65f383f9d3d4e6b886d6902fd17298a7b774cdeccad02167",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x8b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c11e18a61fbcc5979e4335988ef1474cf8b01b3e2141062e74f4864f9353cd1e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x8c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "dc1e9cfb97274aa1799828d23dc9444991fe54b36916d9eada49020e5573a7e3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x8d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "640265072a17c0ca270ee244b46e48720f7ae71e3b4138811feefd44c5f8748f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x8e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9b0cd08c0632da1498138549e3c9ae3d562055a8eb7f1a4584688eaf0d4902ea",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x8f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "cb4559030dcbd6ef7195d1b3c265764ca8b41e81bb91e2aa30aa0c9b0e83a47d",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x90",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "24c35f90706c9581a80e8e4be80784d2b415b74045d6fe4f8ede87e32b271dde",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x91",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7845fa68a314a4329d0bd6b88ca774e30f4675724bacdecb2cbb82faa7125599",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x92",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "821051dd3e157b93fd8a2d39da123ad90e0555794fcb3b27d687afa2d44f4c1b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x93",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "df07455865b2e4b42b6a03c73d5899f3cb6de1f7affe80415e0ed25ff43647f1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x94",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8f7f55111ee5db145a8adcf12d3d0d0c5b60e049c7ce4f38982f48062f182599",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x95",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1cb7aab67fa61e928dbbf846296e108f9e026cb7788d81a7e08e5a36755b8b94",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x96",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8756c469bc5cdbf234d4478366af7f619db8aff8154cc387af63f0c42db528e4",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x97",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "353bdfeb54e245ea31a9c91b241d174fe2f374a4d6f00d49b283125ce4c8dd6b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x98",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "31027ba4df2358f7999c4ce8e7f918c424703352ff2dcfafb0a0bc3267d9c382",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x99",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e08fdb11a4d96fb8c96414df5cce464805374b9c0962febc60fd21507e3458e9",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x9a",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c4b54072cbf52a1d4e94a2f021b08497764370d30e71596e7a3d52dc5c6f786e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x9b",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "54458718594baf305fc98a776c1dcbd8ad6d956de843a615ba6477a4016ee7b5",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x9c",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d3d96f8a29c85d112a008c904d48acbaeaecea8f4abfb84ccd42d84eb6be6f32",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x9d",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9b2f3a7910ae71ddf15e5d5507586a0a120beeaccbb510557bde004531e3d77a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x9e",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "0a5173791e33fa787a075db779de456755866f1a78c60b93bda65047c960fb76",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0x9f",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "bcd59854d7e8d8bc0eb43a6be062336f84a5269c49d49257fc6e3ab4fa48c7ba",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa0",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1445391e4018b6d61d5d0e23ab76674521b78447d871a14f21e894559eb3b13b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa1",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "92ee6130befdef64ddf4e68db9d7e277d77ae8f46430068ce5e18655c3f847bd",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa2",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "2767ca56469a4dfa256264abdceebbfc9eb4a29f080e87f71624030e42238b0f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa3",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "6161d4833c4be89b2f302d58edf2bc24222075949ea2f95bdb650c38a4547081",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa4",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e21250909dd816f574e0870142c715f7cf2cc3a5d5a59d8fa985308099829d5f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa5",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "efa8d600afc796991f3c5b2bbb8c2baf7de208d3d1c82a933612d051635c9944",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa6",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "85cf63e3c74277fcf0f0ec760435731de2a9b8799eccae2ee95b8967174aa6ea",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa7",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a379685b8d87e39fd4bbbe8f958417302b690943f4022cb06e2dd6bb320dfbc4",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa8",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "71b4f71be581c16b58bbd611811bfa89c72862bd6b4c7fbd241d9463ea224b62",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xa9",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "26eeb872cbcd09c16b800455903098ae3aaa718844ceabb39eb7aa2ae74a4d36",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xaa",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "02bf4c8a7b379d214cb9061121407bb63e69485f85c9f7573a1550a7b0641869",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xab",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8c9ed2024a3d4b6710e3a540978f8b55033a0803b90d4c62481ca59cfb0abf03",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xac",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "0ec7e7abd89cd96c36b4735ab6e46868f31db8e38dfbcddc02e0d2a4436a37cb",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xad",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1bd09a15ff9c2e95b35adab6048bd465ec798d727aed8f057e15141069564201",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xae",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d0998140d9e10a9b057ce5e1c79d851d60dced6a381d7fd16794b5982c0484fd",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xaf",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "20b197899fe028c7c95c6e8dc7bf1023efb3995b2c8c75682326f251a3ee91f7",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb0",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e7703b724fd9a43ceda48e6d285aa4a949017de0139d772e97dddd56eb96ac64",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb1",
+   "kind": "core-accepted-block",
+   "block": "514e51b0cf74d1d5a2ecda691c23276abfc10cd5ae08a2138d6bada98347f987",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "flag 0xb1 rollback",
+   "kind": "invalidate",
+   "block": "514e51b0cf74d1d5a2ecda691c23276abfc10cd5ae08a2138d6bada98347f987",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "flag 0xb2",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "85161751e6577ff71f4f7ae1b15ebf79242a7cbc7354f38c6cce2a14ca6901e1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb3",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5060212dcb3a0ce3470259963896c30dd221d6c5fcafc2552ed226acf76a813b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb4",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e0630d82660c4e02e1b6286d7149bd0d489723074c4dc2e118ff00c5599ef6cf",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb5",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "18cb2b4bcb7f1573a222534aa7eb6824293cd86a37a6bba7fecb0d211251593e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb6",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d9bc2956caedf5fc00fafd4b944e113be277daef39041e0fbf5ad26279b40398",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb7",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "279fb6ebdfb7ecf861f4e2e35cd2bfa42cb1f4448123e23707be51f48ee80110",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb8",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "0244c48aba287d78fe0caf6a531c8315cb3b4cd488a265b14a814783bbfea44f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xb9",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ff7776db7dabfab94cf000da41f428494e58c71f7bd55ab1f30efcebc846e8ae",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xba",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "d43bc674014ef0219949e95fcc8d75f6492a358f7d69b17d4b63d540b7edda64",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xbb",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "3b9dbb195aa0ee907d9365abcc020c995e837fabd4a7f0a926e8df186ec3dca7",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xbc",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "6f7f8c2fa3864ad40f6fb06c743fa40ddcc32836dd3769a2c22a7819c20441d0",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xbd",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7aa9115c0676ae7ae5015b7df43b539f5856a596bcf8c3dbd736d1984f17d213",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xbe",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "fd7a2d9c0ca9bbdd5d186cb20d81813e5e6ff18f6091fbf2039caa34ff992f8a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xbf",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1165f294b10510ef49db3a733b055c732907269e57829d25a0ddd1c997256262",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc0",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1f298f07da14d1df21d94fbf354856fe02176e5de1f52dcf59ae542e4eacf92f",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc1",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "899afaf98be53801ae8320001a0f8d5b93e669256c8ea2682f8daf8748020a58",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc2",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "727acc13d5fef51a74a5dcf45ced42c826a345b65a0c7c802008e54e5fc62fa3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc3",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e04295710cc985f07fa8043888cbed09f8981f716ffaba6be9cb2641c2d8db81",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc4",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "50125c0b3bfee9d8d75678d84b481f790af682b96bf979d6adcb8268da0907fa",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc5",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "275389f601fa33dc45c5c939ab7b9c6f6780294015225c4c78062ca7eb347445",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc6",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "1903fd1d94d97511df01c4b2b27355b8563797723b00a67bba7e84b5f0628b7a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc7",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7b68ce5969454f0705f0a63382a5048f429f75ac4f34691ae4d5cbd6ec66ca66",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc8",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ea8318523a967b276044378b07ed2ac29f9a54be69b9bcea0d6dc5078a775a70",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xc9",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "96e415ec368864fb006b8f3fc569f8e16045068377308e2ccf64043f704267dc",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xca",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5d2fff670c81c2ae4a6c5a84d4edac8e48fe930e7e08f7aaa1d998666ff3cfbe",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xcb",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "f79b434c76e9aef9866f83b9e30c78f352c8fb6f0a6a5e70736672a158ea139c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xcc",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "14fd9df6ccfff2ec2f636ef0e7bc2c4a862efd033791ede05b0c0c2f0cca0bc8",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xcd",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "cfcb2d5e1ca9c1f9be182fe58c096883afb4e6cf5d76a22da03b31a6acd2eb42",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xce",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5f0f3750e3c5c447150f97b25421c9581de6babd2416e932885a7bd5b0b4140b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xcf",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "55c3fb4f6a3b512d6b2bbcaa48011dca9d0e49348a466d07b0d45a6158d9f547",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd0",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "2f9c6caf50159501c30c161367a89c4149993073a40dd3bbe5c4cc194d91a13a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd1",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "230ae311fe1bd93e8063e764f858ee7052991c0edf1cf1ee64780410cf7ff707",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd2",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "eefac87c43d02e5790d3eab2e75748f4d716a1fbafc71ad33bf0ad53ca256ade",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd3",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "51b9e4722a926b51df788a0d5e331b16687bb99216b90ecd8023c9fbfd047ae0",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd4",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "f88d90fa2b80ab2374669d5359ea35ccc97f0bcfb78500a490501c9bd679e8a2",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd5",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7dfc99cc94060e53ce1e07ef1cc0a0a9b65f0c30c371399b9f9a6b0999f2607a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd6",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "4ec30bdd9b58c810d5faefe1f27a10491b74279d204867d65278897ca9fe5d61",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd7",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "61c330259c1ab4df783bfdf48c061be18293f850667fa9bd9b54668332a6ab04",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd8",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "fa7833dc352ee426a75813084e8450886e95c89441f56da077babeede6ab0f35",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xd9",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "25b4b013ca7ef5844abc2bd0f3b3c979b26e2f9ae8ad0997284af58ad0385c3b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xda",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "61f3b0d90d1fc3771851b0ba2a734e2ef060e0ac92d5ebc1bbc2c9381e3528cc",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xdb",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "c6a0351949c493b765b1057ee1d7df8a50d18c4fe52f3a263bb99e4dcd61f57a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xdc",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ce137f669a77a1b49c6d987493f670711564a55524f9e78d1147b335418c4b7b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xdd",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e250b017376e3d68bfd0bc9d9af93730fdf4abbd6b8f48f6d67e55329addba5e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xde",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a77a43243b5051b7cbf02e1c268f8bad99cc03d094537c93b38fc15fdb89a66e",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xdf",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a3206e627d28f7e5594a16a02e7cebb02e6807799db81c56e24e0b6fc4885859",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe0",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a7f7a8f8d92d44de7d8dd0c2c448de21ef937e3f0e816e2eb60443940be197f1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe1",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "095295ea55052b106d5e0886f72eebe29291493cffacef65a1b4d734f7411b04",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe2",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7292f1da563ddd3a6c66daf7aa66d469532a8f410c44ad4f88253b429c3838e5",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe3",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "67d3f40c7af83ecc494f3f7cff75531be6f831f23ae986abe09ddacf60fe17eb",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe4",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "4942d3ebf1b32f2cf06cc1729cb763f6253a11aa8547a2da04f224b9d6fed0ec",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe5",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "25ef28d507126e2d7c32e40a50953bf9c8688454b69c3fb2e6cebccf3c67cd4b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe6",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "828195e0f29875bf135d882babef2b10b7b2c2f7732b42918cba95263e25933a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe7",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "757cb154abca770a348f40be5466579ae54719de8879d250789c0bdbbeb009de",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe8",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "f9fe8507f49a3eff13176dbc1b6784b66c85c7bca11b36e54a6b6bb70c8a0ca3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xe9",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "8bb4d4ede87c7b4b06699d7c54c7c28bb5c9eecb39c1d08780da3a1902593f2a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xea",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "58b2b15121ea743f6745da30ddc246dd0752f33d15fd008e8b1dd509bdaa2903",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xeb",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "58263c97ee5bfe2d110664379047791a16091814271dceb0f4c97ffc52bf5521",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xec",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "3a30b678304b0eb71c2c8fabc38d1430dc1112e1a737bea526b220fa3d5bfa19",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xed",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "96bd13b85e77191546cc08742c0653992ca647a0b7ea1a5615d5eb4272a7d5d8",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xee",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "9f60ee40596c146d6b9c15627b6508ae8c1a165953e0117c073d85ab79f75d2c",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xef",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "27b6aedfba4ea04916580738eefa3804063f4dc2372b5fef7925e8d48a994018",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf0",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e7a42c19a0c68afa17f6892e1ba445b74a5fb8399ec957c4e154260d53e0a16b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf1",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "066d05c429b82dfbf6d624a53a31b4e3ae27533d388f78ef2cc9ca1bca19ad0b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf2",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "6ed685c189deae8f8d5ca73c37190bd5c3f1205b94d3a60d653f3af3b368bb3b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf3",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "a1bd4b153e2e0172cd723fc40fb58b8423cdc02f5c52bfc918b86125835d1cd1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf4",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "34f3067d7f53ad7c34d998525a91ce35d82a3294a75b12f9e4a8c16cb21f6ba0",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf5",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ae96db2a95c0ff7f1a864f74cb752b9bf54711f34951b1ef8ca935dce5804c86",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf6",
+   "kind": "core-accepted-block",
+   "block": "25d4e2d9c89ac24ccffc7c7c51cd98331d2e7a8f223caaf57743363190f114e6",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "flag 0xf6 rollback",
+   "kind": "invalidate",
+   "block": "25d4e2d9c89ac24ccffc7c7c51cd98331d2e7a8f223caaf57743363190f114e6",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "flag 0xf7",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e41e54c6b4def756f699057ac172edf2c340e19381a402a37663fc4790f9782a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf8",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "7956e9f22529547df6d88481b39cf4085b232792e6e0b20218dc2c70118980c6",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xf9",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "408e8437dce3321641337eeecdc888abd2c7c540b9d82ed33c8401ce3bec3ec1",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xfa",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "57c6d8092ba8c96e02eb15ea546b9a982a9e8e0c912a1504a811ea7cbd48537a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xfb",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "489002ea8ccb69d511624b80c97e2b932bb55ac45a7a45f453ba6d7747f85428",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xfc",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5ad131cdeab9ba85b89fa8f3fd1266f69767e0dd9c990ab098aeb2ccd3c0f94a",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xfd",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "5343d39ec1de6a4448002c5716140bfc7801bcd42d73ec9e493b260bfddf2ce3",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xfe",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "bc4cd06fe136c0787592fc34bc48946386e88df7b139206488d3ff35e28e061b",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "flag 0xff",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "e13a15d8b3b91517bd41655c9a635c8129ea18b6228f77a9c658f802c28b3c54",
+   "core": "block-script-verify-flag-failed (Script failed an OP_VERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: VERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "VERIFY",
+    "VERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "nop twin",
+   "kind": "core-accepted-block",
+   "block": "6d53c5790c20b29c9285879bc8caccd4f81f337ba4efe190f5fe71ff695dd824",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "nop twin rollback",
+   "kind": "invalidate",
+   "block": "6d53c5790c20b29c9285879bc8caccd4f81f337ba4efe190f5fe71ff695dd824",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "junk twin",
+   "kind": "core-accepted-block",
+   "block": "60acb1d2e663e1bebf0f1e0a946131065060c4643152c55f74748e709206abd6",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "junk twin rollback",
+   "kind": "invalidate",
+   "block": "60acb1d2e663e1bebf0f1e0a946131065060c4643152c55f74748e709206abd6",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "selector twin",
+   "kind": "core-accepted-block",
+   "block": "4198194f46b21998965dade3cda6c05f72b6f155b3aacca9682543ec851800f1",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "selector twin rollback",
+   "kind": "invalidate",
+   "block": "4198194f46b21998965dade3cda6c05f72b6f155b3aacca9682543ec851800f1",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "honest settlement",
+   "kind": "core-accepted-block",
+   "block": "107224c61168518c7285add63db36aacb3d7479b8f32f28b5a7701e4009382a7",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "reorg away honest settlement",
+   "kind": "invalidate",
+   "block": "107224c61168518c7285add63db36aacb3d7479b8f32f28b5a7701e4009382a7",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "front-run",
+   "kind": "core-accepted-block",
+   "block": "7f716e7ed946770420f5a10594aa07eae00ad51c7055acdb382c7cae31cf5f15",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "honest after front-run",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "37a92317027a76499282d5e78e99ae38a4fd17a24f0b0a5ccd47769916a6b172",
+   "core": "bad-txns-inputs-missingorspent",
+   "bitcoin_rs": "bad-txns-inputs-missingorspent",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "bad-txns-inputs-missingorspent",
+    "bad-txns-inputs-missingorspent"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "reorg away front-run",
+   "kind": "invalidate",
+   "block": "7f716e7ed946770420f5a10594aa07eae00ad51c7055acdb382c7cae31cf5f15",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "honest settlement re-mined",
+   "kind": "core-accepted-block",
+   "block": "0486bc9689e95ed1f749da7b2520e95fe76b6cfaae2c7b5ff4d964af790b370f",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "reorg away honest settlement again",
+   "kind": "invalidate",
+   "block": "0486bc9689e95ed1f749da7b2520e95fe76b6cfaae2c7b5ff4d964af790b370f",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "unauthorized payout",
+   "kind": "core-accepted-block",
+   "block": "6ad5c780c00ecf0536f19c371b70e2cd732290566612ea1972990495099665f2",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "single attestation",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "3c37eafbdc949986a969bf67a67ee9f628e7f8d7a69c01ab45c712aafc2f9f83",
+   "core": "block-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)",
+   "bitcoin_rs": "block-script-verify-flag-failed (script failed: EQUALVERIFY)",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "EQUALVERIFY",
+    "EQUALVERIFY"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "slash",
+   "kind": "core-accepted-block",
+   "block": "76adcadd946c464d27a56741d8e9c1ece2ff4cb28283ebf62eccbed17ccd240e",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "slash rollback",
+   "kind": "invalidate",
+   "block": "76adcadd946c464d27a56741d8e9c1ece2ff4cb28283ebf62eccbed17ccd240e",
+   "core": "invalidated",
+   "bitcoin_rs": "invalidated",
+   "agree": true
+  },
+  {
+   "label": "early release",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "ad166a3f00512b88d3f01855935cbb9da605e1d396107de865c40554a0190a4e",
+   "core": "bad-txns-nonfinal",
+   "bitcoin_rs": "bad-txns-nonfinal",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "bad-txns-nonfinal",
+    "bad-txns-nonfinal"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "75fbff2d926ad2b31663f99c8e624886f628b1b4b49e8e1b607d7b5a2d356f4a",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "6dc97a5dc55c2101bfeb10ec3b7aac729264bd5bd908e01053c87bd3084640ac",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "4d5febbce8039bfc0c0e0a539034c8b916f1f715216ecc4aa95c4136a33d9247",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "04ab61015c3c092810ebfb413f9a6d00d7d5e42601a14c141a6a0b218a8585a5",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "05ef99a5dca58c5026ef1310aeb297677f556ddcd5bedfd3e9376f2fa16e1a0d",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "1d0f19195b2da4a0d64d19097f730c8bc40731c9763b7ebff4512e770ee237ca",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "1cd9286222ba2bde8311fc8dcbe055625ca67fabf0f7684304d88b0cb5936e1c",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "547f0d6ef7774fbdffe483998641626b4984fd702a69626e2a2db5ad78762e95",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "0e52a2c8d594f47e1aab9722871c6c9878520da5c5058c316fdfba5af578e651",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "2b60ed0875d27bb418d636c3993f70e874e2f9e0d516f76b40e271f955e26188",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "4fb01a16c1a005d74ae5033d763a996fe37020e418cf3d3f9f969a04c7cce075",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "challenger censored",
+   "kind": "core-accepted-block",
+   "block": "5aaa6f03f7e6ca2f9b8fe9b699b13feee84514d8e48f30754cc78ecf173d2752",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "operator release",
+   "kind": "core-accepted-block",
+   "block": "1e70fafb53b930bc47e97c58eff85afdfebf0dff98b56641fa4575f8992eef47",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  },
+  {
+   "label": "late slash",
+   "kind": "handmade-block-with-refused-tx",
+   "txid": "04978129d9112144876171a2ece1a973948871159e0eb5e0db1e901c437e599b",
+   "core": "bad-txns-inputs-missingorspent",
+   "bitcoin_rs": "bad-txns-inputs-missingorspent",
+   "core_tip_preserved": true,
+   "bitcoin_rs_tip_preserved": true,
+   "agree": true,
+   "reason_class": [
+    "bad-txns-inputs-missingorspent",
+    "bad-txns-inputs-missingorspent"
+   ],
+   "reason_class_match": true
+  },
+  {
+   "label": "split round-1 spend",
+   "kind": "core-accepted-block",
+   "block": "347e5113a4d0742bcc4f960eb60eb89f20dac79d6327b1984d71a9519f26662e",
+   "core": "accepted",
+   "bitcoin_rs": "accepted",
+   "bitcoin_rs_tip_matches": true,
+   "agree": true
+  }
+ ]
+}

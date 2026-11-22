@@ -1,0 +1,305 @@
+{
+  "experiment": "JB-FAD05 regtest proof of concept",
+  "chain": "regtest",
+  "tip_at_build": {
+    "height": 450,
+    "hash": "2313fa381d94558010572ec1aff101f30e75e4cbb80cdad08bc072f050199bfa"
+  },
+  "core_version": "/Satoshi:31.1.0/",
+  "node_policy": "acceptnonstdtxn=1 (test networks only)",
+  "funding": {
+    "txid": "405286fbd3fc0ddf39ae6b299d8fe585fb2687d861243ab9cdf5f95d8f7edc6d",
+    "raw_tx": "020000000001011d19517f730decd9622c62429b193f4899d7dd89fdd3b6986047e75100e6d5600000000000fdffffff06220200000000000017a914da1745e9b549bd0bfa1a569971c77eba30cd5a4b87220200000000000017a914da1745e9b549bd0bfa1a569971c77eba30cd5a4b87220200000000000017a914da1745e9b549bd0bfa1a569971c77eba30cd5a4b87220200000000000017a914da1745e9b549bd0bfa1a569971c77eba30cd5a4b87e803000000000000fd870a82013ba1692102bed3bd8d6a9b23bdbd893636a3fbf6bfb9957ab9fb32638aa084fcfc5ac716f6ad82013ba16921021062f8bf77fa8ecabcaa8b4cc5e743ac0b37a60d229933bf85ef9fcc438ef42dad82013ba1692103474c30c77f144816853173edeae0c288dddf921c4c07a2639b40b3268f0a785bad82013ba1692103457f003d7e8d8e72eddfd69632c343d5f3ad44797d36441aea826f687cecfc74ad5a7a82013ba1696b140ddb9738e6bd4258b558de0fe2729a49c04ae007145fa6b13b8da4929f8e179f1b15faf59cf17fc14614f86e42a6ceb1ba719d0b1823c006a37b5df1790d14e9cccbdbe7f847def1d849b7287d166c60af0a0814d22a38556e3d28612a9b0320cce36e53395797f21492b9eef5d1f8727c5b894f8dd2ab84d0a5d61f38142f300442f78d75a3729da42e5fbf125a5d8db8c9144f604bf3832e26ef4d16ecfdc890ee76d17add091453f9bf424a6a661aa23cf430fb7deb31db9daf37147fccaab0e0851e0a657204e8e98b4f275f7bcf46473044022028126508973a4bd6b9d0a46e2a48ce36ccf7165d27add99033936546a84e86fd0220199b078116da11ca2604cbf83431509a33dca402a87b1e3384cc84624bd47f5903483045022100e631178979dff93e4d350cfdea949b312c11ddb64f1a37fdbf7b855d925b1b3402207be666eb92c0ded5df378ebbb03b60663fd790603638b8635ec40a712e422b1603483045022100b2b3ef119e919149b9df2247c8b9557578fc185efef47abcdf5ded4a04425a2502200a87c40190c5c7797dffd0f787777ecc7f5483348151e02af6fc3ff16af01cf503483045022100bcf80e8c1a4511a1ebb2689f731c8c7ea7202f78c15b061e8445e466004bd7b202207fbf316a795dbe50b978c3924aa49c5c9047c5ba2b7bf2da9be13101ea35dbb703483045022100a7b0f492c46a964021eae5e08f6b9733aee51458a432da981faaf6dfd4aaa30c02200c8651cfe46cae97010465ab26ec19ddd86ae7b229531750b24b4eaf18339083034730440220780709ab587c6f52a7326728777bffe6aea749aa8748d807be0a52e0715a8c5b02206b0b3241b3e2315980f1ae812d28bc08fa93f737ec9044781461de25f19ec002034730440220449d6816a4fe07ea68bc4f81e4e23ad4ba8a61766deffc511d1480683678d41a02204b762c786ff15c09ba6ada86a28d4681aec965b62075fed375f3a33245e76e5f03483045022100f84019c24e0cc4ef29e7852f406874f11ce1b0a9d0d7246989348383b0c3fc9a02200a37a6bc91c3b50879bf0523da45e45c6e0416b031f931c7924acb619200f9930347304402200d37f84c819c24cbd493a0cf2b7ed61f49265e328ee8564c975f09a70bc0196202204764802c7cf44f294a97064b7efdde11b9db665fdaf440042859f6b9feaa30c30348304502210096023d90655cf6d1e739cef2e7ac9555e117108ee1eaefeb5d41a60544fa09280220542be968e29b2716fe3129701dc9535c28a1491b9dc267baa493e5435f2bd6960301187976005aa5697a6b01177959937a011c7aa9880115797601187959a5697a6b01147958937a01197aa9880112797601157958a5697a6b01117957937a01167aa9885f797601127957a5697a6b5e7956937a01137aa9885c79765f7956a5697a6b5b7955937a607aa988006c6c6c6c6c6c562103c09fb3432cc421e1b6209e1defabca87004911c75af4f641975a6dc7729aa0562103c09fb3432cc421e1b6209e1defabca87004911c75af4f641975a6dc7729aa0562103c09fb3432cc421e1b6209e1defabca87004911c75af4f641975a6dc7729aa0562103c09fb3432cc421e1b6209e1defabca87004911c75af4f641975a6dc7729aa0562103c09fb3432cc421e1b6209e1defabca87004911c75af4f641975a6dc7729aa0562103f8f1e55f7349f7ab27c078a916ec02e055164fc7e69fc23e402fa9809acfd4f456ae69ab01197a82013ba1696b14ca13b860692806c2a8702e8d0fb029a2f77e468c14d26d36b338a42c22e299ef88afee153e837e293114429c2ef6b35cdc2ce1e96c68a069537ca74ebf6514321c87672e3f19383edfc990f40b5dfb8d1d7ecf144a899836ebb14d8e2e91e6d7d217babea563f39c14033fd3efe99e984014764accc7ada3136a696b3b14b5e89ee47baf4544bfd0dd490d60001983b7eb0e141bc0fb269a8d1d45f72f8f935806aa38d39cdf9414919ad466331f034e6e11176a369ace0eace37735140bfff5c67b3d6cdb0ee84be406f2c0c60624e1d24830450221008f1483e027648197426960bca4498355615b68c9fedfd11f3549834eaf98648d02201bb78682d2622aabbdbaa82f320a17ab9d982c5a6aea155db40539fcd6a4688f03473044022061aa013aa0abe8c20bc702868d82b218d2732e192ca9d7d41391754b427adecb02206d85aac8797332922a1716738e8edf121dda778395c3fa5e970a65179150532a03473044022008f5edae64b11693ad43b804082fcaf07b90800da629a9c5682eb24c5360d946022008b377eba2ae022c9629da49572c868ace13a6a50d3f7512c80baf6036dca2c40347304402205b60fc4e68ba356a16ea5af5ceb46906c396190da8cabbd8e42c878bd76f166c02201f17967deda084ccad661e1f3afa0516acc4a9e32bfd96178b46ff0d5a519c0f0347304402203792ad1c3407a56deffbaa81060e7ae5494e66193978007e875b339f94d001b302200360fc5f07455254dcd8e8e96b9976535997a1d83c53cc9c06a79f4d4b7bbd750347304402204aba4dc8562980281a3d57090df79293fbc9ecdcb1de76930ae9787d857baf1a02201beadd9e6cec72186a3deb5108fd166477c0d787dd1b255067f868f002a60c6903473044022078b949cf5890b09005e14235e8b4ff7be5979c3c2e81c720c287168ae42881c3022060468388f0ad9ecf044d7eaf891db24c78b962373237eea1c95c3415e3d4650f03473044022035790f67b09274308aca488a441d4f869003569224932114d9ef460c07b2352602205800b02f41b5c2c700a76155100e74d95b70c584455edf2ba8ee0b9db95f8ab50348304502210091d394e6993ae2efa42f75a4084e4f12e04205c6c7069cfebd696c18792a19f802204a6a0d424f57fd6f4d57782dc7ff3888ece394f75e80b6f6d824855293b802820347304402205b54c4f74dacf23263a1128328bdfcda76d6c149c1fd8a183ef8d724f6a1faf90220604e1b3dfdcbfbdee82ee11f0ded21b356eae4f9f162f3c4cbdb80fa25f16ed50301277976005aa5697a6b01267959937a012b7aa9880124797601277959a5697a6b01237958937a01287aa9880121797601247958a5697a6b01207957937a01257aa988011e797601217957a5697a6b011d7956937a01227aa988011b7976011e7956a5697a6b011a7955937a011f7aa988006c6c6c6c6c6c5621032b79fdd1aba885d1a86b4259ff29fa74634a40a7b0c29cf8b6465dee513b094721032b79fdd1aba885d1a86b4259ff29fa74634a40a7b0c29cf8b6465dee513b094721032b79fdd1aba885d1a86b4259ff29fa74634a40a7b0c29cf8b6465dee513b094721032b79fdd1aba885d1a86b4259ff29fa74634a40a7b0c29cf8b6465dee513b094721032b79fdd1aba885d1a86b4259ff29fa74634a40a7b0c29cf8b6465dee513b094721037c529493b8e77328f2537bbe28328661eff467e38dcf52e03ba314ee267312d556ae0eda052a010000001600146bae9bc024d4e18fe3f1f9c84cc720c8f4e225b90247304402200ab96d7370c53664cdedf7dbb29373fc3e826653543830134836b2f4e06e78e70220189dd25c7049e310cf34279091af00f73958c8b8b66b8d1149526e11a8fbcab70121036145ef188ffec494d363fb9af6a1ccf27d42d964b1813be37dc108333239f3b100000000",
+    "vault_vout": 4,
+    "aux_vouts": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "aux_sats": 546,
+    "vault_sats": 1000,
+    "fee_rate_sat_vb": 1.0,
+    "wallet_fee_sats": 2946,
+    "vsize": 2944
+  },
+  "settlement": {
+    "txid": "366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e",
+    "raw_tx": "02000000026ddc7e8f5df9f5cdb93a2461d88726fb85e58f9d296bae39df0dfcd3fb86524002000000020151280200f06ddc7e8f5df9f5cdb93a2461d88726fb85e58f9d296bae39df0dfcd3fb86524004000000fd44023b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f6155d149ec69b6641402ed35fe2fd3996aa83c0dfe51778d31a45c6bcb281201141dfe9b538b6d669221bae1efeabd8e71723db82c14820312aae4d73fc3369a27e4a452b3312e9ea2ae142a85ce9dc38cc9c664495459068e558c4993a3001448114ef177606e1bd0f66081edd4a03bafa614f814c45329e158032197dcd98eb25a64b897cc4e05f551515254553b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f03f7cf05533ce9e0d56042c899b6042bc061c37040a9d8c8cdf7be3dc735420114854814066a461be18047bc9cf5184fd04d5bbefc1447180ad942242a6e6725336963f93087ca0a285d143892eabf0cf68b1fc291a26caf3bd57159e66e51142487a7771fa161e667a34e97d6918066ef1432b714d17a7bd2e7717024717dd8ffc559036c42eb80ae00555555553b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f6be880ec863628418dc5b73e9e76e2b882c2042d56b38ea0f2d38f2e24cd16013b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f1756a25de571dd3c8e40238f85bcb3103acb32cd8952c4f6581004326d1b6d813b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f01dc60265ca05cb0690bcbcaf0725b8d7e2ca68eaecf023a4553683eb0e06a023b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f7c0682e755fb77b3ad6010ac2146a6f0d0681400ec8233f2a515a3545a2d8882800500f0013003000000000000220020d894020a4c4917bee91aef055e861341bfc6203bd2bfe3d00d2baf7cd7885dd200000000",
+    "round1_indices": [
+      0,
+      1,
+      2,
+      3,
+      9
+    ],
+    "round2_indices": [
+      0,
+      2,
+      5,
+      7,
+      8
+    ],
+    "nonce_flags": [
+      "0x01",
+      "0x01"
+    ],
+    "pin_flags": {
+      "acp_none": "0x82",
+      "none": "0x02",
+      "acp_all": "0x81",
+      "all": "0x01"
+    },
+    "payout_witness_script": "20cd3d0b1d6554bac899b4ae138a2412ae2c758588bce155124b6a9ce0896b3aac04140100006d21021701af05c02f0b7c562c5a5022d5bbcbfefc43ac5601e9fae5670b7679b7a630ac",
+    "successor_root": "cd3d0b1d6554bac899b4ae138a2412ae2c758588bce155124b6a9ce0896b3aac",
+    "salt": 276,
+    "attempts": {
+      "acp_none": 1409,
+      "none": 35,
+      "acp_all": 277,
+      "all": 553,
+      "round_1": 258,
+      "round_2": 85,
+      "candidates": 2
+    },
+    "payout_sats": 816,
+    "fee_sats": 730,
+    "recipient_body": "21021701af05c02f0b7c562c5a5022d5bbcbfefc43ac5601e9fae5670b7679b7a630ac",
+    "payee_address": "bcrt1qwgl2zfjh30q0xldtvs3wpfxc3dawkjud52hql7",
+    "grind_seconds": 0.52,
+    "offline_model": {
+      "ok": true,
+      "core_op_count": 182
+    }
+  },
+  "policy_registration": {
+    "schema": "jb-fad05-policy-v1",
+    "vault_txid": "405286fbd3fc0ddf39ae6b299d8fe585fb2687d861243ab9cdf5f95d8f7edc6d",
+    "vault_vout": 4,
+    "funding_script_sha256": "2416c33049d796a9ee50acef678fe16048f627f57ce97d4200a6bae034a9043d",
+    "hors_root": "c25ef2335b3ed9e9bd01fff7f20b874af37d34add60743fa083c1389d468c45a",
+    "recipient_body_hex": "21021701af05c02f0b7c562c5a5022d5bbcbfefc43ac5601e9fae5670b7679b7a630ac",
+    "payout_sats": 816,
+    "fee_sats": 730,
+    "verified_program_id": "a9842edbd1ccec9ced6c5f1391bfa4813cb114f06a8dadd8bc58dc85b9a370b7",
+    "previous_state_root": "d436f5030b2bcedfb9692f671f12823fd47d21d68f33f14c3aae1f4adf48d7c5"
+  },
+  "resources": {
+    "script_bytes": 2695,
+    "nonpush_opcodes": 170,
+    "checkmultisig_key_charge": 12,
+    "core_op_count": 182,
+    "within_201": true,
+    "within_10000_bytes": true,
+    "accurate_sigops": 16,
+    "legacy_block_sigops": 44,
+    "script_sig_bytes": 580,
+    "tx_bytes": 719,
+    "tx_weight": 2876,
+    "hors_commitments": 20,
+    "revealed_preimages": 10,
+    "subsets_per_round": 252,
+    "raw_subset_bits": 15.955
+  },
+  "testmempoolaccept_package": [
+    {
+      "txid": "405286fbd3fc0ddf39ae6b299d8fe585fb2687d861243ab9cdf5f95d8f7edc6d",
+      "wtxid": "eab37df32a5cf530691fae240c3d9c8092e45cdede2d750f6f184517669a5975",
+      "allowed": true,
+      "vsize": 2944,
+      "fees": {
+        "base": 2.946e-05,
+        "effective-feerate": 1e-05,
+        "effective-includes": [
+          "eab37df32a5cf530691fae240c3d9c8092e45cdede2d750f6f184517669a5975"
+        ]
+      }
+    },
+    {
+      "txid": "366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e",
+      "wtxid": "366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e",
+      "allowed": false,
+      "reject-reason": "mempool-script-verify-flag-failed (Signature is found in scriptCode)",
+      "reject-details": "mempool-script-verify-flag-failed (Signature is found in scriptCode), input 1 of 366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e (wtxid 366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e), spending 405286fbd3fc0ddf39ae6b299d8fe585fb2687d861243ab9cdf5f95d8f7edc6d:4"
+    }
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "text": "wallet funded; height 450",
+      "height": 450,
+      "tips_match": true
+    },
+    {
+      "step": 2,
+      "text": "funding 405286fbd3fc0ddf.. (2944 vB) and settlement 366c3c6203bbc5e2.. built; indices [0, 1, 2, 3, 9] / [0, 2, 5, 7, 8]; grind 0.52 s",
+      "funding_txid": "405286fbd3fc0ddf39ae6b299d8fe585fb2687d861243ab9cdf5f95d8f7edc6d",
+      "settlement_txid": "366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e",
+      "tips_match": true
+    },
+    {
+      "step": 3,
+      "text": "funding accepted into the mempool (acceptnonstdtxn=1)",
+      "mempool": true,
+      "tips_match": true
+    },
+    {
+      "step": 4,
+      "text": "settlement refused by the mempool: CONST_SCRIPTCODE policy",
+      "refusal": "sendrawtransaction: {'code': -26, 'message': 'mempool-script-verify-flag-failed (Signature is found in scriptCode), input 1 of 366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e (wtxid 366c3c6203bbc5e20151088d7bc56666c33e2208de7b74666a4becb10f6f6c8e), spending 405286fbd3fc0ddf39ae6b299d8fe585fb2687d861243ab9cdf5f95d8f7edc6d:4'}",
+      "tips_match": true
+    },
+    {
+      "step": 5,
+      "text": "funding mined from the mempool in 49cd67a1a989c1c5..; vault 405286fbd3fc0ddf..:4 holds 1000 sats",
+      "funding_block": "49cd67a1a989c1c5d4fb6f4a3cbe29db78ef684f703307360599e1fed1a54b5a",
+      "tips_match": true
+    },
+    {
+      "step": 6,
+      "text": "settlement included miner-direct in 395a9642910c2012..; vault spent; payout 816 sats to P2WSH(successor || salt || wallet key)",
+      "settlement_block": "395a9642910c2012a90e282593142de47a8ac1a4b133ba3e21ef3b36114785a6",
+      "tips_match": true
+    },
+    {
+      "step": 7,
+      "text": "referee accepts against the registered policy; statement c886b96b540c8d7a..",
+      "statement_hash": "c886b96b540c8d7af632ec2e2c84efcb76360110f1cfe10b0e2ac167cb3d4498",
+      "tips_match": true
+    },
+    {
+      "step": 8,
+      "text": "settlement buried at 7 confirmations",
+      "confirmations": 7,
+      "tips_match": true
+    }
+  ],
+  "referee": {
+    "statement_hash": "c886b96b540c8d7af632ec2e2c84efcb76360110f1cfe10b0e2ac167cb3d4498",
+    "statement": {
+      "vault_outpoint": "6ddc7e8f5df9f5cdb93a2461d88726fb85e58f9d296bae39df0dfcd3fb86524004000000",
+      "funding_script_hash": "2416c33049d796a9ee50acef678fe16048f627f57ce97d4200a6bae034a9043d",
+      "transaction_bytes": "02000000026ddc7e8f5df9f5cdb93a2461d88726fb85e58f9d296bae39df0dfcd3fb86524002000000020151280200f06ddc7e8f5df9f5cdb93a2461d88726fb85e58f9d296bae39df0dfcd3fb86524004000000fd44023b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f6155d149ec69b6641402ed35fe2fd3996aa83c0dfe51778d31a45c6bcb281201141dfe9b538b6d669221bae1efeabd8e71723db82c14820312aae4d73fc3369a27e4a452b3312e9ea2ae142a85ce9dc38cc9c664495459068e558c4993a3001448114ef177606e1bd0f66081edd4a03bafa614f814c45329e158032197dcd98eb25a64b897cc4e05f551515254553b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f03f7cf05533ce9e0d56042c899b6042bc061c37040a9d8c8cdf7be3dc735420114854814066a461be18047bc9cf5184fd04d5bbefc1447180ad942242a6e6725336963f93087ca0a285d143892eabf0cf68b1fc291a26caf3bd57159e66e51142487a7771fa161e667a34e97d6918066ef1432b714d17a7bd2e7717024717dd8ffc559036c42eb80ae00555555553b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f6be880ec863628418dc5b73e9e76e2b882c2042d56b38ea0f2d38f2e24cd16013b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f1756a25de571dd3c8e40238f85bcb3103acb32cd8952c4f6581004326d1b6d813b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f01dc60265ca05cb0690bcbcaf0725b8d7e2ca68eaecf023a4553683eb0e06a023b303802153b78ce563f89a0ed9414f5aa28ad0d96d6795f9c63021f7c0682e755fb77b3ad6010ac2146a6f0d0681400ec8233f2a515a3545a2d8882800500f0013003000000000000220020d894020a4c4917bee91aef055e861341bfc6203bd2bfe3d00d2baf7cd7885dd200000000",
+      "block_header_anchor": "000000205a4ba5d1fee19905360733704f68ef78db29be3c4a6ffbd4c5c189a9a167cd49516970782c65e5691b65102fc0ddae9f4ac15046c2253860c34b0e11cd70cc3d6ecf026bffff7f2000000000",
+      "binohash_round_1_indices": "0001020309",
+      "binohash_round_2_indices": "0002050708",
+      "verified_program_id": "a9842edbd1ccec9ced6c5f1391bfa4813cb114f06a8dadd8bc58dc85b9a370b7",
+      "previous_state_root": "d436f5030b2bcedfb9692f671f12823fd47d21d68f33f14c3aae1f4adf48d7c5",
+      "successor_state_root": "cd3d0b1d6554bac899b4ae138a2412ae2c758588bce155124b6a9ce0896b3aac",
+      "recipient_script": "0020d894020a4c4917bee91aef055e861341bfc6203bd2bfe3d00d2baf7cd7885dd2",
+      "payout_amount": "3003000000000000",
+      "fee": "da02000000000000",
+      "proof_commitment": "5728f05e072aa08e3576b7ba75c51465fd9da2de7ffe646fc39f3e6cbccf0703"
+    },
+    "checks": [
+      {
+        "check": "funding_txid_matches_policy",
+        "enforced_by": "external-policy"
+      },
+      {
+        "check": "vault_script_hash_matches_policy",
+        "enforced_by": "external-policy"
+      },
+      {
+        "check": "hors_root_matches_policy",
+        "enforced_by": "external-policy"
+      },
+      {
+        "check": "two_inputs_one_output",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "spends_registered_vault_outpoint",
+        "enforced_by": "bitcoin-consensus"
+      },
+      {
+        "check": "scriptsig_shape",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "round1_hors_preimages_open_selected_indices",
+        "enforced_by": "bitcoin-consensus"
+      },
+      {
+        "check": "round1_canonical_subset_encoding",
+        "enforced_by": "bitcoin-consensus"
+      },
+      {
+        "check": "round2_hors_preimages_open_selected_indices",
+        "enforced_by": "bitcoin-consensus"
+      },
+      {
+        "check": "round2_canonical_subset_encoding",
+        "enforced_by": "bitcoin-consensus"
+      },
+      {
+        "check": "four_pin_signatures_valid",
+        "enforced_by": "bitcoin-consensus"
+      },
+      {
+        "check": "pin_sighash_bytes_canonical",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "nonce_puzzles_valid",
+        "enforced_by": "bitcoin-consensus"
+      },
+      {
+        "check": "nonce_sighash_bytes_canonical",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "payout_script_opens_witness",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "recipient_matches_policy",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "payout_matches_policy",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "fee_matches_policy",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "program_id_matches_policy",
+        "enforced_by": "external-policy"
+      },
+      {
+        "check": "state_transition_valid",
+        "enforced_by": "referee-only"
+      },
+      {
+        "check": "tx_in_trusted_block",
+        "enforced_by": "trusted-anchor"
+      }
+    ],
+    "indices": [
+      0,
+      1,
+      2,
+      3,
+      9,
+      0,
+      2,
+      5,
+      7,
+      8
+    ]
+  },
+  "blocks": {
+    "funding": "49cd67a1a989c1c5d4fb6f4a3cbe29db78ef684f703307360599e1fed1a54b5a",
+    "settlement": "395a9642910c2012a90e282593142de47a8ac1a4b133ba3e21ef3b36114785a6"
+  },
+  "engines": {
+    "bitcoind": "/Satoshi:31.1.0/",
+    "bitcoind_sha256": "986e63b3c8770f08d0059820ad3dd085d1ab9e1bea23946c243f858a06888a08",
+    "bitcoin_rs_commit": "dd6c2040606cc5069923211e5371decfd43cdb9d",
+    "bitcoin_rs_sha256": "f49710aab309a718ed8a0a7bea59d66a8d3286f9dcdfa2de99dd7d0729e500c0",
+    "bitcoin_rs_final_tip_matches": true
+  },
+  "seconds": 149.0
+}
