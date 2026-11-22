@@ -128,3 +128,35 @@ enforce canonical scriptSig encoding, and measure all 256 sighash flag
 variants against both consensus and standardness. A subsequent
 two-round experiment can add the Lamport-signable Script-readable digest
 for a BitVM verifier.
+
+## Native Bitcoin Core 30.2 evidence
+
+[Workflow run 44993684859](https://github.com/patrickdugan/jurassic-bitcoin/actions/runs/44993684859)
+passed both the offline and native-regtest jobs at source revision
+`c0a6e1de9d2cb1264dec72a8c6aa1b125c334e37`.
+
+- 8 offline unit tests passed, including all 252 unique subset scriptCodes.
+- The deterministic synthetic fixture found two winners after 175 attempted
+  combinations within locktime context 0.
+- The independently funded native fixture needed 357 candidate attempts over
+  locktime contexts 0 and 1, with 996-byte bare locking script and two
+  distinct qualifying five-signature subsets.
+- The bare-script funding transaction was policy-refused: `scriptpubkey`.
+  Both valid spending candidates were mempool-refused:
+  `bad-txns-nonstandard-inputs`.
+- Bitcoin Core accepted the nonstandard funding transaction directly in a
+  regtest block and subsequently confirmed one valid spending transaction.
+- Core rejected five direct-block attacks: changed subset, changed payout
+  value, out-of-bounds selector, extra output and wrong SIGHASH flag.
+  Each rejection preserved the best-block hash.
+
+The complete raw funding transaction, winning spends, selected indices,
+ECDSA signatures, sighash digests, mempool responses, block hashes, and
+five negative Core error messages are in the `jb-fad02-native` JSON receipt
+artifact attached to that workflow run.
+
+This demonstrates consensus-valid, nonstandard use of a readable
+10-choose-5 selector under Bitcoin's current legacy Script rules.
+The approximate 8-bit extracted nonce does not provide production collision
+resistance. Transaction pinning, two-round amplification, verifier import,
+and enforceable vault settlement remain separate construction milestones.
