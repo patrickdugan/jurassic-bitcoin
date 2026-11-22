@@ -101,3 +101,33 @@ find the short signatures.
 
 Reference: Robin Linus, Binohash, section 3.1 and Appendix A.
 https://robinlinus.com/binohash.pdf
+
+## Verified native receipt (2026-11-22)
+
+[Core 30.2 run 44995348183](https://github.com/patrickdugan/jurassic-bitcoin/actions/runs/44995348183)
+passed its offline and native-regtest jobs at the source head
+`968c8474f2632c2c916dd2a9f4a60bce5efe5a58`.
+
+The native campaign generated one funding transaction with 2,048 genuine
+auxiliary OP_TRUE outputs and one pinned bare-script pool. The cumulative
+pinning attempt counts were 279 (ACP|NONE), 67 (NONE), 215 (ACP|ALL),
+and 255 (ALL), followed by 72 nonce-subset candidates.
+
+A 1,156-byte locking script used 67 counted nonpush opcodes and 10 sigops.
+The 433-byte signed spend serialized to 1,732 nonwitness weight units
+and carried a 306-byte scriptSig.
+
+The native node rejected an altered destination with the four original
+pin signatures while preserving the current best-block hash. It then
+confirmed the genuine four-pin spend in block
+`0a84f72041c17ccb12191b45446dce18cba2e3242a760d20f68678ae3228c005`,
+spending transaction
+`85a47b90ca65f9ef2170699a6d6c6d6259e24971eceddde014467afa08b70a12`.
+The `jb-fad03b-native` workflow artifact contains the signed funding
+and spending bytes, per-mode signature digests and Core rejection details.
+
+The evidence verifies one concrete transaction and one stale-payout
+counterexample under current Core rules. A repeatable high-security
+construction still needs larger work factors, collision analysis,
+canonical byte parsing in the BitVM verifier and an enforceable vault
+settlement path.
