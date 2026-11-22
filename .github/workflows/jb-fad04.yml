@@ -86,11 +86,34 @@ jobs:
           python scripts/jb_fad04.py --live-regtest \
             --output /tmp/jb-fad04-native.json > /tmp/jb-fad04-native-summary.txt
           cat /tmp/jb-fad04-native-summary.txt
-      - name: Referee verifies byte-exact tx, funding UTXO and anchored Merkle proof
+      - name: Register explicitly labeled CI fixture policy
+        run: |
+          python - <<'PY'
+          import json,sys
+          sys.path.insert(0,"scripts")
+          from jb_fad04_verify import parse_legacy_tx
+          from seam_digests_standalone import sha256
+          receipt=json.load(open("/tmp/jb-fad04-native.json",encoding="utf8"))
+          tx=parse_legacy_tx(bytes.fromhex(receipt["raw_spend_tx"]))
+          policy={
+              "schema":"jb-fad04-policy-v1",
+              "vault_txid":receipt["funding"]["txid"],
+              "vault_vout":receipt["funding"]["pool_vout"],
+              "vault_script_sha256":sha256(bytes.fromhex(receipt["locking_script_hex"])).hex(),
+              "payout_script_hex":tx.vout[0].script_pubkey.hex(),
+              "min_payout_sats":170000,
+              "index_digest":receipt["two_round_binohash"]["concatenated_indices"],
+              "provenance":"CI-registered research fixture, not an independently authenticated policy",
+          }
+          with open("/tmp/jb-fad04-ci-trusted-policy.json","w",encoding="utf8") as out:
+              json.dump(policy,out,indent=2)
+          PY
+      - name: Referee checks supplied vault policy and anchored Merkle proof
         run: |
           BLOCK_HASH=$(python -c 'import json; r=json.load(open("/tmp/jb-fad04-native.json")); print(r["block_evidence"]["block_hash"])')
           python scripts/jb_fad04_verify.py \
             --native-receipt /tmp/jb-fad04-native.json \
+            --trusted-policy /tmp/jb-fad04-ci-trusted-policy.json \
             --trusted-blockhash "$BLOCK_HASH" \
             --output /tmp/jb-fad04-referee.json
       - uses: actions/upload-artifact@v4
@@ -101,6 +124,7 @@ jobs:
             /tmp/jb-fad04-native.json
             /tmp/jb-fad04-native-summary.txt
             /tmp/jb-fad04-referee.json
+            /tmp/jb-fad04-ci-trusted-policy.json
           if-no-files-found: warn
       - name: Stop regtest
         if: always()
