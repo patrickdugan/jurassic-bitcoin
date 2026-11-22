@@ -1,0 +1,107 @@
+name: JB-FAD04 two-round Binohash and referee
+
+on:
+  push:
+    branches: [research/jb-fad04-two-round]
+  pull_request:
+    paths:
+      - "scripts/jb_fad04.py"
+      - "scripts/jb_fad04_verify.py"
+      - "tests/test_jb_fad04.py"
+      - ".github/workflows/jb-fad04.yml"
+      - "docs/JB-FAD04.md"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Compile scripts and verifier
+        run: python -m py_compile scripts/jb_fad04.py scripts/jb_fad04_verify.py tests/test_jb_fad04.py
+      - name: Check two-round legacy Script and byte-exact referee
+        run: python -m unittest discover -s tests -p "test_jb_fad04.py" -v
+      - name: Emit exact synthetic funding and two-round signed spend
+        run: python scripts/jb_fad04.py --output /tmp/jb-fad04-offline.json
+      - name: Independently verify signed raw funding and spend
+        run: |
+          python - <<'PY'
+          import json,sys
+          sys.path.insert(0,"scripts")
+          from jb_fad04_verify import parse_legacy_tx,verify_transaction
+          data=json.load(open("/tmp/jb-fad04-offline.json",encoding="utf8"))
+          tx=parse_legacy_tx(bytes.fromhex(data["raw_spend_tx"]))
+          result=verify_transaction(
+              raw_spend_hex=data["raw_spend_tx"],
+              raw_funding_hex=data["funding"]["raw_tx"],
+              expected_payout_script_hex=tx.vout[0].script_pubkey.hex(),
+              expected_indices=data["two_round_binohash"]["concatenated_indices"],
+              min_payout_sats=170000,
+          )
+          assert result["valid"] and len(result["checks"]) == 6
+          print("public-key raw transaction referee: PASS",result["txid"])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad04-offline
+          path: /tmp/jb-fad04-offline.json
+          if-no-files-found: warn
+
+  native-regtest:
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 38
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Fetch SHA256-pinned Bitcoin Core 30.2
+        run: |
+          curl -fsSL --retry 3 -o /tmp/bitcoin-core.tar.gz https://bitcoincore.org/bin/bitcoin-core-30.2/bitcoin-30.2-x86_64-linux-gnu.tar.gz
+          echo "6aa7bb4feb699c4c6262dd23e4004191f6df7f373b5d5978b5bcdd4bb72f75d8  /tmp/bitcoin-core.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/bitcoin-core.tar.gz -C /tmp
+          echo "/tmp/bitcoin-30.2/bin" >> "$GITHUB_PATH"
+      - name: Start isolated regtest
+        run: |
+          mkdir -p "$RUNNER_TEMP/jb-fad04-datadir"
+          /tmp/bitcoin-30.2/bin/bitcoind -datadir="$RUNNER_TEMP/jb-fad04-datadir" -regtest -daemon -server -rpcuser=user -rpcpassword=pass -fallbackfee=0.0001
+          for i in $(seq 1 60); do
+            if /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad04-datadir" -regtest -rpcuser=user -rpcpassword=pass getblockchaininfo >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          echo "regtest node never became RPC ready" >&2
+          exit 1
+      - name: Mine both-round signed spend and reject three native attacks
+        run: |
+          python scripts/jb_fad04.py --live-regtest \
+            --output /tmp/jb-fad04-native.json > /tmp/jb-fad04-native-summary.txt
+          cat /tmp/jb-fad04-native-summary.txt
+      - name: Referee verifies byte-exact tx, funding UTXO and anchored Merkle proof
+        run: |
+          BLOCK_HASH=$(python -c 'import json; r=json.load(open("/tmp/jb-fad04-native.json")); print(r["block_evidence"]["block_hash"])')
+          python scripts/jb_fad04_verify.py \
+            --native-receipt /tmp/jb-fad04-native.json \
+            --trusted-blockhash "$BLOCK_HASH" \
+            --output /tmp/jb-fad04-referee.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad04-native-and-referee
+          path: |
+            /tmp/jb-fad04-native.json
+            /tmp/jb-fad04-native-summary.txt
+            /tmp/jb-fad04-referee.json
+          if-no-files-found: warn
+      - name: Stop regtest
+        if: always()
+        run: /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad04-datadir" -regtest -rpcuser=user -rpcpassword=pass stop || true
