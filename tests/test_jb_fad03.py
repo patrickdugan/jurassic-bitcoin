@@ -42,7 +42,7 @@ class SighashFlagMatrixTests(unittest.TestCase):
         cls.setup = make_setup()
         cls.funding = "12" * 32
         cls.a_script = p2sh(AUX_REDEEM)
-        cls.b_script = p2sh(op(0x51))
+        cls.b_script = p2sh(op(0x52))
         cls.result, cls.candidates, cls.honest, cls.altered = report(
             cls.setup, cls.funding, cls.a_script, cls.b_script
         )
