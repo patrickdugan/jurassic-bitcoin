@@ -92,6 +92,8 @@ jobs:
           /tmp/bitcoin-30.2/bin/bitcoind -version | head -1 > core-version.txt
           sha256sum native.json native-summary.json ci-fixture-policy.json referee-*.json params.json core-version.txt > SHA256SUMS
           cat SHA256SUMS
+      - name: Publish verdicts as public annotations
+        run: cd scripts && python jb_fad05_ci_notice.py /tmp/jb-fad05
       - uses: actions/upload-artifact@v4
         if: always()
         with:
