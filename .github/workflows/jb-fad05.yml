@@ -1,0 +1,103 @@
+name: JB-FAD05 HORS attestation and settlement enforcement
+
+on:
+  push:
+    branches: [research/jb-fad05-bitvm-enforcement]
+  pull_request:
+    paths:
+      - "scripts/jb_fad05*.py"
+      - "tests/test_jb_fad05.py"
+      - ".github/workflows/jb-fad05.yml"
+      - "docs/JB-FAD05*.md"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Compile FAD05 modules
+        run: python -m py_compile scripts/jb_fad05.py scripts/jb_fad05_interp.py scripts/jb_fad05_native.py scripts/jb_fad05_verify.py scripts/jb_fad05_params.py scripts/jb_fad05_ci_policy.py tests/test_jb_fad05.py
+      - name: FAD05 offline model, referee, bond and budget tests
+        run: python -m unittest discover -s tests -p "test_jb_fad05.py" -v
+      - name: FAD01-FAD04 baselines unchanged
+        run: |
+          for t in test_jb_fad01.py test_jb_fad02.py test_jb_fad03.py test_jb_fad03_pinning.py test_jb_fad04.py; do
+            python -m unittest discover -s tests -p "$t"
+          done
+      - name: Legacy budget frontier
+        run: cd scripts && python jb_fad05_params.py --output /tmp/jb-fad05-params.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad05-offline
+          path: /tmp/jb-fad05-params.json
+          if-no-files-found: warn
+
+  native-regtest:
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Fetch SHA256-pinned Bitcoin Core 30.2
+        run: |
+          curl -fsSL --retry 3 -o /tmp/bitcoin-core.tar.gz https://bitcoincore.org/bin/bitcoin-core-30.2/bitcoin-30.2-x86_64-linux-gnu.tar.gz
+          echo "6aa7bb4feb699c4c6262dd23e4004191f6df7f373b5d5978b5bcdd4bb72f75d8  /tmp/bitcoin-core.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/bitcoin-core.tar.gz -C /tmp
+      - name: Start isolated regtest
+        run: |
+          mkdir -p "$RUNNER_TEMP/jb-fad05-datadir"
+          /tmp/bitcoin-30.2/bin/bitcoind -datadir="$RUNNER_TEMP/jb-fad05-datadir" -regtest -daemon -server -listen=0 -rpcuser=user -rpcpassword=pass -fallbackfee=0.0001
+          for i in $(seq 1 60); do
+            if /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad05-datadir" -regtest -rpcuser=user -rpcpassword=pass getblockchaininfo >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          echo "regtest node never became RPC ready" >&2
+          exit 1
+      - name: Native scenarios A-G against Core 30.2
+        run: |
+          mkdir -p /tmp/jb-fad05
+          cd scripts
+          python jb_fad05_native.py --output /tmp/jb-fad05/native.json > /tmp/jb-fad05/native-summary.json
+          cat /tmp/jb-fad05/native-summary.json
+      - name: Register explicitly labeled CI fixture policy
+        run: cd scripts && python jb_fad05_ci_policy.py --native-receipt /tmp/jb-fad05/native.json --output /tmp/jb-fad05/ci-fixture-policy.json
+      - name: Referee accepts honest, rejects front-run and unauthorized payouts
+        run: |
+          cd scripts
+          for pair in honest:accept front_run:reject unauthorized:reject; do
+            which=${pair%%:*}; expect=${pair##*:}
+            BLOCK=$(python -c "import json,sys; r=json.load(open('/tmp/jb-fad05/native.json')); d={'honest':r['honest'],'front_run':r['D_reorg_front_run'],'unauthorized':r['E_retained_key']}[sys.argv[1]]; print(d['block_evidence']['block_hash'])" "$which")
+            python jb_fad05_verify.py --native-receipt /tmp/jb-fad05/native.json \
+              --policy /tmp/jb-fad05/ci-fixture-policy.json --trusted-blockhash "$BLOCK" \
+              --which "$which" --expect "$expect" --output "/tmp/jb-fad05/referee-$which.json"
+          done
+      - name: Budget model with measured attempt counts
+        run: cd scripts && python jb_fad05_params.py --native-receipt /tmp/jb-fad05/native.json --output /tmp/jb-fad05/params.json
+      - name: SHA256 manifest of receipts
+        run: |
+          cd /tmp/jb-fad05
+          /tmp/bitcoin-30.2/bin/bitcoind -version | head -1 > core-version.txt
+          sha256sum native.json native-summary.json ci-fixture-policy.json referee-*.json params.json core-version.txt > SHA256SUMS
+          cat SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad05-native-and-referee
+          path: /tmp/jb-fad05/
+          if-no-files-found: warn
+      - name: Stop regtest
+        if: always()
+        run: /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad05-datadir" -regtest -rpcuser=user -rpcpassword=pass stop || true
