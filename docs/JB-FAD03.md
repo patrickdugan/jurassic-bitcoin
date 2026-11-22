@@ -111,3 +111,27 @@ are outside this A-stage experiment.
 
 Primary reference: Robin Linus, Binohash, sections 3.1 and 7,
 https://robinlinus.com/binohash.pdf.
+
+## Verified native evidence (2026-11-22)
+
+[Core 30.2 run 44995003647](https://github.com/patrickdugan/jurassic-bitcoin/actions/runs/44995003647)
+passed the offline and exhaustive native lanes. The native branch tested
+all 256 sighash bytes against the same previously funded bare Script UTXO.
+The results were 248 accepted direct-block spends and 8 rejected signed
+spends under the fixed-Rmin 59-byte signature-size gate. Every accepted
+trial was followed by explicit block invalidation; each trial restored the
+same funded outpoint and original best-chain tip.
+
+The separate payout-alias campaign confirmed both A and B using the exact
+same selected nonce subset, signature, and unlocking script. They spent
+the same original UTXO in alternative regtest histories after explicit
+rollback. Core confirmed the honest spend in block
+`33a2a3a3a77e8d57d18065c1a9e3f8cc3c932c0f5be162961a7eeb18145e0af5`
+and the altered-recipient spend in block
+`1f052d5b7803fcc663eed5da63fe534dbca0856c901cea627968aceb67fa4f46`.
+
+This is a real consensus-accepted counterexample under Bitcoin Core 30.2
+and a reason to retain the explicit four-mode pinning milestone before
+using the extracted nonce as an authorization digest. The receipt artifact
+`jb-fad03-native` stores every positive and negative Core decision and
+the full signed transactions.
