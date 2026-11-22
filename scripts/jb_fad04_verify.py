@@ -414,15 +414,47 @@ def make_envelope(receipt: dict, *, expected_payout_script_hex: str,
     }
 
 
-def verify_envelope(envelope: dict, *, trusted_block_hash: str) -> dict:
+def verify_envelope(envelope: dict, *, trusted_block_hash: str,
+                    trusted_policy: dict) -> dict:
+    """Referee gate with externally authorized vault and payout constraints.
+
+    The policy is a distinct trusted input, never inferred from the raw
+    transaction, the envelope, or the claimed block header.
+    """
     need(envelope.get("schema")=="jb-fad04-referee-v1","invalid verifier schema")
+    need(isinstance(trusted_policy,dict) and
+         trusted_policy.get("schema")=="jb-fad04-policy-v1",
+         "missing externally trusted authorization policy")
+    required=(
+        "vault_txid","vault_vout","vault_script_sha256",
+        "payout_script_hex","min_payout_sats","index_digest",
+    )
+    need(all(k in trusted_policy for k in required),
+         "trusted policy omits a mandatory authorization field")
+    setup=make_dual_setup()
+    need(trusted_policy["vault_vout"]==AUX_COUNT,
+         "unregistered vault outpoint index")
+    need(trusted_policy["vault_script_sha256"]==sha256(setup.script).hex(),
+         "vault locking script differs from trusted policy")
+    need(envelope["expected_payout_script_hex"]==
+         trusted_policy["payout_script_hex"],
+         "envelope payout claim conflicts with trusted policy")
+    need(envelope["min_payout_sats"]==trusted_policy["min_payout_sats"],
+         "envelope minimum payout conflicts with trusted policy")
+    need(envelope["claimed_indices"]==trusted_policy["index_digest"],
+         "envelope index claim conflicts with trusted policy")
     tx_result=verify_transaction(
         raw_spend_hex=envelope["raw_spend_hex"],
         raw_funding_hex=envelope["raw_funding_hex"],
-        expected_payout_script_hex=envelope["expected_payout_script_hex"],
-        expected_indices=envelope["claimed_indices"],
-        min_payout_sats=envelope["min_payout_sats"],
+        expected_payout_script_hex=trusted_policy["payout_script_hex"],
+        expected_indices=trusted_policy["index_digest"],
+        min_payout_sats=trusted_policy["min_payout_sats"],
+        setup=setup,
     )
+    need(tx_result["funding_txid"]==trusted_policy["vault_txid"] and
+         tx_result["spent_outpoint"]==(
+             trusted_policy["vault_txid"]+":"+str(AUX_COUNT)),
+         "actual spend references a different vault UTXO")
     block_result=verify_block_inclusion(
         txid=tx_result["txid"],
         header_hex=envelope["block_header_hex"],
@@ -434,9 +466,13 @@ def verify_envelope(envelope: dict, *, trusted_block_hash: str) -> dict:
         "accepted":True,
         "transaction":tx_result,
         "block":block_result,
+        "trusted_policy_fingerprint":sha256(json.dumps(
+            trusted_policy,sort_keys=True,separators=(",",":")
+        ).encode()).hex(),
         "limits":[
+            "trusted policy must come from a separate authorization source",
             "requires independently validated header-chain anchor",
-            "this Python verifier is not an in-circuit BitVM or ZK verifier",
+            "this Python referee is not an in-circuit BitVM or ZK verifier",
             "no vault spend authorization enforced by this code",
         ],
     }
@@ -447,15 +483,21 @@ def main():
     ap.add_argument("--native-receipt",required=True)
     ap.add_argument("--trusted-blockhash",required=True,
                     help="block hash verified by a separate header-chain oracle")
+    ap.add_argument("--trusted-policy",required=True,
+                    help="separately registered vault outpoint, script and payout policy JSON")
     ap.add_argument("--output",default="artifacts/jb-fad04/referee.json")
     args=ap.parse_args()
     receipt=json.loads(Path(args.native_receipt).read_text(encoding="utf-8"))
-    tx=parse_legacy_tx(bytes.fromhex(receipt["raw_spend_tx"]))
+    policy=json.loads(Path(args.trusted_policy).read_text(encoding="utf-8"))
     env=make_envelope(
-        receipt,expected_payout_script_hex=tx.vout[0].script_pubkey.hex(),
-        min_payout_sats=PAYOUT_BASE_SATS,
+        receipt,
+        expected_payout_script_hex=policy["payout_script_hex"],
+        min_payout_sats=policy["min_payout_sats"],
     )
-    verdict=verify_envelope(env,trusted_block_hash=args.trusted_blockhash)
+    verdict=verify_envelope(
+        env,trusted_block_hash=args.trusted_blockhash,
+        trusted_policy=policy,
+    )
     out=Path(args.output)
     out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps({"envelope":env,"verdict":verdict},indent=2)+"\n",
