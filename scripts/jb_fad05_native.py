@@ -18,6 +18,12 @@ Scenarios:
   F  Bond timeout: early release rejected, challenger censored until CSV
      expiry, late slash rejected.
   G  Split-UTXO arrangement: round-1 UTXO spends without round-2 UTXO.
+
+With --mirror (see jb_fad05_bitcoin_rs.py) a second consensus engine,
+bitcoin-rs, receives every block Core accepts and every invalidation, and
+each transaction Core refuses is wrapped in an identical hand-built block
+that is submitted to BOTH engines. The receipt records each pair of
+verdicts and whether they agree.
 """
 
 from __future__ import annotations
@@ -26,6 +32,7 @@ import argparse
 import itertools
 import json
 import os
+import struct
 from dataclasses import replace
 from pathlib import Path
 
@@ -45,23 +52,182 @@ from jb_fad05 import (
     release_unlock, resources, round_specs, round_unlock, settlement_record,
     split_scripts, successor_root, RoundSpec,
 )
+from jb_fad05_interp import num_encode
 from seam_digests_standalone import (
-    Tx, TxIn, TxOut, op, p2sh, push, ser_tx, sha256, signature_hash, txid_hex,
+    Tx, TxIn, TxOut, dsha256, op, p2sh, push, ser_tx, sha256, signature_hash,
+    txid_hex, varint,
 )
 
 AUX_COUNT = 2048
+START_HEIGHT = 450
 FUNDING_FEE_SATS = 30_000
 
 
+def merkle_root(txids_le: list[bytes]) -> bytes:
+    layer = list(txids_le)
+    while len(layer) > 1:
+        if len(layer) % 2:
+            layer.append(layer[-1])
+        layer = [dsha256(layer[i] + layer[i + 1]) for i in range(0, len(layer), 2)]
+    return layer[0]
+
+
+def handmade_block(node: CoreRPC, txs: list[Tx], tag: bytes) -> bytes:
+    """A regtest block on the current tip containing exactly `txs`.
+
+    Zero-value coinbase (always <= subsidy + fees), BIP34 height push, no
+    witness transactions so no witness commitment is required. Used to put
+    the SAME bytes in front of every engine for transactions Core refuses to
+    template.
+    """
+    tip = node("getbestblockhash")
+    head = node("getblockheader", tip)
+    height = head["height"] + 1
+    coinbase = Tx(2, (TxIn(bytes(32), 0xFFFFFFFF,
+                           push(num_encode(height)) + push(tag[:40]), 0xFFFFFFFF),),
+                  (TxOut(0, op(0x51)),), 0)
+    body = [coinbase] + list(txs)
+    root = merkle_root([dsha256(ser_tx(t)) for t in body])
+    bits = int(head["bits"], 16)
+    exponent, mantissa = bits >> 24, bits & 0x007FFFFF
+    target = mantissa << (8 * (exponent - 3))
+    when = max(head["mediantime"] + 1, head["time"] + 1)
+    prefix = (struct.pack("<i", 0x20000000) + bytes.fromhex(tip)[::-1] + root +
+              struct.pack("<II", when, bits))
+    for nonce in range(1 << 32):
+        header = prefix + struct.pack("<I", nonce)
+        if int.from_bytes(dsha256(header), "little") <= target:
+            break
+    return header + varint(len(body)) + b"".join(ser_tx(t) for t in body)
+
+
+CORE_SCRIPT_ERRORS = {
+    "Script failed an OP_VERIFY operation": "VERIFY",
+    "Script failed an OP_CHECKSIGVERIFY operation": "CHECKSIGVERIFY",
+    "Script failed an OP_EQUALVERIFY operation": "EQUALVERIFY",
+    "Script evaluated without error but finished with a false/empty top stack element": "EVAL_FALSE",
+}
+
+
+def reason_class(text: str) -> str:
+    """Engine-neutral rejection class: failing script opcode or bad-* code."""
+    if "block-script-verify-flag-failed (" in text:
+        inner = text.split("block-script-verify-flag-failed (", 1)[1].rsplit(")", 1)[0]
+        if inner.startswith("script failed: "):
+            return inner[len("script failed: "):].strip()
+        return CORE_SCRIPT_ERRORS.get(inner.strip(), inner.strip())
+    for code in ("bad-txns-inputs-missingorspent", "bad-txns-nonfinal"):
+        if code in text:
+            return code
+    return text.strip()
+
+
 class Campaign:
-    def __init__(self, node: CoreRPC, miner: str, alt_miner: str):
+    def __init__(self, node: CoreRPC, miner: str, alt_miner: str, mirror: CoreRPC | None = None):
         self.node = node
         self.miner = miner
         # Alternative histories pay a different coinbase address. Otherwise
         # re-mining the same transaction on the same parent within one second
         # reproduces the hash of a block that was just invalidated.
         self.alt_miner = alt_miner
+        self.mirror = mirror
+        self.differential: list[dict] = []
+        self._tag = 0
 
+    # -- second engine --------------------------------------------------
+    def _mirror_submit(self, block_hex: str):
+        try:
+            return self.mirror("submitblock", block_hex)
+        except RPCFailure as exc:
+            return "rpc-error: " + str(exc)
+
+    def mirror_block(self, label: str, block: str) -> None:
+        """Feed a block Core accepted to the mirror and require the same tip."""
+        if self.mirror is None:
+            return
+        result = self._mirror_submit(self.node("getblock", block, 0))
+        tip = self.mirror("getbestblockhash")
+        row = {"label": label, "kind": "core-accepted-block", "block": block,
+               "core": "accepted", "bitcoin_rs": "accepted" if result is None else str(result),
+               "bitcoin_rs_tip_matches": tip == block}
+        row["agree"] = result is None and row["bitcoin_rs_tip_matches"]
+        self.differential.append(row)
+
+    def invalidate(self, block: str, label: str = "rollback") -> None:
+        self.node("invalidateblock", block)
+        if self.mirror is not None:
+            self.mirror("invalidateblock", block)
+            same = self.mirror("getbestblockhash") == self.tip()
+            self.differential.append({"label": label, "kind": "invalidate", "block": block,
+                                      "core": "invalidated", "bitcoin_rs": "invalidated",
+                                      "agree": same})
+
+    def generate(self, n: int, label: str) -> list[str]:
+        blocks = self.node("generatetoaddress", n, self.miner)
+        for b in blocks:
+            self.mirror_block(label, b)
+        return blocks
+
+    def sync_mirror(self) -> int:
+        """Replay Core's active chain into a fresh mirror."""
+        if self.mirror is None:
+            return 0
+        start = self.mirror("getblockcount") + 1
+        for h in range(start, self.node("getblockcount") + 1):
+            res = self._mirror_submit(self.node("getblock", self.node("getblockhash", h), 0))
+            if res is not None:
+                raise AssertionError(f"mirror refused Core block at height {h}: {res}")
+        if self.mirror("getbestblockhash") != self.tip():
+            raise AssertionError("mirror tip differs from Core after sync")
+        return self.node("getblockcount") - start + 1
+
+    def mirror_positive_control(self, tx: Tx) -> dict | None:
+        """A hand-built block with a VALID transaction must be accepted by
+        both engines; otherwise refusals of hand-built blocks prove nothing."""
+        if self.mirror is None:
+            return None
+        self._tag += 1
+        raw = handmade_block(self.node, [tx], b"jb-fad05/control/%d" % self._tag)
+        block = raw.hex()
+        bhash = dsha256(raw[:80])[::-1].hex()
+        core = self.node("submitblock", block)
+        rs = self._mirror_submit(block)
+        row = {"label": "positive control: valid settlement in hand-built block",
+               "kind": "handmade-block-positive-control", "block": bhash,
+               "core": "accepted" if core is None else str(core),
+               "bitcoin_rs": "accepted" if rs is None else str(rs),
+               "tips": [self.tip(), self.mirror("getbestblockhash")]}
+        row["agree"] = core is None and rs is None and row["tips"] == [bhash, bhash]
+        self.differential.append(row)
+        self.invalidate(bhash, "positive control rollback")
+        return row
+
+    def mirror_reject(self, label: str, tx: Tx) -> dict | None:
+        """Same hand-built block to both engines; both must refuse it."""
+        if self.mirror is None:
+            return None
+        self._tag += 1
+        block = handmade_block(self.node, [tx], b"jb-fad05/%d" % self._tag).hex()
+        core_tip, rs_tip = self.tip(), self.mirror("getbestblockhash")
+        try:
+            core = self.node("submitblock", block)
+        except RPCFailure as exc:
+            core = "rpc-error: " + str(exc)
+        rs = self._mirror_submit(block)
+        row = {"label": label, "kind": "handmade-block-with-refused-tx", "txid": txid_hex(tx),
+               "core": "accepted" if core is None else str(core),
+               "bitcoin_rs": "accepted" if rs is None else str(rs),
+               "core_tip_preserved": self.tip() == core_tip,
+               "bitcoin_rs_tip_preserved": self.mirror("getbestblockhash") == rs_tip}
+        row["agree"] = (core is not None and rs is not None and row["core_tip_preserved"]
+                        and row["bitcoin_rs_tip_preserved"])
+        if core is not None and rs is not None:
+            row["reason_class"] = [reason_class(str(core)), reason_class(str(rs))]
+            row["reason_class_match"] = row["reason_class"][0] == row["reason_class"][1]
+        self.differential.append(row)
+        return row
+
+    # -- Core ------------------------------------------------------------
     def tip(self) -> str:
         return self.node("getbestblockhash")
 
@@ -73,32 +239,38 @@ class Campaign:
     def unspent(self, outpoints) -> bool:
         return all(self.node("gettxout", t, v, False) is not None for t, v in outpoints)
 
-    def mine(self, tx: Tx, *, alternative: bool = False) -> str:
+    def mine(self, tx: Tx, *, alternative: bool = False, label: str = "mine") -> str:
         coinbase = self.alt_miner if alternative else self.miner
         block = self.node("generateblock", coinbase, [ser_tx(tx).hex()])["hash"]
         if txid_hex(tx) not in self.node("getblock", block, 1)["tx"]:
             raise AssertionError("direct block omitted the transaction")
+        self.mirror_block(label, block)
         return block
 
     def reject(self, label: str, tx: Tx, watch) -> dict:
         tip = self.tip()
         try:
-            block = self.mine(tx)
+            block = self.node("generateblock", self.miner, [ser_tx(tx).hex()])["hash"]
         except RPCFailure as exc:
             if self.tip() != tip:
                 raise AssertionError(label + ": rejected block moved the tip") from exc
             if not self.unspent(watch):
                 raise AssertionError(label + ": watched coin spent after rejection")
-            return {"consensus": "rejected", "reason": str(exc), "tip_preserved": tip,
-                    "relay_policy": self.policy(tx), "txid": txid_hex(tx)}
+            out = {"consensus": "rejected", "reason": str(exc), "tip_preserved": tip,
+                   "relay_policy": self.policy(tx), "txid": txid_hex(tx)}
+            mirrored = self.mirror_reject(label, tx)
+            if mirrored is not None:
+                out["bitcoin_rs"] = mirrored["bitcoin_rs"]
+                out["engines_agree"] = mirrored["agree"]
+            return out
         raise AssertionError(f"{label}: Core accepted block {block}")
 
     def accept_alternative(self, label: str, tx: Tx, watch) -> dict:
         tip = self.tip()
         pol = self.policy(tx)
-        block = self.mine(tx, alternative=True)
+        block = self.mine(tx, alternative=True, label=label)
         spent = not self.unspent(watch)
-        self.node("invalidateblock", block)
+        self.invalidate(block, label + " rollback")
         if self.tip() != tip or not self.unspent(watch):
             raise AssertionError(label + ": rollback did not restore the chain")
         return {"consensus": "accepted", "block": block, "txid": txid_hex(tx),
@@ -224,19 +396,22 @@ def scenario_c(c: Campaign, setup, s: Settlement, funding_txid: str, vault_vout:
     return out
 
 
-def run_native(node: CoreRPC) -> dict:
+def run_native(node: CoreRPC, mirror: CoreRPC | None = None) -> dict:
     if node("getblockchaininfo")["chain"] != "regtest":
         raise RuntimeError("JB-FAD05 refuses non-regtest networks")
     wallet = wallet_rpc(node, "jb_fad05")
     miner = wallet("getnewaddress", "jb-fad05-miner", "bech32")
-    if node("getblockcount") < 110:
-        node("generatetoaddress", 110, miner)
+    # Start above height 440: bitcoin-rs activates regtest CSV at 432 while
+    # Core activates it at height 1; below 432 the engines legitimately differ.
+    if node("getblockcount") < START_HEIGHT:
+        node("generatetoaddress", START_HEIGHT - node("getblockcount"), miner)
     coins = sorted((x for x in wallet("listunspent") if x["spendable"] and x["confirmations"] >= 101),
                    key=lambda x: -satoshis(x["amount"]))
     if not coins:
         raise RuntimeError("no mature fixture coin")
     coin = coins[0]
-    c = Campaign(node, miner, wallet("getnewaddress", "jb-fad05-alt-history", "bech32"))
+    c = Campaign(node, miner, wallet("getnewaddress", "jb-fad05-alt-history", "bech32"), mirror)
+    mirrored_prefix = c.sync_mirror()
     setup = make_setup()
     op_pub = pubkey_bytes(OPERATOR_SECRET)
     bonds = tuple(bond_script(setup.hors.tables[r], op_pub) for r in range(ROUNDS))
@@ -259,6 +434,7 @@ def run_native(node: CoreRPC) -> dict:
     ftxid = node("decoderawtransaction", funding_raw)["txid"]
     funding_policy = node("testmempoolaccept", [funding_raw])[0]
     funding_block = node("generateblock", miner, [funding_raw])["hash"]
+    c.mirror_block("funding", funding_block)
     funding_height = node("getblock", funding_block, 1)["height"]
     aux = list(range(AUX_COUNT))
     receipt = {
@@ -287,43 +463,47 @@ def run_native(node: CoreRPC) -> dict:
     receipt["honest"]["relay_policy"] = c.policy(honest.tx)
     receipt["resources"] = resources(setup, honest)
 
+    if mirror is not None:
+        receipt["positive_control"] = c.mirror_positive_control(honest.tx)
     receipt["A_attestation_mutations"] = scenario_a(c, setup, honest, ftxid, V, VT, body)
     receipt["B_sighash_flag_matrix"] = scenario_b(c, setup, honest, ftxid, V)
     receipt["C_txid_malleation"] = scenario_c(c, setup, honest, ftxid, V)
 
     vault = [(ftxid, V)]
-    block_a = c.mine(honest.tx)
+    block_a = c.mine(honest.tx, label="honest settlement")
     if c.unspent(vault):
         raise AssertionError("vault still unspent after honest settlement")
     receipt["honest"]["block_evidence"] = block_evidence(node, block_a, honest.txid)
 
     # D: controlled reorg, then front-run with the revealed preimages.
-    node("invalidateblock", block_a)
+    c.invalidate(block_a, "reorg away honest settlement")
     if not c.unspent(vault):
         raise AssertionError("reorg did not restore the vault coin")
     fr = front_run(setup, honest, ftxid, V, aux, key_body(ATTACKER_SECRET))
     d = {"front_run": settlement_record(fr), "relay_policy": c.policy(fr.tx)}
     d["same_indices_as_honest"] = fr.indices == honest.indices
     d["preimages_used"] = "only the ten revealed in the honest settlement scriptSig"
-    block_f = c.mine(fr.tx)
+    block_f = c.mine(fr.tx, label="front-run")
     d["consensus"] = "accepted"
     d["block_evidence"] = block_evidence(node, block_f, fr.txid)
     d["honest_now_conflicts"] = c.reject("honest after front-run", honest.tx, [])
-    node("invalidateblock", block_f)
-    node("reconsiderblock", block_a)
-    if c.tip() != block_a or c.unspent(vault):
+    c.invalidate(block_f, "reorg away front-run")
+    # Re-mine the honest settlement in a fresh block instead of
+    # reconsiderblock, which bitcoin-rs does not implement.
+    block_a = c.mine(honest.tx, alternative=True, label="honest settlement re-mined")
+    if c.unspent(vault):
         raise AssertionError("could not restore the honest history")
     d["restored_honest_tip"] = block_a
     receipt["D_reorg_front_run"] = d
 
     # E: retained HORS key; unauthorized payout in an alternative history.
-    node("invalidateblock", block_a)
+    c.invalidate(block_a, "reorg away honest settlement again")
     ubody = key_body(UNAUTHORIZED_SECRET)
     usucc = successor_root(PREVIOUS_STATE_ROOT, ftxid, V, ubody, PAYOUT_SATS, SETTLEMENT_FEE_SATS)
     unauth = grind_settlement(setup, ftxid, V, aux, ubody, usucc)
     e = {"unauthorized": settlement_record(unauth), "relay_policy": c.policy(unauth.tx)}
     e["unauthorized"]["recipient_body"] = ubody.hex()
-    block_u = c.mine(unauth.tx)
+    block_u = c.mine(unauth.tx, label="unauthorized payout")
     e["consensus"] = "accepted"
     e["block_evidence"] = block_evidence(node, block_u, unauth.txid)
     rows = setup.hors.preimages
@@ -361,10 +541,10 @@ def run_native(node: CoreRPC) -> dict:
     if age >= BOND_CSV_BLOCKS:
         raise AssertionError("bond matured before the early-release check")
     f["early_release"] = c.reject("early release", release_tx, [(ftxid, bond_vouts[slashed])])
-    node("generatetoaddress", BOND_CSV_BLOCKS, miner)
+    c.generate(BOND_CSV_BLOCKS, "challenger censored")
     f["blocks_mined_without_challenger"] = BOND_CSV_BLOCKS
     f["release_relay_policy"] = c.policy(release_tx)
-    f["release_block"] = c.mine(release_tx)
+    f["release_block"] = c.mine(release_tx, label="operator release")
     f["late_slash"] = c.reject("late slash", slash, [])
     receipt["F_bond_timeout"] = f
 
@@ -377,11 +557,23 @@ def run_native(node: CoreRPC) -> dict:
                                   lock_script=split1, specs=(sp,))
     g = {"split_round1_spend": settlement_record(lone_split),
          "relay_policy": c.policy(lone_split.tx)}
-    g["block"] = c.mine(lone_split.tx)
+    g["block"] = c.mine(lone_split.tx, label="split round-1 spend")
     g["round2_utxo_still_unspent"] = c.unspent([(ftxid, S2)])
     g["consensus_enforced_cross_input_dependency"] = not g["round2_utxo_still_unspent"]
     receipt["G_split_utxo"] = g
     receipt["final_tip"] = c.tip()
+    if mirror is not None:
+        rows = c.differential
+        receipt["bitcoin_rs_differential"] = {
+            "mirrored_prefix_blocks": mirrored_prefix,
+            "comparisons": len(rows),
+            "disagreements": [r for r in rows if not r["agree"]],
+            "reason_class_mismatches": [r for r in rows if r.get("reason_class_match") is False],
+            "by_kind": {k: sum(1 for r in rows if r["kind"] == k)
+                        for k in sorted({r["kind"] for r in rows})},
+            "rows": rows,
+            "final_tips_match": mirror("getbestblockhash") == c.tip(),
+        }
     return receipt
 
 

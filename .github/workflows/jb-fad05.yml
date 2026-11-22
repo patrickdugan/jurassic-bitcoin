@@ -103,3 +103,71 @@ jobs:
       - name: Stop regtest
         if: always()
         run: /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad05-datadir" -regtest -rpcuser=user -rpcpassword=pass stop || true
+
+  bitcoin-rs-two-engine:
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BITCOIN_RS_COMMIT: dd6c2040606cc5069923211e5371decfd43cdb9d
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Fetch SHA256-pinned Bitcoin Core 30.2
+        run: |
+          curl -fsSL --retry 3 -o /tmp/bitcoin-core.tar.gz https://bitcoincore.org/bin/bitcoin-core-30.2/bitcoin-30.2-x86_64-linux-gnu.tar.gz
+          echo "6aa7bb4feb699c4c6262dd23e4004191f6df7f373b5d5978b5bcdd4bb72f75d8  /tmp/bitcoin-core.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/bitcoin-core.tar.gz -C /tmp
+      - name: Check out bitcoin-rs at the pinned commit
+        run: |
+          git init -q "$RUNNER_TEMP/bitcoin-rs"
+          cd "$RUNNER_TEMP/bitcoin-rs"
+          git remote add origin https://github.com/patrickdugan/bitcoin-rs.git
+          git fetch -q --depth 1 origin "$BITCOIN_RS_COMMIT"
+          git checkout -q FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$BITCOIN_RS_COMMIT"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ runner.temp }}/bitcoin-rs/target
+          key: bitcoin-rs-quickstart-${{ env.BITCOIN_RS_COMMIT }}
+      - name: Build the bitcoin-rs node (native validation engine)
+        run: |
+          cd "$RUNNER_TEMP/bitcoin-rs"
+          cargo build --locked --profile quickstart -p bitcoin-rs --no-default-features --features fjall 2>&1 | tail -3
+          sha256sum target/quickstart/bitcoin-rs
+      - name: Two-engine regtest demonstration (Core 30.2 + bitcoin-rs)
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/jb-fad05-two-engine
+          cd scripts
+          python jb_fad05_bitcoin_rs.py --bitcoind /tmp/bitcoin-30.2/bin/bitcoind \
+            --bitcoin-rs "$RUNNER_TEMP/bitcoin-rs/target/quickstart/bitcoin-rs" \
+            --bitcoin-rs-commit "$BITCOIN_RS_COMMIT" \
+            --output /tmp/jb-fad05-two-engine/two-engine.json | tee /tmp/jb-fad05-two-engine/summary.json
+      - name: Publish two-engine verdict as public annotations
+        if: always()
+        run: |
+          cd /tmp/jb-fad05-two-engine
+          sha256sum two-engine.json > SHA256SUMS || true
+          python - <<'PY'
+          import json, pathlib
+          d = pathlib.Path("/tmp/jb-fad05-two-engine")
+          s = json.loads((d / "summary.json").read_text())
+          print("::notice title=jb-fad05-two-engine::" + json.dumps({k: s[k] for k in (
+              "comparisons", "by_kind", "disagreements", "reason_class_mismatches",
+              "positive_control", "final_tips_match", "mirrored_prefix_blocks", "core", "bitcoin_rs")}))
+          sums = (d / "SHA256SUMS").read_text().split()
+          print("::notice title=jb-fad05-two-engine::two-engine.json sha256 " + sums[0])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad05-two-engine
+          path: /tmp/jb-fad05-two-engine/
+          if-no-files-found: warn

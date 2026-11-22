@@ -435,7 +435,8 @@ def grind_settlement(setup: Fad05Setup, funding_txid: str, vault_vout: int,
                      nonce_flags: tuple[int, ...] = (SIGHASH_ALL,),
                      lock_script: bytes | None = None,
                      specs: tuple[RoundSpec, ...] | None = None,
-                     max_candidates: int = 1 << 20) -> Settlement:
+                     max_candidates: int = 1 << 20,
+                     seq1_limit: int = SEQ1_LIMIT) -> Settlement:
     """Four staged pins, then every nonce round in `specs`.
 
     Honest mode (required=None): search all 252 subsets per round with the
@@ -456,7 +457,9 @@ def grind_settlement(setup: Fad05Setup, funding_txid: str, vault_vout: int,
         attempts[name] += 1
         return rmin_sign(digest, setup.pin_secrets[name], flag), digest
 
-    for s1 in range(SEQ1_LIMIT):
+    if not 0 < seq1_limit <= 0x0FFFFFFF:
+        raise ValueError("stage-1 sequence range must keep bit 31 set")
+    for s1 in range(seq1_limit):
         t1 = replace(base, vin=(base.vin[0], replace(base.vin[1], sequence=0xF0000000 + s1)))
         sig1, d1 = pin(t1, *FLAGS[0])
         if len(sig1) > TARGET_SIG_BYTES:
