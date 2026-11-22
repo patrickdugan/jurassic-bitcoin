@@ -30,6 +30,45 @@ from jb_fad01 import CoreRPC, RPCFailure
 from jb_fad05_native import run_native
 
 
+class TimedRPC(CoreRPC):
+    """JSON-RPC client with a long timeout that records the slowest call.
+
+    bitcoin-rs occasionally holds one submitblock past two minutes while its
+    sync frontier settles (seen locally once in four runs); a fixed 120 s
+    client timeout turned that into a false failure.
+    """
+
+    def __init__(self, url: str, user: str, password: str, timeout: float = 900):
+        super().__init__(url, user, password)
+        self.timeout = timeout
+        self.slowest = (0.0, "")
+
+    def __call__(self, method: str, *params):
+        import json as _json
+        from urllib.error import HTTPError
+        from urllib.request import Request, urlopen
+        payload = _json.dumps({"jsonrpc": "1.0", "id": "jb-fad05", "method": method,
+                               "params": params}).encode()
+        req = Request(self.url, payload, {"Content-Type": "application/json",
+                                          "Authorization": self.auth})
+        t0 = time.monotonic()
+        try:
+            with urlopen(req, timeout=self.timeout) as resp:
+                body = resp.read()
+        except HTTPError as e:
+            body = e.read()
+        took = time.monotonic() - t0
+        if took > self.slowest[0]:
+            self.slowest = (round(took, 2), method)
+        try:
+            data = _json.loads(body)
+        except ValueError:
+            raise RPCFailure(method + ": invalid RPC response") from None
+        if data.get("error"):
+            raise RPCFailure(method + ": " + str(data["error"]))
+        return data["result"]
+
+
 def free_ports(n: int) -> list[int]:
     ports = set()
     while len(ports) < n:
@@ -99,8 +138,8 @@ def main() -> None:
              "--dns-seeds-enabled=false", "--validation-engine", "native", "--log-level", "info"],
             env=env, stdout=rs_log, stderr=subprocess.STDOUT)
         stack.callback(stop, rs)
-        core_rpc_client = CoreRPC(f"http://127.0.0.1:{core_rpc}", "jbfad05", secret)
-        rs_rpc_client = CoreRPC(f"http://127.0.0.1:{rs_rpc}", "jbfad05", secret)
+        core_rpc_client = TimedRPC(f"http://127.0.0.1:{core_rpc}", "jbfad05", secret)
+        rs_rpc_client = TimedRPC(f"http://127.0.0.1:{rs_rpc}", "jbfad05", secret)
         wait_ready(core_rpc_client, core, "bitcoind")
         wait_ready(rs_rpc_client, rs, "bitcoin-rs")
         if core_rpc_client("getpeerinfo") or rs_rpc_client("getpeerinfo"):
@@ -115,6 +154,8 @@ def main() -> None:
             "bitcoin_rs_validation_engine": "native",
             "p2p_link": "none; blocks replayed via submitblock",
             "seconds": round(time.monotonic() - started, 1),
+            "bitcoin_rs_slowest_rpc": {"seconds": rs_rpc_client.slowest[0],
+                                       "method": rs_rpc_client.slowest[1]},
         }
     args.output.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     diff = receipt["bitcoin_rs_differential"]
@@ -128,6 +169,7 @@ def main() -> None:
         "mirrored_prefix_blocks": diff["mirrored_prefix_blocks"],
         "core": receipt["two_engine"]["bitcoind_version"],
         "bitcoin_rs": receipt["two_engine"]["bitcoin_rs_commit"],
+        "bitcoin_rs_slowest_rpc": receipt["two_engine"]["bitcoin_rs_slowest_rpc"],
         "receipt": str(args.output),
     }
     print(json.dumps(summary, indent=2))

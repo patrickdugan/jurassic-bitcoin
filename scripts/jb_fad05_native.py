@@ -123,13 +123,15 @@ def reason_class(text: str) -> str:
 
 
 class Campaign:
-    def __init__(self, node: CoreRPC, miner: str, alt_miner: str, mirror: CoreRPC | None = None):
+    def __init__(self, node: CoreRPC, miner: str, fresh_address, mirror: CoreRPC | None = None):
         self.node = node
         self.miner = miner
-        # Alternative histories pay a different coinbase address. Otherwise
-        # re-mining the same transaction on the same parent within one second
-        # reproduces the hash of a block that was just invalidated.
-        self.alt_miner = alt_miner
+        # Every alternative-history block pays a fresh coinbase address.
+        # Otherwise mining the same transaction on the same parent within one
+        # second reproduces the hash of a block that was already invalidated
+        # (scenario B's flag-0x01 row and the re-mined honest settlement are
+        # the same transaction on the same parent).
+        self.fresh_address = fresh_address
         self.mirror = mirror
         self.differential: list[dict] = []
         self._tag = 0
@@ -240,7 +242,7 @@ class Campaign:
         return all(self.node("gettxout", t, v, False) is not None for t, v in outpoints)
 
     def mine(self, tx: Tx, *, alternative: bool = False, label: str = "mine") -> str:
-        coinbase = self.alt_miner if alternative else self.miner
+        coinbase = self.fresh_address() if alternative else self.miner
         block = self.node("generateblock", coinbase, [ser_tx(tx).hex()])["hash"]
         if txid_hex(tx) not in self.node("getblock", block, 1)["tx"]:
             raise AssertionError("direct block omitted the transaction")
@@ -403,14 +405,14 @@ def run_native(node: CoreRPC, mirror: CoreRPC | None = None) -> dict:
     miner = wallet("getnewaddress", "jb-fad05-miner", "bech32")
     # Start above height 440: bitcoin-rs activates regtest CSV at 432 while
     # Core activates it at height 1; below 432 the engines legitimately differ.
-    if node("getblockcount") < START_HEIGHT:
-        node("generatetoaddress", START_HEIGHT - node("getblockcount"), miner)
+    while node("getblockcount") < START_HEIGHT:
+        node("generatetoaddress", min(50, START_HEIGHT - node("getblockcount")), miner)
     coins = sorted((x for x in wallet("listunspent") if x["spendable"] and x["confirmations"] >= 101),
                    key=lambda x: -satoshis(x["amount"]))
     if not coins:
         raise RuntimeError("no mature fixture coin")
     coin = coins[0]
-    c = Campaign(node, miner, wallet("getnewaddress", "jb-fad05-alt-history", "bech32"), mirror)
+    c = Campaign(node, miner, lambda: wallet("getnewaddress", "jb-fad05-alt-history", "bech32"), mirror)
     mirrored_prefix = c.sync_mirror()
     setup = make_setup()
     op_pub = pubkey_bytes(OPERATOR_SECRET)

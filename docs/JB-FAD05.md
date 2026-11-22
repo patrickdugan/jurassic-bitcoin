@@ -293,7 +293,9 @@ Findings:
 
 **Dependent on miner inclusion or challenger availability**
 
-- Every FAD05 transaction needs miner-direct inclusion.
+- Every FAD05 transaction needs miner-direct inclusion. Settlement spends
+  fail Core's CONST_SCRIPTCODE mempool policy even with `-acceptnonstdtxn`
+  (confirmed on testnet4).
 - A challenger must publish the slash within the CSV window. Censorship
   hands the bond back to the operator (scenario F).
 - The miner of the honest settlement, or anyone after a reorg, can
@@ -354,6 +356,96 @@ SHA256 prefixes from the run's manifest: `native.json` ecf2912c3d631aa2,
 
 The CI policy is a research fixture generated from public constants and is
 labelled as such. It is not an independent registration.
+
+## Second consensus engine: bitcoin-rs
+
+`scripts/jb_fad05_bitcoin_rs.py` runs the full A–G campaign against two
+isolated regtest nodes with no P2P link between them:
+
+- **Bitcoin Core** acts as wallet, miner and reference.
+- **bitcoin-rs** (patrickdugan/bitcoin-rs `dev` at `dd6c2040`, native
+  validation engine) is the second engine.
+
+What each engine receives:
+
+- Core's first 450 blocks are replayed into bitcoin-rs.
+- Every block Core accepts is submitted to bitcoin-rs, and the two tips must
+  match.
+- Every `invalidateblock` is applied to both nodes.
+- Every transaction Core refuses is wrapped in **one hand-built regtest
+  block**: zero-value coinbase, BIP34 height, real proof-of-work. That same
+  block goes to both engines, and both must refuse it with the same
+  normalised reason (the failing opcode, or the `bad-txns-*` code).
+- A hand-built block carrying the valid honest settlement is the positive
+  control. Both engines must accept it, which shows the builder itself
+  produces valid blocks.
+
+Two changes keep the comparison meaningful:
+
+- The campaign starts at height 450. bitcoin-rs activates regtest CSV at
+  height 432 and Core at height 1, so the engines legitimately differ below
+  432.
+- The honest settlement is re-mined instead of using `reconsiderblock`,
+  which bitcoin-rs does not implement.
+
+Local result in WSL, Core 31.1 + bitcoin-rs `dd6c2040`
+(`docs/JB-FAD05-two-engine-local.json`):
+
+| Quantity | Value |
+|---|---|
+| Comparisons | 312 (29 Core-accepted blocks, 268 hand-built blocks with refused transactions, 14 invalidations, 1 positive control) |
+| Disagreements | 0 |
+| Rejection-reason class mismatches | 0 |
+| Positive control | accepted by both engines |
+| Final tips | equal |
+
+The refusal classes seen are VERIFY, CHECKSIGVERIFY, EQUALVERIFY,
+EVAL_FALSE, `bad-txns-inputs-missingorspent` and `bad-txns-nonfinal`.
+bitcoin-rs therefore enforces every consensus property this report labels
+`bitcoin-consensus`:
+
+- the four Binohash pin and two nonce puzzles;
+- the HORS openings;
+- the canonical encoding;
+- the bond equivocation slash and the CSV delay.
+
+It also accepts every counterexample transaction that Core accepts (CE1–CE4).
+
+One local run in four timed out on an RPC call at the 120-second client
+limit. The launcher's clients now wait up to 900 s and record the slowest
+call (0.13 s in the clean run). CI job `bitcoin-rs-two-engine` builds the
+same commit and repeats the run against Core 30.2.
+
+## Testnet4 staging
+
+`scripts/jb_fad05_testnet4.py` staged the vault on Bitcoin testnet4 on
+2026-11-22 from wallet `m16`. The node was a local Core 31.1 started with
+`-acceptnonstdtxn=1`, which test networks allow. The receipt is
+`docs/JB-FAD05-testnet4-staging.json`.
+
+| Item | Value |
+|---|---|
+| Funding txid | `e7708ccf9c77cf8a1aeedd58eb11ea526fb4ba52c0f7f90ff64534a2280b26c1` |
+| Funding shape | 4 × 546-sat P2SH(OP_TRUE) aux coins + 1,000-sat bare FAD05 vault (vout 4) + change; 2,991 vB; 2,993 sats fee (1 sat/vB) |
+| Settlement txid | `a53e1858b92a57671e77da22a1afdaf00a0fb8c09b0de700f90a58f837e44450`, round 1 = (0,1,4,5,6), round 2 = (1,2,6,8,9), pays P2WSH(successor ‖ salt ‖ wallet key) |
+| Local mempool | funding accepted and announced to 10 peers |
+| Settlement in mempool | refused: `mempool-script-verify-flag-failed (Signature is found in scriptCode)` |
+| mempool.space testnet4 | funding refused: `scriptpubkey` |
+
+Two relay facts come out of the staging:
+
+- **Funding (outputs):** the public testnet4 nodes require standard outputs,
+  and a bare 2,695-byte vault output is not a standard template. The funding
+  transaction lives in this node's mempool and in any peer's that runs
+  `-acceptnonstdtxn`.
+- **Settlement (spend):** Core applies `SCRIPT_VERIFY_CONST_SCRIPTCODE` to
+  every mempool spend. It is a policy flag, not a consensus rule, and
+  `-acceptnonstdtxn` does not lift it; Core 31.1 also has no option to relax
+  mempool script flags. Every Binohash/FindAndDelete spend therefore needs a
+  miner who includes it directly, on testnet as much as on mainnet.
+
+The signed settlement bytes are in the receipt. Unless a miner includes the
+funding transaction, no testnet4 block will carry this staging.
 
 ## Not built
 
