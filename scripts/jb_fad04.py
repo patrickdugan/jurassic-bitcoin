@@ -487,6 +487,20 @@ def run_native(node: CoreRPC) -> dict:
     return result
 
 
+def synthetic_funding(setup: DualSetup) -> Tx:
+    """Byte-exact *offline* funding specimen; prevout is deliberately fake."""
+    outputs=(
+        [TxOut(AUX_VALUE_SATS,p2sh(AUX_REDEEM)) for _ in range(AUX_COUNT)] +
+        [TxOut(POOL_SATS,setup.script),TxOut(100_000,p2sh(op(0x51)))]
+    )
+    return Tx(
+        2,
+        (TxIn(bytes.fromhex("34"*32),0,b"",0xFFFFFFFD),),
+        tuple(outputs),
+        0,
+    )
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--output",default="artifacts/jb-fad04/receipt.json")
@@ -499,8 +513,15 @@ def main():
         result=run_native(CoreRPC(args.rpc_url,args.rpc_user,args.rpc_password))
     else:
         setup=make_dual_setup()
-        c=grind(setup,DEFAULT_FUNDING_TXID,p2sh(op(0x51)))
+        funding=synthetic_funding(setup)
+        c=grind(setup,txid_hex(funding),p2sh(op(0x51)))
         result=receipt(setup,c)
+        result["funding"]={
+            "raw_tx":ser_tx(funding).hex(),
+            "txid":txid_hex(funding),
+            "pool_vout":AUX_COUNT,
+            "scope":"synthetic offline funding; unconfirmed and unspendable",
+        }
     out=Path(args.output)
     out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps(result,indent=2)+"\n",encoding="utf-8")
