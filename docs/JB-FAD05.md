@@ -489,7 +489,15 @@ Local run in WSL, Core 31.1 + bitcoin-rs `dd6c2040`, 149 s
 This closes the staging gap. The same transaction shape that testnet4 relay
 refuses is valid under both consensus engines once a miner includes it. CI
 job `bitcoin-rs-two-engine` runs the proof of concept on Core 30.2 and
-publishes each step as a notice annotation.
+publishes each step as a notice annotation. In
+[run 45016723978](https://github.com/patrickdugan/jurassic-bitcoin/actions/runs/45016723978)
+(commit `29d4db6`):
+
+- All 8 steps passed, with tips matching after each one.
+- The settlement was included miner-direct in block `256032d2…`.
+- `poc.json` has sha256 `cfa2b769d6049ceff14f2cbf6640bbdef890fd7fbd6d656b7853149f5e50f9b8`.
+- The same run's two-engine comparison recorded 311 comparisons and 0
+  disagreements.
 
     cd scripts
     python jb_fad05_poc.py --bitcoind <bitcoind> [--bitcoin-rs <bitcoin-rs>] --output /tmp/poc.json
