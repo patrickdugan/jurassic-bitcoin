@@ -1,0 +1,74 @@
+name: JB-FAD02 Binohash nonce-pool regtest
+
+on:
+  push:
+    branches: [research/jb-fad02-nonce-pool]
+  pull_request:
+    paths:
+      - "scripts/jb_fad02.py"
+      - "scripts/jb_fad01.py"
+      - "scripts/seam_digests_standalone.py"
+      - "tests/test_jb_fad02.py"
+      - ".github/workflows/jb-fad02.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Check all 252 subset executions and grind
+        run: python -m unittest discover -s tests -p "test_jb_fad02.py" -v
+      - name: Emit signed transaction candidates
+        run: python scripts/jb_fad02.py --output /tmp/jb-fad02-offline.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad02-offline
+          path: /tmp/jb-fad02-offline.json
+          if-no-files-found: warn
+
+  native-regtest:
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Fetch verified Bitcoin Core 30.2
+        run: |
+          curl -fsSL --retry 3 -o /tmp/bitcoin-core.tar.gz https://bitcoincore.org/bin/bitcoin-core-30.2/bitcoin-30.2-x86_64-linux-gnu.tar.gz
+          echo "6aa7bb4feb699c4c6262dd23e4004191f6df7f373b5d5978b5bcdd4bb72f75d8  /tmp/bitcoin-core.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/bitcoin-core.tar.gz -C /tmp
+          echo "/tmp/bitcoin-30.2/bin" >> "$GITHUB_PATH"
+      - name: Start isolated regtest
+        run: |
+          mkdir -p "$RUNNER_TEMP/jb-fad02-datadir"
+          /tmp/bitcoin-30.2/bin/bitcoind -datadir="$RUNNER_TEMP/jb-fad02-datadir" -regtest -daemon -server -rpcuser=user -rpcpassword=pass -fallbackfee=0.0001
+          for i in $(seq 1 60); do
+            if /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad02-datadir" -regtest -rpcuser=user -rpcpassword=pass getblockchaininfo >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          echo "regtest RPC did not start" >&2
+          exit 1
+      - name: Fund bare script, reject mutated witnesses, mine valid nonce-pool spend
+        run: python scripts/jb_fad02.py --live-regtest --confirm --output /tmp/jb-fad02-native.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad02-native
+          path: /tmp/jb-fad02-native.json
+          if-no-files-found: warn
+      - name: Stop regtest
+        if: always()
+        run: /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad02-datadir" -regtest -rpcuser=user -rpcpassword=pass stop || true
