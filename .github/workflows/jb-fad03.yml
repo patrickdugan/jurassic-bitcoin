@@ -1,0 +1,78 @@
+name: JB-FAD03 legacy sighash-byte adversarial matrix
+
+on:
+  push:
+    branches: [research/jb-fad03-sighash-matrix]
+  pull_request:
+    paths:
+      - "scripts/jb_fad03.py"
+      - "tests/test_jb_fad03.py"
+      - ".github/workflows/jb-fad03.yml"
+      - "docs/JB-FAD03.md"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Verify 256-byte flag matrix and payout ambiguity
+        run: python -m unittest discover -s tests -p "test_jb_fad03.py" -v
+      - name: Produce byte-exact counterexample and receipts
+        run: python scripts/jb_fad03.py --output /tmp/jb-fad03-offline.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad03-offline
+          path: /tmp/jb-fad03-offline.json
+          if-no-files-found: warn
+
+  native-regtest:
+    needs: offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "cryptography>=44,<47"
+      - name: Fetch SHA256-pinned Bitcoin Core 30.2
+        run: |
+          curl -fsSL --retry 3 -o /tmp/bitcoin-core.tar.gz https://bitcoincore.org/bin/bitcoin-core-30.2/bitcoin-30.2-x86_64-linux-gnu.tar.gz
+          echo "6aa7bb4feb699c4c6262dd23e4004191f6df7f373b5d5978b5bcdd4bb72f75d8  /tmp/bitcoin-core.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/bitcoin-core.tar.gz -C /tmp
+          echo "/tmp/bitcoin-30.2/bin" >> "$GITHUB_PATH"
+      - name: Start isolated native regtest
+        run: |
+          mkdir -p "$RUNNER_TEMP/jb-fad03-datadir"
+          /tmp/bitcoin-30.2/bin/bitcoind -datadir="$RUNNER_TEMP/jb-fad03-datadir" -regtest -daemon -server -rpcuser=user -rpcpassword=pass -fallbackfee=0.0001
+          for i in $(seq 1 60); do
+            if /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad03-datadir" -regtest -rpcuser=user -rpcpassword=pass getblockchaininfo >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          echo "native regtest never became ready" >&2
+          exit 1
+      - name: Test every flag under consensus and mine same-nonce altered payout
+        run: |
+          python scripts/jb_fad03.py --live-regtest --all-native-flags \
+            --output /tmp/jb-fad03-native.json > /tmp/jb-fad03-native-summary.txt
+          cat /tmp/jb-fad03-native-summary.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jb-fad03-native
+          path: |
+            /tmp/jb-fad03-native.json
+            /tmp/jb-fad03-native-summary.txt
+          if-no-files-found: warn
+      - name: Stop native regtest
+        if: always()
+        run: /tmp/bitcoin-30.2/bin/bitcoin-cli -datadir="$RUNNER_TEMP/jb-fad03-datadir" -regtest -rpcuser=user -rpcpassword=pass stop || true
