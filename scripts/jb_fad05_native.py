@@ -387,7 +387,15 @@ def main():
     ap.add_argument("--rpc-user", default=os.getenv("BITCOIND_RPC_USER", "user"))
     ap.add_argument("--rpc-password", default=os.getenv("BITCOIND_RPC_PASS", "pass"))
     args = ap.parse_args()
-    result = run_native(CoreRPC(args.rpc_url, args.rpc_user, args.rpc_password))
+    try:
+        result = run_native(CoreRPC(args.rpc_url, args.rpc_user, args.rpc_password))
+    except Exception:
+        # Workflow-command annotations are readable on public repos without
+        # authentication, unlike raw job logs.
+        import traceback
+        for line in traceback.format_exc().splitlines()[-12:]:
+            print("::error title=jb-fad05-native::" + line.replace("%", "%25"), flush=True)
+        raise
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
