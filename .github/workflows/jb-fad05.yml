@@ -68,10 +68,10 @@ jobs:
           exit 1
       - name: Native scenarios A-G against Core 30.2
         run: |
+          set -o pipefail
           mkdir -p /tmp/jb-fad05
           cd scripts
-          python jb_fad05_native.py --output /tmp/jb-fad05/native.json > /tmp/jb-fad05/native-summary.json
-          cat /tmp/jb-fad05/native-summary.json
+          python jb_fad05_native.py --output /tmp/jb-fad05/native.json | tee /tmp/jb-fad05/native-summary.json
       - name: Register explicitly labeled CI fixture policy
         run: cd scripts && python jb_fad05_ci_policy.py --native-receipt /tmp/jb-fad05/native.json --output /tmp/jb-fad05/ci-fixture-policy.json
       - name: Referee accepts honest, rejects front-run and unauthorized payouts
