@@ -232,10 +232,33 @@ class DualRoundTests(unittest.TestCase):
         env=make_envelope(trial,
                           expected_payout_script_hex=self.payout.hex(),
                           min_payout_sats=170_000)
-        out=verify_envelope(env,trusted_block_hash=trusted)
+        policy={
+            "schema":"jb-fad04-policy-v1",
+            "vault_txid":txid_hex(self.funding),
+            "vault_vout":AUX_COUNT,
+            "vault_script_sha256":sha256(self.setup.script).hex(),
+            "payout_script_hex":self.payout.hex(),
+            "min_payout_sats":170_000,
+            "index_digest":list(self.candidate.index_digest),
+        }
+        self.assertTrue(reject(verify_envelope,env,trusted_block_hash=trusted,
+                               trusted_policy={}))
+        out=verify_envelope(
+            env,trusted_block_hash=trusted,trusted_policy=policy,
+        )
         self.assertTrue(out["accepted"])
+        self.assertEqual(out["transaction"]["spent_outpoint"],
+                         txid_hex(self.funding)+":"+str(AUX_COUNT))
         env["claimed_indices"]=list(reversed(env["claimed_indices"]))
-        self.assertTrue(reject(verify_envelope,env,trusted_block_hash=trusted))
+        self.assertTrue(reject(verify_envelope,env,trusted_block_hash=trusted,
+                                trusted_policy=policy))
+        env["claimed_indices"]=list(self.candidate.index_digest)
+        bad_policy=dict(policy,vault_txid="ff"*32)
+        self.assertTrue(reject(verify_envelope,env,trusted_block_hash=trusted,
+                                trusted_policy=bad_policy))
+        bad_policy=dict(policy,payout_script_hex=p2sh(op(0x52)).hex())
+        self.assertTrue(reject(verify_envelope,env,trusted_block_hash=trusted,
+                                trusted_policy=bad_policy))
 
 
 if __name__=="__main__":
