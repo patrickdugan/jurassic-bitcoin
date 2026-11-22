@@ -77,13 +77,20 @@ class ByteReader:
         return value
 
 
-def parse_legacy_tx(raw: bytes) -> Tx:
-    """Exact pre-SegWit parser; round-trip equality rejects ambiguous bytes."""
+def _parse_raw_tx(raw: bytes, *, witness_allowed: bool) -> Tx:
+    """Read both BIP144-funded transactions and strictly legacy spends."""
     need(10<=len(raw)<=4_000_000,"bad raw transaction length")
     r=ByteReader(raw)
     version=int.from_bytes(r.take(4),"little",signed=True)
     count=r.compactsize()
-    need(1<=count<=100_000,"missing inputs, unsupported witness, or too many inputs")
+    has_witness=False
+    if count==0:
+        # BIP144 marker=0 and flag=1. Legacy spends use count>=1.
+        need(witness_allowed,"nonce-pool spend must use legacy serialization")
+        has_witness=True
+        need(r.take(1)==b"\x01","unrecognized BIP144 witness flag")
+        count=r.compactsize()
+    need(1<=count<=100_000,"input count outside research parser bounds")
     vin=[]
     for _ in range(count):
         previous=r.take(32)
@@ -102,11 +109,34 @@ def parse_legacy_tx(raw: bytes) -> Tx:
         n=r.compactsize()
         need(n<=10_000,"output script exceeds legacy limit")
         vout.append(TxOut(sats,r.take(n)))
+    if has_witness:
+        saw_nonempty_witness=False
+        for _ in range(count):
+            nitems=r.compactsize()
+            need(nitems<=1000,"witness item count excessive")
+            if nitems:
+                saw_nonempty_witness=True
+            for _ in range(nitems):
+                nbytes=r.compactsize()
+                need(nbytes<=4_000_000,"witness item exceeds transaction bound")
+                r.take(nbytes)
+        need(saw_nonempty_witness,"superfluous BIP144 witness marker")
     locktime=int.from_bytes(r.take(4),"little")
     need(r.offset==len(raw),"trailing raw transaction bytes")
     tx=Tx(version,tuple(vin),tuple(vout),locktime)
-    need(ser_tx(tx)==raw,"noncanonical raw transaction encoding")
+    if not has_witness:
+        need(ser_tx(tx)==raw,"noncanonical raw transaction encoding")
     return tx
+
+
+def parse_legacy_tx(raw: bytes) -> Tx:
+    return _parse_raw_tx(raw, witness_allowed=False)
+
+
+def parse_funding_tx(raw: bytes) -> Tx:
+    # Funding coins use wallet P2WPKH and thus carry a BIP144 witness. The
+    # pool spend itself is legacy. Its outpoint references the stripped txid.
+    return _parse_raw_tx(raw, witness_allowed=True)
 
 
 def parse_canonical_pushes(script_sig: bytes) -> list[bytes]:
@@ -212,7 +242,7 @@ def verify_transaction(*, raw_spend_hex: str, raw_funding_hex: str,
     setup=setup or make_dual_setup()
     try:
         tx=parse_legacy_tx(bytes.fromhex(raw_spend_hex))
-        funding=parse_legacy_tx(bytes.fromhex(raw_funding_hex))
+        funding=parse_funding_tx(bytes.fromhex(raw_funding_hex))
         expected_script=bytes.fromhex(expected_payout_script_hex)
     except ValueError as exc:
         raise ProofRejected("malformed hexadecimal transaction or script") from exc
@@ -221,7 +251,7 @@ def verify_transaction(*, raw_spend_hex: str, raw_funding_hex: str,
     need(len(tx.vin)==2 and len(tx.vout)==1,"expected 2 inputs / 1 output")
     need(tx.vin[0].prevout_hash==tx.vin[1].prevout_hash,
          "auxiliary and pool inputs must spend same funding transaction")
-    funding_hash=dsha256(bytes.fromhex(raw_funding_hex))
+    funding_hash=dsha256(ser_tx(funding))
     need(tx.vin[1].prevout_hash==funding_hash,"wrong funded transaction identity")
     need(tx.vin[1].prevout_n==AUX_COUNT,"wrong pool vout")
     need(0<=tx.vin[0].prevout_n<AUX_COUNT,"auxiliary vout outside funded set")
